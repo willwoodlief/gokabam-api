@@ -1,5 +1,5 @@
 <?php
-namespace maider;
+namespace gokabam_api;
 /**
  * The file that defines the core plugin class
  *

@@ -1,5 +1,5 @@
 <?php
-namespace maider;
+namespace gokabam_api;
 /**
  * Provide a admin area view for the plugin
  */

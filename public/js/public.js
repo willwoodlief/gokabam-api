@@ -1,4 +1,4 @@
-function maider_talk_to_frontend(method, server_options, success_callback, error_callback) {
+function gokabam_api_talk_to_frontend(method, server_options, success_callback, error_callback) {
 
     if (!server_options) {
         server_options = {};
@@ -7,21 +7,21 @@ function maider_talk_to_frontend(method, server_options, success_callback, error
     // noinspection ES6ModulesDependencies
     var outvars = jQuery.extend({}, server_options);
     // noinspection JSUnresolvedVariable
-    outvars._ajax_nonce = maider_frontend_ajax_obj.nonce;
+    outvars._ajax_nonce = gokabam_api_frontend_ajax_obj.nonce;
     // noinspection JSUnresolvedVariable
-    outvars.action = maider_frontend_ajax_obj.action;
+    outvars.action = gokabam_api_frontend_ajax_obj.action;
     outvars.method = method;
     // noinspection ES6ModulesDependencies
     // noinspection JSUnresolvedVariable
-    var maider_ajax_req = jQuery.ajax({
+    var gokabam_api_ajax_req = jQuery.ajax({
         type: 'POST',
         beforeSend: function () {
-            if (maider_ajax_req && (maider_ajax_req !== 'ToCancelPrevReq') && (maider_ajax_req.readyState < 4)) {
-                //    maider_ajax_req.abort();
+            if (gokabam_api_ajax_req && (gokabam_api_ajax_req !== 'ToCancelPrevReq') && (gokabam_api_ajax_req.readyState < 4)) {
+                //    gokabam_api_ajax_req.abort();
             }
         },
         dataType: "json",
-        url: maider_frontend_ajax_obj.ajax_url,
+        url: gokabam_api_frontend_ajax_obj.ajax_url,
         data: outvars,
         success: success_handler,
         error: error_handler

@@ -1,5 +1,5 @@
 <?php /** @noinspection PhpComposerExtensionStubsInspection */
-namespace maider;
+namespace gokabam_api;
 
 
 class CurlHelperException extends \Exception {

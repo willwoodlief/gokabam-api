@@ -1,5 +1,5 @@
 <?php
-namespace maider;
+namespace gokabam_api;
 /**
  * Register all actions and filters for the plugin
  *

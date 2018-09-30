@@ -1,5 +1,5 @@
 <?php
-namespace maider;
+namespace gokabam_api;
 require_once realpath(dirname(__FILE__)) . '/../vendor/autoload.php';
 
 use Symfony\Component\Yaml\Yaml;

@@ -1,5 +1,5 @@
 <?php
-namespace maider;
+namespace gokabam_api;
 /**
  * Define the internationalization functionality
  *

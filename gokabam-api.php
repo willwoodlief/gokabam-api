@@ -10,7 +10,7 @@
  *
  *
  * @wordpress-plugin
- * Plugin Name:       Maider
+ * Plugin Name:       gokabam_api
  * Plugin URI:        mailto:willwoodlief@gmail.com
  * Description:       Configures WordPress
  * Version:           1.0.0
@@ -18,7 +18,7 @@
  * Author URI:        willwoodlief@gmail.com
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       maider
+ * Text Domain:       gokabam_api
  * Domain Path:       /languages
  * Requires at least: 4.6
  */
@@ -34,16 +34,16 @@ if ( ! defined( 'WPINC' ) ) {
  * Rename this for your plugin and update it as you release new versions.
  */
 define( 'PLUGIN_VERSION', '1.0.0' );
-define( 'PLUGIN_NAME', 'Maider' );
+define( 'PLUGIN_NAME', 'gokabam_api' );
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-activator.php
  */
-function activate_maider() {
+function activate_gokabam_api() {
 	/** @noinspection PhpIncludeInspection */
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-activator.php';
-	\maider\Activator::activate();
+	\gokabam_api\Activator::activate();
 }
 
 
@@ -52,14 +52,14 @@ function activate_maider() {
  * The code that runs during plugin deactivation.
  * This action is documented in includes/class-deactivator.php
  */
-function deactivate_maider() {
+function deactivate_gokabam_api() {
 	/** @noinspection PhpIncludeInspection */
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-deactivator.php';
-	\maider\Deactivator::deactivate();
+	\gokabam_api\Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_maider' );
-register_deactivation_hook( __FILE__, 'deactivate_maider' );
+register_activation_hook( __FILE__, 'activate_gokabam_api' );
+register_deactivation_hook( __FILE__, 'deactivate_gokabam_api' );
 
 /**
  * The core plugin class that is used to define internationalization,
@@ -78,10 +78,10 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-start.php';
  *
  * @since    1.0.0
  */
-function run_maider() {
+function run_gokabam_api() {
 
-	$plugin = new \maider\Start();
+	$plugin = new \gokabam_api\Start();
 	$plugin->run();
 
 }
-run_maider();
+run_gokabam_api();

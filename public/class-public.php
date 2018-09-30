@@ -1,6 +1,6 @@
 <?php
 
-namespace maider;
+namespace gokabam_api;
 
 /**
  * The public-facing functionality of the plugin.

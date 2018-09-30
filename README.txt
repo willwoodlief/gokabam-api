@@ -1,5 +1,5 @@
-=== Will's Plugin Template  ===
- to change, substitute the word maider for the new plugin name and then change the file name to the new plugin name
+=== GoKabam Api  ===
+ to change, substitute the word gokabam_api for the new plugin name and then change the file name to the new plugin name
 
 
 == Description ==

@@ -1,5 +1,5 @@
 <?php
-namespace maider;
+namespace gokabam_api;
 
 class ErrorLoggerQuietException extends \Exception {}
 
