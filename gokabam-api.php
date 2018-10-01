@@ -10,7 +10,7 @@
  *
  *
  * @wordpress-plugin
- * Plugin Name:       gokabam_api
+ * Plugin Name:       GoKabam Api Developer
  * Plugin URI:        mailto:willwoodlief@gmail.com
  * Description:       Configures WordPress
  * Version:           1.0.0
@@ -39,6 +39,9 @@ define( 'PLUGIN_NAME', 'gokabam_api' );
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-activator.php
+ */
+/**
+ * @throws Exception
  */
 function activate_gokabam_api() {
 	/** @noinspection PhpIncludeInspection */

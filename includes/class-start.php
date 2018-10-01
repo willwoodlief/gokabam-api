@@ -157,7 +157,7 @@ class Start {
         $this->loader->add_action( 'admin_menu', $plugin_admin, 'my_admin_menu' );
         $this->loader->add_action('admin_init',$plugin_admin,'add_settings');
         $this->loader->add_action( 'wp_ajax_'.strtolower( PLUGIN_NAME) .'_admin', $plugin_admin, 'query_survey_ajax_handler' );
-
+		$this->loader->add_action( 'plugins_loaded', $plugin_admin, 'plugins_loaded' );
 	}
 
 	/**
@@ -176,7 +176,7 @@ class Start {
         $this->loader->add_action( 'init', $plugin_public, 'shortcut_code' );
         $this->loader->add_action( 'wp_ajax_'. strtolower( PLUGIN_NAME) .'_submit_chart_step', $plugin_public, 'send_survey_ajax_handler' );
         $this->loader->add_action( 'wp_ajax_nopriv_'.strtolower( PLUGIN_NAME) .'_submit_chart_step', $plugin_public, 'send_survey_ajax_handler' );
-		$this->loader->add_action( 'do_parse_request', $plugin_public, 'do_parse_request',1,3 );
+		$this->loader->add_action( 'init', $plugin_public, 'virtual_pages' );
 
 
 	}

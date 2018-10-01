@@ -1,7 +1,7 @@
 <?php
 
 namespace gokabam_api;
-
+require_once 'pages.php';
 /**
  * The public-facing functionality of the plugin.
  *
@@ -35,6 +35,11 @@ class Plugin_Public
      */
     private $version;
 
+	/**
+	 * @var Pages pages
+	 */
+    private $pages;
+
     /**
      * Initialize the class and set its properties.
      *
@@ -47,6 +52,7 @@ class Plugin_Public
 
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+        $this->pages = null;
 
     }
 
@@ -160,44 +166,10 @@ class Plugin_Public
     }
 
 
-	public function do_parse_request($continue, /** @noinspection PhpUnusedParameterInspection */
-		\WP $wp, /** @noinspection PhpUnusedParameterInspection */
-		$extra_query_vars) {
-		global /** @noinspection PhpUnusedLocalVariableInspection */
-		$wpdb;
-		if ( preg_match( '~(.*)\\/'.strtolower( PLUGIN_NAME) .'\\/command-(.*)$~', $_SERVER['REQUEST_URI'],$matches ) ) {
-			$extra_info =  trim($matches[2]);
-			if (empty($extra_info)) {
-				//if reached here then things work, just return 200
-				http_response_code(200);
-				//get the number of logs
-				die();
-			}
-			if (strcmp($extra_info,'stats') === 0) {
-				$b_ok = true;
-				try {
-					$queue_resp = "Working";
-				} catch (\Exception $e) {
-					$queue_resp = $e->getMessage();
-					$b_ok = false;
-				}
 
+	public function virtual_pages() {
 
-				$what = [
-					'status' => $b_ok,
-					'queue_status' =>$queue_resp
-				];
-
-				http_response_code(200);
-				echo json_encode($what);
-				die();
-			}
-			//convert it to a query string
-
-			die();
-		}
-
-		return $continue;
+		$this->pages = new Pages();
 	}
 
 }

@@ -43,6 +43,15 @@ class Admin {
 	}
 
 	/**
+	 * @throws \Exception
+	 */
+	public function plugins_loaded() {
+		/** @noinspection PhpIncludeInspection */
+		require_once plugin_dir_path( __FILE__ ) . '../includes/class-activator.php';
+		Activator::activate();
+	}
+
+	/**
 	 * Register the stylesheets for the admin area.
 	 *
 	 * @since    1.0.0
@@ -125,7 +134,7 @@ class Admin {
 
 	    add_settings_section(
 		    strtolower( PLUGIN_NAME). '_section_id', // ID
-		    'Click Funnel Integration Settings', // Title
+		    'Go Kabam Api Integration Settings', // Title
 		    array( $this, 'print_section_info' ), // Callback
 		    strtolower( PLUGIN_NAME). '-options' // Page
 	    );
@@ -140,13 +149,6 @@ class Admin {
 	    );
 
 
-	    add_settings_field(
-		    'redirect_url', // ID
-		    'Access', // Title
-		    array( $this, 'test_blocked_ports_callback' ), // Callback
-		    strtolower( PLUGIN_NAME). '-options', // Page
-		    strtolower( PLUGIN_NAME). '_section_id' // Section
-	    );
 
 
     }
@@ -185,7 +187,7 @@ class Admin {
 
 	public function redirect_url_callback() {
 
-    	if (array_key_exists('redirect_url',$this->options)) {
+    	if ($this->options && array_key_exists('redirect_url',$this->options)) {
 		    $redir =  $this->options['redirect_url'] ;
 	    } else {
 		    $redir =  '' ;

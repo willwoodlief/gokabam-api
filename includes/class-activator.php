@@ -33,7 +33,7 @@ class Activator {
 
 		//check to see if any tables are missing
 		$b_force_create = false;
-		$tables_to_check= [];
+		$tables_to_check= ['gokabam_api_version'];
 		foreach ($tables_to_check as $tb) {
 			$table_name = "{$wpdb->base_prefix}$tb";
 			//check if table exists
@@ -47,24 +47,21 @@ class Activator {
 
 		if ( ($b_force_create) || ( Activator::DB_VERSION > $installed_ver) ) {
 			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-//			$charset_collate = $wpdb->get_charset_collate();
+			$charset_collate = $wpdb->get_charset_collate();
 
 
 			//do response table
 
-//			$sql = "CREATE TABLE `{$wpdb->base_prefix}burp_responses` (
-//              id int NOT NULL AUTO_INCREMENT,
-//              survey_id int not null ,
-//              question_id int not null ,
-//              answer_id int not null,
-//              PRIMARY KEY  (id),
-//              KEY survey_id_key (survey_id),
-//              KEY question_id_key (question_id),
-//              KEY answer_id_key (answer_id),
-//              UNIQUE KEY unique_survey_question (survey_id,question_id)
-//              ) $charset_collate;";
-//
-//			dbDelta( $sql );
+			$sql = "CREATE TABLE `{$wpdb->base_prefix}gokabam_api_version` (
+              id int NOT NULL AUTO_INCREMENT,
+              version float not null ,
+              commit_id varchar(255) DEFAULT NULL ,
+              tag varchar(255) DEFAULT NULL,
+              PRIMARY KEY  (id),
+              UNIQUE KEY version_key (version)
+              ) $charset_collate;";
+
+			dbDelta( $sql );
 			update_option( "_".strtolower( PLUGIN_NAME) ."_db_version" , Activator::DB_VERSION );
 		}
 
