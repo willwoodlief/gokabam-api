@@ -13,7 +13,7 @@ class VirtualThemedPages {
 	private $vpages = array();  // the main array of virtual pages
 	private $mypath = '';
 	public $blankcomments = "blank-comments.php";
-
+	private $b_already_ran = false;
 	public $template;
 	public $subtemplate;
 
@@ -65,9 +65,9 @@ class VirtualThemedPages {
 				$matched      = 1;
 				if ($is_post) {
 					$post_function = $functions['post'];
-				} else {
-					$get_function = $functions['get'];
 				}
+				$get_function = $functions['get'];
+
 				$name = $functions['name'];
 				break;
 			}
@@ -77,12 +77,7 @@ class VirtualThemedPages {
 			return false;
 		}
 
-		$data_from_post = [];
-		if ($post_function) {
-			call_user_func_array( $post_function, array($name,  &$data_from_post, $request_uri ) );
-		}
-
-		if (!$get_function) {
+		if ( !$get_function && !$post_function ) {
 			return false;
 		}
 
@@ -111,7 +106,14 @@ class VirtualThemedPages {
 		$this->template = $this->subtemplate = null;
 		$this->title    = null;
 		unset( $this->body );
-		call_user_func_array( $get_function, array( $name, &$this,$request_uri,$data_from_post ) );
+		$data_from_post = [];
+		if ($post_function) {
+			call_user_func_array( $post_function, array($name,  &$data_from_post, $request_uri ) );
+		}
+		if ($get_function) {
+			call_user_func_array( $get_function, array( $name, &$this,$request_uri,$data_from_post ) );
+		}
+
 
 		if ( ! isset( $this->body ) ) //assert
 		{
@@ -132,79 +134,83 @@ class VirtualThemedPages {
 	// Setup a dummy post/page
 	// From the WP view, a post == a page
 	//
-	function vtp_createdummypost( $posts ) {
+	function vtp_createdummypost( /* $posts */ ) {
 
+		global $wp, $wp_query;
+		if ($this->b_already_ran) {
+			return []; //some templates call this more than once
+		}
+		$this->b_already_ran = true;
 		// have to create a dummy post as otherwise many templates
 		// don't call the_content filter
-		global $wp, $wp_query;
+
 
 //		( count( $posts ) == 0 ) &&
 //		(
+			//add the partial path to the slug for comparison
 //			(strpos( $wp->request, $this->slug ) !== false) ||
 //			( array_key_exists('page_id',$wp->query_vars) && ($wp->query_vars['page_id'] == $this->slug) )
 //		)
 
-		if (true) {
 
-			//create a fake post instance
-			$p = new \stdClass;
-			// fill $p with everything a page in the database would have
-			$p->ID                    = - 1;
-			$p->post_author           = 1;
-			$p->post_date             = current_time( 'mysql' );
-			$p->post_date_gmt         = current_time( 'mysql', $gmt = 1 );
-			$p->post_content          = $this->body;
-			$p->post_title            = $this->title;
-			$p->post_excerpt          = '';
-			$p->post_status           = 'publish';
-			$p->ping_status           = 'closed';
-			$p->post_password         = '';
-			$p->post_name             = $this->slug; // slug
-			$p->to_ping               = '';
-			$p->pinged                = '';
-			$p->modified              = $p->post_date;
-			$p->modified_gmt          = $p->post_date_gmt;
-			$p->post_content_filtered = '';
-			$p->post_parent           = 0;
-			$p->guid                  = get_home_url( '/' . $p->post_name ); // use url instead?
-			$p->menu_order            = 0;
-			$p->post_type             = 'page';
-			$p->post_mime_type        = '';
-			$p->comment_status        = 'closed';
-			$p->comment_count         = 0;
-			$p->filter                = 'raw';
-			$p->ancestors             = array(); // 3.6
+		//create a fake post instance
+		$p = new \stdClass;
+		// fill $p with everything a page in the database would have
+		$p->ID                    = - 1;
+		$p->post_author           = 1;
+		$p->post_date             = current_time( 'mysql' );
+		$p->post_date_gmt         = current_time( 'mysql', $gmt = 1 );
+		$p->post_content          = $this->body;
+		$p->post_title            = $this->title;
+		$p->post_excerpt          = '';
+		$p->post_status           = 'publish';
+		$p->ping_status           = 'closed';
+		$p->post_password         = '';
+		$p->post_name             = $this->slug; // slug
+		$p->to_ping               = '';
+		$p->pinged                = '';
+		$p->modified              = $p->post_date;
+		$p->modified_gmt          = $p->post_date_gmt;
+		$p->post_content_filtered = '';
+		$p->post_parent           = 0;
+		$p->guid                  = get_home_url( '/' . $p->post_name ); // use url instead?
+		$p->menu_order            = 0;
+		$p->post_type             = 'page';
+		$p->post_mime_type        = '';
+		$p->comment_status        = 'closed';
+		$p->comment_count         = 0;
+		$p->filter                = 'raw';
+		$p->ancestors             = array(); // 3.6
 
-			// reset wp_query properties to simulate a found page
-			$wp_query->is_page     = true;
-			$wp_query->is_singular = true;
-			$wp_query->is_home     = false;
-			$wp_query->is_archive  = false;
-			$wp_query->is_category = false;
-			unset( $wp_query->query['error'] );
-			$wp->query                     = array();
-			$wp_query->query_vars['error'] = '';
-			$wp_query->is_404              = false;
+		// reset wp_query properties to simulate a found page
+		$wp_query->is_page     = true;
+		$wp_query->is_singular = true;
+		$wp_query->is_home     = false;
+		$wp_query->is_archive  = false;
+		$wp_query->is_category = false;
+		unset( $wp_query->query['error'] );
+		$wp->query                     = array();
+		$wp_query->query_vars['error'] = '';
+		$wp_query->is_404              = false;
 
-			$wp_query->current_post  = $p->ID;
-			$wp_query->found_posts   = 1;
-			$wp_query->post_count    = 1;
-			$wp_query->comment_count = 0;
-			// -1 for current_comment displays comment if not logged in!
-			$wp_query->current_comment = null;
-			$wp_query->is_singular     = 1;
-			$wp_query->is_attachment   = false;
+		$wp_query->current_post  = $p->ID;
+		$wp_query->found_posts   = 1;
+		$wp_query->post_count    = 1;
+		$wp_query->comment_count = 0;
+		// -1 for current_comment displays comment if not logged in!
+		$wp_query->current_comment = null;
+		$wp_query->is_singular     = 1;
+		$wp_query->is_attachment   = false;
 
-			$wp_query->post              = $p;
-			$wp_query->posts             = array( $p );
-			$wp_query->queried_object    = $p;
-			$wp_query->queried_object_id = $p->ID;
-			$wp_query->current_post      = $p->ID;
-			$wp_query->post_count        = 1;
+		$wp_query->post              = $p;
+		$wp_query->posts             = array( $p );
+		$wp_query->queried_object    = $p;
+		$wp_query->queried_object_id = $p->ID;
+		$wp_query->current_post      = $p->ID;
+		$wp_query->post_count        = 1;
 
-			return array( $p );
-		}
-		return $posts;
+		return array( $p );
+
 	}
 
 
@@ -261,32 +267,6 @@ class VirtualThemedPages {
 } // class
 
 
-// Example code - you'd use something very like this in a plugin
-//
-if ( 0 ) {
-	// require 'BC_Virtual_Themed_pages.php';
-	// this code segment requires the WordPress environment
-
-	$vp = new VirtualThemedPages();
-	$vp->add( '#/mypattern/unique#i', 'mytest_contentfunc' );
-
-	// Example of content generating function
-	// Must set $this->body even if empty string
-	function mytest_contentfunc( $v, $url ) {
-		// extract an id from the URL
-		$id = 'none';
-		if ( preg_match( '#unique/(\d+)#', $url, $m ) ) {
-			$id = $m[1];
-		}
-		// could wp_die() if id not extracted successfully...
-
-		$v->title       = "My Virtual Page Title";
-		$v->body        = "Some body content for my virtual page test - id $id\n";
-		$v->template    = 'page'; // optional
-		$v->subtemplate = 'billing'; // optional
-		$v->slug        = 'go-kabam-versions';
-	}
-}
 
 
 

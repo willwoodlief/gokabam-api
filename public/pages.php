@@ -5,6 +5,8 @@ require_once 'virtual-pages.php';
 
 class Pages {
 
+	protected $plugin_version = 0;
+	protected $plugin_name = null;
 	protected $vp = null;
 	protected $page_def_classes = [];
 	protected $page_class_lookup = [];
@@ -12,9 +14,13 @@ class Pages {
 
 	/**
 	 * Pages constructor.
+	 * @param string $plugin_name
+	 * @param float $plugin_version
 	 * @throws \Exception
 	 */
-	public function __construct() {
+	public function __construct($plugin_name,$plugin_version) {
+		$this->plugin_version = $plugin_version;
+		$this->plugin_name = $plugin_name;
 		$this->page_def_classes = [];
 		$this->auto_load_virtual_pages();
 		$this->vp = new VirtualThemedPages();
@@ -139,11 +145,37 @@ class Pages {
 	}
 
 	public function enqueue_styles() {
+		$request_uri = $_SERVER['REQUEST_URI'];
+
+		foreach ($this->page_def_classes as $page_def_class) {
+			$class     = $page_def_class['class'];
+			$namespace = $page_def_class['namespace'];
+
+			$fullname = "$namespace\\$class";
+			$regexp =  call_user_func($fullname . "::get_regex");
+			if ( preg_match( $regexp, $request_uri ) ) {
+				call_user_func_array( $fullname . "::enqueue_styles", array( $this->plugin_name,$this->plugin_version ) );
+				break;
+			}
+		}
 
 	}
 
 	public function enqueue_scripts() {
 
+		$request_uri = $_SERVER['REQUEST_URI'];
+
+		foreach ($this->page_def_classes as $page_def_class) {
+			$class     = $page_def_class['class'];
+			$namespace = $page_def_class['namespace'];
+
+			$fullname = "$namespace\\$class";
+			$regexp =  call_user_func($fullname . "::get_regex");
+			if ( preg_match( $regexp, $request_uri ) ) {
+				call_user_func_array( $fullname . "::enqueue_scripts", array( $this->plugin_name,$this->plugin_version ) );
+				break;
+			}
+		}
 	}
 
 }

@@ -64,8 +64,15 @@ class Plugin_Public
     public function enqueue_styles()
     {
 
-        wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/public.css', array(), $this->version, 'all');
+	    $b_check = strpos($_SERVER['REQUEST_URI'], strtolower( PLUGIN_NAME));
+	    if ($b_check) {
+		    wp_enqueue_style('bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap.min.css', array(), '3.3.7', 'all');
+		    wp_enqueue_style('bootstrap-theme' , PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap-theme.min.css', array(), '3.3.7', 'all');
+		    wp_enqueue_style( 'fontawesome', PLUGIN_URL . 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', array(), '5.3.1', 'all');
+	    }
 
+        wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/public.css', array(), $this->version, 'all');
+	    $this->pages->enqueue_styles();
     }
 
     /**
@@ -76,8 +83,11 @@ class Plugin_Public
     public function enqueue_scripts()
     {
 
-
-
+	    $b_check = strpos($_SERVER['REQUEST_URI'], strtolower( PLUGIN_NAME));
+    	if ($b_check) {
+		    wp_enqueue_script('moment', PLUGIN_URL . 'node_modules/moment/min/moment-with-locales.min.js', array('jquery'), '2.22.2', false);
+		    wp_enqueue_script('jquery-bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/js/bootstrap.min.js', array('jquery'), '3.3.7', false);
+    	}
         wp_enqueue_script($this->plugin_name. 'a', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
         $title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
         wp_localize_script($this->plugin_name. 'a', strtolower( PLUGIN_NAME) . '_frontend_ajax_obj', array(
@@ -86,6 +96,8 @@ class Plugin_Public
             'nonce' => $title_nonce,
             'plugins_url' => plugins_url()
         ));
+
+        $this->pages->enqueue_scripts();
 
     }
 
@@ -166,10 +178,12 @@ class Plugin_Public
     }
 
 
-
+	/**
+	 * @throws \Exception
+	 */
 	public function virtual_pages() {
 
-		$this->pages = new Pages();
+		$this->pages = new Pages($this->plugin_name,$this->version);
 	}
 
 }
