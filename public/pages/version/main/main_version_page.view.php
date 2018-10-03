@@ -4,12 +4,12 @@
     global $wpdb;
     $versions = [];
     try {
-	    $table_name = $wpdb->prefix . 'gokabam_api_version';
+
 	    /** @noinspection SqlResolve */
 	    $versions = $wpdb->get_results(
 		    " 
                 select id,version,commit_id,tag,created_at_ts,version_notes,version_name
-                from $table_name 
+                from gokabam_api_versions 
                 order by created_at_ts asc;
                 " );
 

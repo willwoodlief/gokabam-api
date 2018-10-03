@@ -14,6 +14,10 @@ class  ErrorLogger {
     public static $last_error_id = null;
     public static $exceptions = [];
 
+    public static function unused_params(...$params) {
+
+    }
+
 
     public static function print_exceptions($b_erase_after = false) {
 	    $alerts = [];
@@ -128,16 +132,21 @@ class  ErrorLogger {
 	 * @throws SecondTryException if anything happens
 	 */
 	public static function saveErrorInfo(array $info,$parent_id = null) {
-		global $wpdb;
+		global $wpdb,$is_wp_init_called;
+		if (!$is_wp_init_called) {return 0;}
 		$info['parent_id'] = $parent_id;
 		try {
 			unset($info['other_info']);
+			//get user id
+			$user = wp_get_current_user();
 			$info['trace'] = null; //do not save the array trace, recursion issues
 			$insert_result = $wpdb->insert(
 				self::getDBTableName(),
 				array(
 					  'parent_id' =>  $info['parent_id'],
 		              'created_at_ts' =>  time(),
+					  'user_id' =>  $user->ID,
+		              'user_roles' => implode(',',$user->roles),
 		              'hostname' =>  JsonHelper::toStringAgnostic($info['hostname']),
 		              'machine_id'  =>  JsonHelper::toStringAgnostic($info['machine_id']),
 		              'caller_ip_address' =>  JsonHelper::toStringAgnostic($info['caller_ip_address']),
@@ -162,7 +171,7 @@ class  ErrorLogger {
 		              'chained'  =>  JsonHelper::toStringAgnostic($info['chained'])
 				),
 				array(
-					'%d','%d','%s','%s','%s',
+					'%d','%d','%d','%s','%s','%s','%s',
 					'%s','%s','%s','%s','%s',
 					'%s','%s','%s','%s','%s',
 					'%s','%s','%s','%s','%s',
@@ -216,6 +225,8 @@ class  ErrorLogger {
               parent_id int DEFAULT null,
               created_at_ts int not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              user_id int DEFAULT NULL,
+              user_roles varchar(255) DEFAULT NULL ,
               hostname varchar(255) DEFAULT NULL ,
               machine_id varchar(255) DEFAULT NULL ,
               caller_ip_address varchar(255) DEFAULT NULL ,

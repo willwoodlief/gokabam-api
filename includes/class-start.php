@@ -1,14 +1,15 @@
 <?php
 namespace gokabam_api;
+
+
 /**
- * The file that defines the core plugin class
- *
- * A class definition that includes attributes and functions used across both the
- * public-facing side of the site and the admin area.
- *
-
+ * @var $is_wp_init_called bool, default false
+ * <p>
+ *   set to true in the init hook, this provides an easy way to see if all WP functions can be used yet
+ * </p>
  */
-
+global $is_wp_init_called;
+$is_wp_init_called = false;
 /**
  * The core plugin class.
  *

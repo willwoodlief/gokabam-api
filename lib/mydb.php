@@ -528,7 +528,7 @@ class MYDB
      *   The return is based on what the close param is
      *     MYDB::LAST_ID        returns the primary key of an insert operation
      *     MYDB::ROWS_AFFECTED  returns the number of rows affected during an update or delete
-     *     MYDB::RESULT_SET     a regular array of hashes where each hash is a key value pair of column_name:value
+     *     MYDB::RESULT_SET     an array of standard objects where each property is a key value pair of column_name:value
      * </p>
      * @throws SQLException if anything goes wrong, including sql errors, bad params, etc
      */
@@ -696,7 +696,7 @@ class MYDB
                 foreach ($row as $key => $val) {
                     $x[$key] = $val;
                 }
-                $results[] = $x;
+                $results[] = (object)$x;
             }
 
             $result = $results;

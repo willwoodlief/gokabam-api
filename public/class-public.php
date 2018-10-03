@@ -2,6 +2,18 @@
 
 namespace gokabam_api;
 require_once 'pages.php';
+require_once  'gokabam.goodies.php';
+
+/**
+ * @var $GokabamGoodies GoKabamGoodies
+ * <p>
+ *   Nice Stuff
+ * </p>
+ */
+global $GokabamGoodies;
+$GokabamGoodies = null;
+
+
 /**
  * The public-facing functionality of the plugin.
  *
@@ -131,6 +143,10 @@ class Plugin_Public
 
     public function shortcut_code()
     {
+    	global $is_wp_init_called;
+	    $is_wp_init_called = true;
+	    global $GokabamGoodies;
+	    $GokabamGoodies = new GoKabamGoodies();
         add_shortcode($this->plugin_name, array($this, 'manage_shortcut'));
 
     }

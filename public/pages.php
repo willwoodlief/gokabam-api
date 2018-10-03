@@ -29,11 +29,11 @@ class Pages {
 			$this->vp->add($regex,$name,
 				function( $name,$virtual_page, $request_uri,$data_from_post ) {
 					$class =        $this->page_class_lookup[$name];
-					$virtual_page->title       = call_user_func($class . "::get_title");
 
-					//get_page(&$virtual_page,$url,array $data_from_post = null)
 					$virtual_page->body        = call_user_func_array( $class . "::get_page", array(  &$data_from_post, $request_uri ) );
 					$virtual_page->template       = call_user_func($class . "::get_template");
+					//title after so the body can set it, if necessary
+					$virtual_page->title       = call_user_func_array($class . "::get_title", array(  $request_uri ));
 
 					//	$v->subtemplate = 'billing'; // optional
 					$virtual_page->slug        = call_user_func($class . "::get_slug");
