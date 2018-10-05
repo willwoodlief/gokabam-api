@@ -6,6 +6,10 @@
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.3.1.tgz#5466b8f31c1f493a96754c1426c25796d0633dd9"
 
+bootstrap3-dialog@^1.35.4:
+  version "1.35.4"
+  resolved "https://registry.yarnpkg.com/bootstrap3-dialog/-/bootstrap3-dialog-1.35.4.tgz#07323b5654dae5b65ac5ea2471a8437c70964d3c"
+
 bootstrap@3.3.7:
   version "3.3.7"
   resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-3.3.7.tgz#5a389394549f23330875a3b150656574f8a9eb71"

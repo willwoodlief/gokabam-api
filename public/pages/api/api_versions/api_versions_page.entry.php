@@ -61,11 +61,23 @@ class ApiVersionsPage {
 			$version_notes = Input::get('api_version_notes', Input::THROW_IF_EMPTY);
 			$version_ts = time();
 			$mydb = DBSelector::getConnection('wordpress');
+			//create the container for the journals
 			$sql = <<<SQL
-            INSERT INTO gokabam_api_api_versions (version_id,api_version,api_version_name,api_version_notes,created_at_ts) VALUES (?,?,?,?,?);
+            INSERT INTO gokabam_api_journal_containers (container_notes) VALUES (?);
 SQL;
-			$mydb->execSQL($sql, array('isssi', $version_id,$version_number, $version_name,$version_notes,$version_ts), MYDB::LAST_ID, 'Tests::lock_resources');
-		} catch (\Exception $e) {
+			$notes = "For new API Version";
+			$container_id = $mydb->execSQL($sql, array('s', $notes), MYDB::LAST_ID, 'ApiVersion::create-constainer');
+
+			//create the api version
+			$sql = <<<SQL
+            INSERT INTO gokabam_api_api_versions 
+            (version_id,api_version,api_version_name,api_version_notes,created_at_ts,journal_container_id)
+             VALUES (?,?,?,?,?,?);
+SQL;
+			$mydb->execSQL($sql, array('isssii',
+				$version_id,$version_number, $version_name,$version_notes,$version_ts,$container_id),
+				MYDB::LAST_ID,
+				'ApiVersion::create-version');		} catch (\Exception $e) {
 			ErrorLogger::saveException($e);
 		}
 
@@ -73,12 +85,12 @@ SQL;
 	}
 
 	static public function enqueue_styles($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/version/api_versions/api_versions_page.css');
+		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/api_versions/api_versions_page.css');
 		wp_enqueue_style($plugin_name . '_gk_api_versions', $path, array(), $plugin_version, 'all');
 	}
 
 	static public function enqueue_scripts($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/version/api_versions/api_versions_page.js');
+		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/api_versions/api_versions_page.js');
 		wp_enqueue_script($plugin_name. '_gk_api_versions', $path, array('jquery'), $plugin_version, false);
 	}
 }

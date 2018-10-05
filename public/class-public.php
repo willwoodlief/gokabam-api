@@ -81,6 +81,8 @@ class Plugin_Public
 		    wp_enqueue_style('bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap.min.css', array(), '3.3.7', 'all');
 		    wp_enqueue_style('bootstrap-theme' , PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap-theme.min.css', array(), '3.3.7', 'all');
 		    wp_enqueue_style( 'fontawesome', PLUGIN_URL . 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', array(), '5.3.1', 'all');
+		    wp_enqueue_style( 'bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css', array('bootstrap'), '1.35.4', 'all');
+
 	    }
 
         wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/public.css', array(), $this->version, 'all');
@@ -99,6 +101,7 @@ class Plugin_Public
     	if ($b_check) {
 		    wp_enqueue_script('moment', PLUGIN_URL . 'node_modules/moment/min/moment-with-locales.min.js', array('jquery'), '2.22.2', false);
 		    wp_enqueue_script('jquery-bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/js/bootstrap.min.js', array('jquery'), '3.3.7', false);
+		    wp_enqueue_script('bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js', array('jquery-bootstrap'), '1.35.4', false);
     	}
         wp_enqueue_script($this->plugin_name. 'a', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
         $title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');

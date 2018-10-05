@@ -38,12 +38,6 @@ class ApiVersionHome {
 	static public function get_page(array $data_from_post ,$request_uri) {
 		ErrorLogger::unused_params($data_from_post,$request_uri);
 
-
-//		$id = 'none';
-//		if ( preg_match( '#unique/(\d+)#', $url, $m ) ) {
-//			$id = $m[1];
-//		}
-
 		ob_start();
 		require_once( realpath( dirname( __FILE__ ) ) . '/api_version_home.view.php' );
 		$html = ob_get_contents();
@@ -57,16 +51,62 @@ class ApiVersionHome {
 		ErrorLogger::unused_params($data_from_post,$url);
 
 		try {
-			$version_id = Input::get('current_version_id', Input::THROW_IF_EMPTY);
-			$version_number = Input::get('api_version_number', Input::THROW_IF_EMPTY);
-			$version_name = Input::get('api_version_name', Input::THROW_IF_EMPTY);
-			$version_notes = Input::get('api_version_notes', Input::THROW_IF_EMPTY);
-			$version_ts = time();
+			$version_id = Input::get('gokabam_current_version_id', Input::THROW_IF_EMPTY);
+			$family_blurb = Input::get('gokabam_new_family_blurb', Input::THROW_IF_EMPTY);
+			$family_name = Input::get('gokabam_new_family_name', Input::THROW_IF_EMPTY);
+			$family_notes = Input::get('gokabam_family_description', Input::THROW_IF_EMPTY);
+			$api_version_id =Input::get('gokabam_api_version_id', Input::THROW_IF_EMPTY);
+
+
+			$current_ts = time();
 			$mydb = DBSelector::getConnection('wordpress');
+
+			//create the container for the journals
 			$sql = <<<SQL
-            INSERT INTO gokabam_api_api_versions (version_id,api_version,api_version_name,api_version_notes,created_at_ts) VALUES (?,?,?,?,?);
+            INSERT INTO gokabam_api_journal_containers (container_notes) VALUES (?);
 SQL;
-			$mydb->execSQL($sql, array('isssi', $version_id,$version_number, $version_name,$version_notes,$version_ts), MYDB::LAST_ID, 'Tests::lock_resources');
+			$notes = "For new API Family";
+			$container_id = $mydb->execSQL($sql, array('s', $notes), MYDB::LAST_ID, 'ApiVersion::create-constainer');
+
+			//add in the description as the first note
+			$sql = <<<SQL
+            INSERT INTO gokabam_api_journals (journal_container_id,version_id,entry,created_at_ts) VALUES (?,?,?,?);
+SQL;
+
+
+			/** @noinspection PhpUnusedLocalVariableInspection */
+			$journal_id = $mydb->execSQL($sql,
+				array(
+						'issi',
+						$container_id,
+						$version_id,
+						$family_notes,
+						$current_ts
+				),
+				MYDB::LAST_ID,
+				'ApiVersion::create-journal-entry'
+			);
+
+			//todo add in the tag api-family to the note and the container
+
+			//create the api version
+			$sql = <<<SQL
+            INSERT INTO gokabam_api_family 
+            (journal_container_id,api_version,created_at_ts,family_name,family_blurb,family_description)
+             VALUES (?,?,?,?,?,?);
+SQL;
+			$mydb->execSQL($sql,
+						array(
+							'iiisss',
+							$container_id,
+							$api_version_id,
+							$current_ts,
+							$family_name,
+							$family_blurb,
+							$family_notes
+							),
+					 MYDB::LAST_ID,
+				'ApiVersion::create-api-family');
 		} catch (\Exception $e) {
 			ErrorLogger::saveException($e);
 		}
@@ -75,12 +115,12 @@ SQL;
 	}
 
 	static public function enqueue_styles($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/version/api_versions/api_version_home.css');
+		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/api_version_home/api_version_home.css');
 		wp_enqueue_style($plugin_name . '_gk_api_versions', $path, array(), $plugin_version, 'all');
 	}
 
 	static public function enqueue_scripts($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/version/api_versions/api_version_home.js');
+		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/api_version_home/api_version_home.js');
 		wp_enqueue_script($plugin_name. '_gk_api_versions', $path, array('jquery'), $plugin_version, false);
 	}
 }

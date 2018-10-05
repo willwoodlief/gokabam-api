@@ -12,7 +12,7 @@
  * @wordpress-plugin
  * Plugin Name:       GoKabam Api Developer
  * Plugin URI:        mailto:willwoodlief@gmail.com
- * Description:       Configures WordPress
+ * Description:       Api Specification
  * Version:           1.0.0
  * Author:            Will Woodlief
  * Author URI:        willwoodlief@gmail.com

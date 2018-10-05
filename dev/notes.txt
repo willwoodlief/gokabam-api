@@ -1,0 +1,61 @@
+http://viima.github.io/jquery-comments/  for user comments
+
+https://speckyboy.com/plugins-for-extending-bootstrap/ toy store
+
+https://getbootstrap.com/docs/3.3/components/ bs ref
+----------------
+
+JournalEditor
+api: get_journals, update_journal, update_journal_tags, create_journal
+js api:
+    $(div).journal_editor({container_id:})
+                         "destroy"
+                         "set_journals" [{jid,text,tag_array}]
+                         "set_current_tags"
+                         "get_current_tags"
+                          event: "on_tags_changed"
+  GUI:
+       text edit area
+       tag edit area
+       buttons new/save
+       List older
+          text/tags/when/version
+
+JournalSearch
+api: search_journals
+js_api:
+    $(div).journal_search()
+            "destroy"
+            "set_filter_tags(all:sub)"  //replace all tags or just the previous filter tags (user can add filter tags in the gui)
+
+GUI:
+      tag_filters: search_text:
+      list results
+          text,tag,version,date
+
+JournalDisplay
+js api $(div).journal_display({text:,tag_array,version:,when:})
+
+
+
+api:
+    create family, update family, delete button, create api, list api
+|family                                         |journal                                |api list
+                                                first just a sample journal display       <input api name> button to add
+create family                                                                               # will fresh api list after creating
+   <input family name> <button add>                                                             links to each api
+   <family list>
+     name
+     description
+     //select it and the journal comes up,
+      //and the list of apis associated with it
+       //are displayed
+       //also with delete button
+
+    # family has an all which will display
+     #the api list for everything in alpha order
+-----------------------------
+api family
+<div>
+
+---------------------------------------
