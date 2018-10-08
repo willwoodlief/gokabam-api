@@ -1086,6 +1086,96 @@ class MYDB
         return implode(',',$cloned);
     }
 
+	/**
+	 * @param $key_like_this
+	 *
+	 * @return bool
+	 * @throws SQLException
+	 */
+    public function foreignKeyExists($key_like_this) {
+    	$res = $this->execSQL('SELECT database() AS the_db;');
+	    $schema = $res[0]->the_db;
+    	$param = "%$key_like_this%";
+    	$res = $this->execSQL( /** @lang text */
+		    'SELECT *
+							 FROM information_schema.REFERENTIAL_CONSTRAINTS
+						     WHERE CONSTRAINT_SCHEMA = ?
+						     AND CONSTRAINT_NAME like ?;',['ss',$schema,$param]);
+    	if (empty($res)) {
+    		return false;
+	    }
+	    return true;
+    }
+
+
+	/**
+	 * Will drop all triggers that have the param as part or all the name
+	 * @param string $trigger_like_this - part or whole of the trigger name
+	 *
+	 * @return array list of triggers dropped
+	 * @throws SQLException
+	 */
+	public function dropTriggersLike($trigger_like_this) {
+		$res = $this->execSQL('SELECT database() AS the_db;');
+		$schema = $res[0]->the_db;
+		$param = "%$trigger_like_this%";
+		$ret = [];
+		$res = $this->execSQL( /** @lang text */
+			'SELECT Trigger_Name
+					FROM `information_schema`.`TRIGGERS`
+					WHERE TRIGGER_SCHEMA = ? and Trigger_Name like ?;',
+				['ss',$schema,$param]);
+		if ($res) {
+			foreach ($res as $row) {
+				$trigger_name = $row->Trigger_Name;
+				$ret[] = $trigger_name;
+				$this->execute("DROP TRIGGER IF EXISTS $trigger_name;");
+			}
+		}
+		return $ret;
+	}
+
+	/**
+	 * reads all files in the included folder path
+	 * @param string $folder_path
+	 *
+	 * @throws SQLException
+	 */
+	public function execute_nested_sql_files($folder_path) {
+		try {
+			$this->beginTransaction();
+
+			$dir = realpath($folder_path) ;
+			if (!$dir) {
+				throw new SQLException("Cannot Find the folder path $folder_path");
+			}
+
+			$files = self::rsearch($dir,'/*.sql/');
+
+			foreach ($files as $file) {
+				$sql = trim(file_get_contents($file));
+				if (empty($sql)) {continue;}
+				$this->execute($sql);
+			}
+
+			$this->commit();
+		} catch (SQLException $e) {
+			$this->rollback();
+			throw $e;
+		}
+	}
+
+	private static function rsearch($folder, $pattern) {
+		$dir = new \RecursiveDirectoryIterator($folder);
+		$ite = new \RecursiveIteratorIterator($dir);
+		$files = new \RegexIterator($ite, $pattern, \RegexIterator::GET_MATCH);
+		$fileList = array();
+		foreach($files as $file) {
+			$fileList = array_merge($fileList, $file);
+		}
+		return $fileList;
+	}
+
 
 }
 

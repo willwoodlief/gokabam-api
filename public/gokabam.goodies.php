@@ -7,7 +7,7 @@ class GoKabamGoodies {
 	protected $current_version_id = null;
 	protected $current_version_name = null;
 	protected $mydb = null;
-
+	protected $page_load_obj = null;
 
 
 	public function __construct( ) {
@@ -32,4 +32,5 @@ SQL;
 	public function get_current_version_id() { return $this->current_version_id;}
 	public function get_current_version_name() { return $this->current_version_name;}
 	public function get_mydb() { return $this->mydb;}
+	public function get_page_load_id() { return null; } //todo implement page id here
 }

@@ -2,6 +2,7 @@
     "require": {
         "symfony/yaml": "~3.4",
         "neitanod/forceutf8": "^2.0",
-        "czproject/git-php": "^3.14"
+        "czproject/git-php": "^3.14",
+        "hashids/hashids": "^2.0"
     }
 }

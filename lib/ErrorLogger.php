@@ -145,6 +145,7 @@ class  ErrorLogger {
 				array(
 					  'parent_id' =>  $info['parent_id'],
 		              'created_at_ts' =>  time(),
+					  'page_load_id' => JsonHelper::toStringAgnostic($info['page_load_id']),
 					  'user_id' =>  $user->ID,
 		              'user_roles' => implode(',',$user->roles),
 		              'hostname' =>  JsonHelper::toStringAgnostic($info['hostname']),
@@ -223,6 +224,7 @@ class  ErrorLogger {
 		$sql = "CREATE TABLE `$table_name` (
               id int NOT NULL AUTO_INCREMENT,
               parent_id int DEFAULT null,
+              page_load_id int DEFAULT null comment 'gokabam_api_page_loads',
               created_at_ts int not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               user_id int DEFAULT NULL,
@@ -346,6 +348,8 @@ class  ErrorLogger {
 	 */
 	public static function get_call_info()
 	{
+		global $GokabamGoodies;
+
 		$ret = [];
 		$ret['hostname'] = gethostname();
 		$ret['machine_id'] = ErrorLogger::getMachineID();
@@ -357,6 +361,15 @@ class  ErrorLogger {
 		$isCLI = (php_sapi_name() == 'cli');
 
 		$ret['server_super'] = $_SERVER;
+		$ret['page_load_id'] = null;
+		if (
+			isset($GokabamGoodies) &&
+			(!empty($GokabamGoodies)) &&
+			is_object($GokabamGoodies) &&
+			method_exists($GokabamGoodies,'get_page_load_id')
+		) {
+			$ret['page_load_id'] = $GokabamGoodies->get_page_load_id();
+		}
 
 
 

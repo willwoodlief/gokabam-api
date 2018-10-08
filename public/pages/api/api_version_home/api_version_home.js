@@ -22,6 +22,9 @@ jQuery(function($) {
                 }
             }]
         });
-    })
+    });
+
+    $('.demo').gokabam_family();
+    $('.demo').gokabam_family('test','whats','up');
 
 });

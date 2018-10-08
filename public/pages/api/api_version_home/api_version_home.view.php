@@ -72,6 +72,8 @@ SQL;
 
 </div> <!-- .row -->
 
+    <span class="demo" style="color: red">demo</span>
+
     <div class="" id="family-api-forms" style="display: none">
 
         <div class="gokabam-new-family-form form-group">
@@ -101,7 +103,16 @@ SQL;
                     </div>
                 </div>
             </form>
-        </div>
+        </div> <!-- end new family form -->
+
+        <div class="gokabam-family-preview" data-familyid = "-1">
+            <div class="gokabam-family-name" ></div>
+            <div class="gokabam-family-blurb"></div>
+            <div class="gokabam-family-at">
+                <div class="gokabam-family-when"></div>
+                <div class="gokabam-family-at-version"></div>
+            </div>
+        </div> <!-- end family preview -->
 
     </div>
 
