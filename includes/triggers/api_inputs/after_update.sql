@@ -49,10 +49,10 @@ CREATE TRIGGER trigger_after_update_gokabam_api_inputs
       VALUES (@edit_log_id,'origin_enum',OLD.origin_enum);
     END IF;
 
-    IF (NEW.source_body_mime <> OLD.source_body_mime) OR (NEW.source_body_mime IS NULL AND OLD.source_body_mime IS NOT NULL) OR (NEW.source_body_mime IS NOT NULL AND OLD.source_body_mime IS  NULL)
+    IF (NEW.source_body <> OLD.source_body) OR (NEW.source_body IS NULL AND OLD.source_body IS NOT NULL) OR (NEW.source_body IS NOT NULL AND OLD.source_body IS  NULL)
     THEN
       INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'source_body_mime',OLD.source_body_mime);
+      VALUES (@edit_log_id,'source_body',OLD.source_body);
     END IF;
 
     IF (NEW.in_data_group_id <> OLD.in_data_group_id) OR (NEW.in_data_group_id IS NULL AND OLD.in_data_group_id IS NOT NULL) OR (NEW.in_data_group_id IS NOT NULL AND OLD.in_data_group_id IS  NULL)

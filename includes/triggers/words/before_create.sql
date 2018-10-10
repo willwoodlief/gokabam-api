@@ -21,13 +21,13 @@ CREATE TRIGGER trigger_before_create_gokabam_api_words
     # test to see if the target is a tag
     SELECT id into maybe_tag_object
     from gokabam_api_objects
-    where id = NEW.target_object_id and da_table_name = 'gokabam_api_words';
+    where id = NEW.target_object_id and (da_table_name = 'gokabam_api_tags' OR da_table_name = 'gokabam_api_words');
 
     #dont allow tags on tags
     IF NEW.target_object_id AND (maybe_tag_object IS NOT NULL)
     THEN
       SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Cannot Add Words to another Word object. Nested Words not allowed ';
+      SET MESSAGE_TEXT = 'Cannot Add Words to another Word or Tag object. Nested Words not allowed ';
     END IF;
 
     #insert new object id

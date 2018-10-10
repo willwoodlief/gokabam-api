@@ -21,7 +21,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_inputs
         CONCAT(
             coalesce(NEW.source_name,' '),
             coalesce(NEW.origin_enum,' '),
-            coalesce(NEW.source_body_mime,' '),
+            coalesce(NEW.source_body,' '),
             coalesce(NEW.in_data_group_id,' '),
             coalesce(NEW.api_id,' '),
             coalesce(NEW.is_deleted,' '),

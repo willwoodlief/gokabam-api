@@ -3,12 +3,11 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts
   FOR EACH ROW
   BEGIN
 
-    if NEW.use_case_part_type_enum not in (
-      'sql','algorithm','generic_node','generic_start'
-    ) then
-      SET @message := CONCAT('INVALID use_case_part_type_enum: ', NEW.use_case_part_type_enum);
+
+    if (NEW.in_data_group_id IS NOT NULL) AND (NEW.in_api_id IS NOT NULL)
+    THEN
       SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = @message;
+      SET MESSAGE_TEXT = 'Cannot use both input api and in group';
     end if;
 
     #insert new object id
@@ -22,15 +21,14 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts
     SET NEW.md5_checksum := SHA1(
         CONCAT(
             coalesce(NEW.use_case_id,' '),
-            coalesce(NEW.use_case_part_type_enum,' '),
             coalesce(NEW.in_data_group_id,' '),
-            coalesce(NEW.in_data_group_example_id,' '),
             coalesce(NEW.in_api_id,' '),
             coalesce(NEW.out_data_group_id,' '),
+            coalesce(NEW.rank,' '),
+            coalesce(NEW.children,' '),
             coalesce(NEW.is_deleted,' '),
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
-            coalesce(NEW.md5_checksum_examples,' '),
             coalesce(NEW.md5_checksum_groups,' '),
             coalesce(NEW.md5_checksum_apis,' '),
             coalesce(NEW.md5_checksum_sql_parts)

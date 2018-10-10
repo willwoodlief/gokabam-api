@@ -25,13 +25,6 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
       SET @has_groups_changed := 0;
     END IF;
 
-    IF (NEW.md5_checksum_examples <> OLD.md5_checksum_examples) OR (NEW.md5_checksum_examples IS NULL AND OLD.md5_checksum_examples IS NOT NULL) OR (NEW.md5_checksum_examples IS NOT NULL AND OLD.md5_checksum_examples IS  NULL)
-    THEN
-      SET @has_examples_changed := 1;
-    ELSE
-      SET @has_examples_changed := 0;
-    END IF;
-
 
     IF (NEW.md5_checksum_apis <> OLD.md5_checksum_apis) OR (NEW.md5_checksum_apis IS NULL AND OLD.md5_checksum_apis IS NOT NULL) OR (NEW.md5_checksum_apis IS NOT NULL AND OLD.md5_checksum_apis IS  NULL)
     THEN
@@ -49,11 +42,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
     END IF;
 
     if NEW.is_deleted = 0 THEN
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups,is_examples,is_apis,is_sql_parts)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_groups_changed,@has_examples_changed,@has_api_changed,@has_sql_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups,is_apis,is_sql_parts)
+      VALUES (NEW.object_id,NEW.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_groups_changed,@has_api_changed,@has_sql_changed);
     ELSE
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups,is_examples,is_apis,is_sql_parts)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_groups_changed,@has_examples_changed,@has_api_changed,@has_sql_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups,is_apis,is_sql_parts)
+      VALUES (NEW.object_id,NEW.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_groups_changed,@has_api_changed,@has_sql_changed);
     END IF;
 
 
@@ -66,18 +59,6 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
       VALUES (@edit_log_id,'use_case_id',OLD.use_case_id);
     END IF;
 
-    IF (NEW.use_case_part_type_enum <> OLD.use_case_part_type_enum) OR (NEW.use_case_part_type_enum IS NULL AND OLD.use_case_part_type_enum IS NOT NULL) OR (NEW.use_case_part_type_enum IS NOT NULL AND OLD.use_case_part_type_enum IS  NULL)
-    THEN
-      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'use_case_part_type_enum',OLD.use_case_part_type_enum);
-    END IF;
-
-
-    IF (NEW.in_data_group_example_id <> OLD.in_data_group_example_id) OR (NEW.in_data_group_example_id IS NULL AND OLD.in_data_group_example_id IS NOT NULL) OR (NEW.in_data_group_example_id IS NOT NULL AND OLD.in_data_group_example_id IS  NULL)
-    THEN
-      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'in_data_group_example_id',OLD.in_data_group_example_id);
-    END IF;
 
     IF (NEW.in_api_id <> OLD.in_api_id) OR (NEW.in_api_id IS NULL AND OLD.in_api_id IS NOT NULL) OR (NEW.in_api_id IS NOT NULL AND OLD.in_api_id IS  NULL)
     THEN
@@ -95,6 +76,18 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
     THEN
       INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
       VALUES (@edit_log_id,'in_data_group_id',OLD.in_data_group_id);
+    END IF;
+
+    IF (NEW.rank <> OLD.rank) OR (NEW.rank IS NULL AND OLD.rank IS NOT NULL) OR (NEW.rank IS NOT NULL AND OLD.rank IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'rank',OLD.rank);
+    END IF;
+
+    IF (NEW.children <> OLD.children) OR (NEW.children IS NULL AND OLD.children IS NOT NULL) OR (NEW.children IS NOT NULL AND OLD.children IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'children',OLD.children);
     END IF;
 
     IF (NEW.is_deleted <> OLD.is_deleted) OR (NEW.is_deleted IS NULL AND OLD.is_deleted IS NOT NULL) OR (NEW.is_deleted IS NOT NULL AND OLD.is_deleted IS  NULL)

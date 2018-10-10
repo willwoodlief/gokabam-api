@@ -23,7 +23,7 @@ class Activator {
 	 * @since    1.0.0
 	 */
 
-	const DB_VERSION = 0.174;
+	const DB_VERSION = 0.179;
 
 
 	/**
@@ -89,7 +89,8 @@ class Activator {
               id int NOT NULL AUTO_INCREMENT,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              compressed_json mediumtext,
+              reference_name varchar(255) default null,	
+              stored_json mediumtext,
               PRIMARY KEY  (id),
               KEY created_at_key (created_at)
               ) $charset_collate;";
@@ -827,10 +828,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              is_required tinyint DEFAULT 0 not null,
+              is_required tinyint DEFAULT 0 not null comment 'not supported right now, all inputs are required',
               origin_enum varchar(255) not null comment 'url,query,body,header',
               source_name varchar(255) default null comment 'if header then name of header, if query name of key, if url then pattern in url, if body and not null then top level json key', 
-              source_body_mime varchar(255) default null comment 'if not application/json',
+              source_body varchar(255) default null comment 'not supported right now, everything is assumed json',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
@@ -949,8 +950,8 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               api_output_id int default null  comment 'optinally tied to a specific return type',
               out_data_group_id int default null comment 'for non static headers',
               header_name varchar(255) not null comment 'the name of the header',
-              header_value text not null comment 'the key of the header',
-              header_value_regex text default null comment 'pattern with group names that is used for putting in the values of the data group to the regex group. For non dynamic headers leave null',
+              header_value text not null comment 'the contents/value of the header can have regex groups with names that match the out data group',
+              header_value_regex text default null comment 'not supported, the value has the placeholders',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
@@ -1198,28 +1199,25 @@ table structure for all types
               object_id int not null,
               last_page_load_id int default null,
               use_case_id int not null comment 'use case that this belongs to',
-              use_case_part_type_enum varchar(15) not null comment 'sql|algorithm|generic_node|generic_start',
-              in_data_group_id int default null comment 'must not be used for generic_start',
-              in_data_group_example_id int default null comment 'can only be used for generic_start',
+              in_data_group_id int default null comment 'used by any type',
               in_api_id int default null comment 'can only be used by generic_node, locks out other inputs',
               out_data_group_id  int default null comment 'all types can use this, if there is an in_api then this cannot be used because that apis output will be used instead ',
+              rank int default 0 comment 'used to help organize this outside the db',
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,  
+              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
+              children text DEFAULT null comment 'ids seperated by | each part can have 0 to n parents and children and can loop',	  
               md5_checksum varchar(255) default null,
               md5_checksum_sql_parts varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
-              md5_checksum_examples varchar(255) default null,
               md5_checksum_apis varchar(255) default null,
               md5_checksum_words varchar(255) default null,
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
               KEY last_page_load_id_key (last_page_load_id), 
-              KEY user_case_id_key (use_case_id) ,
-              KEY use_case_part_type_enum_key (use_case_part_type_enum) ,	
+              KEY user_case_id_key (use_case_id) ,	
               KEY in_data_group_id_key (in_data_group_id), 
-              KEY in_data_group_example_id_key (in_data_group_example_id) ,
               KEY in_api_id_key (in_api_id), 
               KEY out_data_group_id_key (out_data_group_id), 
               KEY is_deleted_key (is_deleted)
@@ -1259,10 +1257,6 @@ table structure for all types
 										FOREIGN KEY (out_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_in_example_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_api_use_case_part_has_in_example_id 
-										FOREIGN KEY (in_data_group_example_id) REFERENCES gokabam_api_data_group_examples(id);' );
-			}
 
 
 ###########################################################################################################################################
