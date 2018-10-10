@@ -23,7 +23,15 @@ class Activator {
 	 * @since    1.0.0
 	 */
 
-	const DB_VERSION = 0.179;
+	const DB_VERSION = 0.183;
+	/*
+	 * Change Log
+	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
+	 * .181     use case parts cannot have duplicate ranks
+	 * .182     added connection table for use case parts, this is a full object which can be annotated and tagged and
+	 *          journaled. It also updates the parts when they are connected. Took out the old children string from the parts
+	 * .183     Added reason and error_log_id to page_loads
+	 */
 
 
 	/**
@@ -32,6 +40,7 @@ class Activator {
 	public static function activate() {
 		global $wpdb;
 		$mydb = DBSelector::getConnection('wordpress');
+		$table_prefix = $wpdb->base_prefix;
 
 		$b_safety_swith = false; // turn to true while working on this
 		if ($b_safety_swith) return ;
@@ -110,15 +119,31 @@ class Activator {
               id int NOT NULL AUTO_INCREMENT,
               user_id int default null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              start_micro_time double default null comment 'php micro time',
+              stop_micro_time double default null comment 'can be filled in afterwards',
               ip VARBINARY(16) default null,
+              is_git_dirty tinyint default 0,
+              error_log_id int default null comment 'optional link to an error report',
               git_commit_hash varchar(50) default null,
-              server_time_ms int default null comment 'can be filled in afterwards',
+              git_branch varchar(50) default null,
+              person_name varchar(255) default null,
+              user_roles varchar(255) default null,
+              reason text default null,
               PRIMARY KEY  (id),
               KEY created_at_key (created_at),
-              KEY user_id_key (user_id)
+              KEY user_id_key (user_id),
+              KEY start_micro_time_key (start_micro_time),
+              KEY stop_micro_time_key (stop_micro_time)
               ) $charset_collate;";
 
 			dbDelta( $sql );
+
+			$error_log_table_name = $table_prefix . 'gokabam_api_error_logs';
+			if (!$mydb->foreignKeyExists('fk_page_load_can_reference_error_log_id')) {
+				/** @noinspection SqlResolve */
+				$mydb->execute( "ALTER TABLE gokabam_api_page_loads ADD CONSTRAINT fk_page_load_can_reference_error_log_id 
+										FOREIGN KEY (error_log_id) REFERENCES $error_log_table_name(id);" );
+			}
 
 
 ###########################################################################################################################################
@@ -148,6 +173,7 @@ class Activator {
 					is_outputs tinyint default null comment 'togged if dependent changed',
 					is_sql_parts tinyint default null comment 'togged if dependent changed',
 					is_use_case_parts tinyint default null comment 'toggled if dependent use case parts changed',
+					is_use_case_part_connection tinyint default null comment 'toggled if dependent use case part connections changed',
 					edit_action varchar(6) not null DEFAULT 'edit' comment 'insert|edit|delete',
 					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 					PRIMARY KEY  (id),
@@ -1205,14 +1231,14 @@ table structure for all types
               rank int default 0 comment 'used to help organize this outside the db',
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              children text DEFAULT null comment 'ids seperated by | each part can have 0 to n parents and children and can loop',	  
+              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,  
               md5_checksum varchar(255) default null,
               md5_checksum_sql_parts varchar(255) default null,
-              md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
               md5_checksum_apis varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_tags varchar(255) default null,
+              md5_checksum_use_case_connection varchar(255) default null,
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
               KEY last_page_load_id_key (last_page_load_id), 
@@ -1220,7 +1246,8 @@ table structure for all types
               KEY in_data_group_id_key (in_data_group_id), 
               KEY in_api_id_key (in_api_id), 
               KEY out_data_group_id_key (out_data_group_id), 
-              KEY is_deleted_key (is_deleted)
+              KEY is_deleted_key (is_deleted),
+              UNIQUE KEY no_dupe_ranks (rank,use_case_id)
               ) $charset_collate;";
 
 			dbDelta( $sql );
@@ -1257,6 +1284,47 @@ table structure for all types
 										FOREIGN KEY (out_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
 			}
 
+###############################################################################
+#
+#           gokabam_api_use_case_part_connections
+			// describes the connections between the use parts
+#
+###############################################################################
+
+
+			$sql = "CREATE TABLE `gokabam_api_use_case_part_connections` (
+              id int NOT NULL AUTO_INCREMENT,
+              object_id int not null,
+              last_page_load_id int default null,
+              parent_use_case_part_id int not null comment 'use case part which is the parent',
+              child_use_case_part_id int not null comment 'use case part which is the child, both of these must be in the same use case',
+              rank int default 0 comment 'used to help organize this outside the db, does not need to be set and defaults to 0',
+              is_deleted tinyint DEFAULT 0 not null,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,	  
+              md5_checksum varchar(255) default null,
+              md5_checksum_words varchar(255) default null,
+              md5_checksum_tags varchar(255) default null,
+              PRIMARY KEY  (id),
+              KEY object_id_key (object_id), 
+              KEY last_page_load_id_key (last_page_load_id), 
+              KEY parent_use_case_part_id_key (parent_use_case_part_id) ,	
+              KEY child_use_case_part_id_key (child_use_case_part_id), 
+              KEY rank_key (rank),
+              KEY is_deleted_key (is_deleted)
+              ) $charset_collate;";
+
+			dbDelta( $sql );
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_parent_part_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk_api_use_case_parts_connection_has_parent_part_id 
+										FOREIGN KEY (parent_use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_child_part_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk_api_use_case_parts_connection_has_child_part_id 
+										FOREIGN KEY (child_use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
 
 
 ###########################################################################################################################################

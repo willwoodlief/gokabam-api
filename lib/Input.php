@@ -75,7 +75,7 @@ class Input {
      *    boolean,integer,float,text,json,date_time
      * </p>
      * @return array|mixed|string
-     * @throws \Exception if cannot cast (try to cast array)
+     * @throws \JsonException if cannot cast (try to cast array)
      * @throws \InvalidArgumentException if it cannot find the name
      */
 	public static function get($item,$alternate='',$b_sanitize=false,$cast = false){

@@ -2,10 +2,11 @@
 
 namespace gokabam_api;
 require_once  'gokabam.goodies.php';
+require_once 'api-typedefs.php';
 require_once  PLUGIN_PATH.'lib/Input.php';
 require_once  PLUGIN_PATH.'lib/ErrorLogger.php';
-
-
+require_once  PLUGIN_PATH.'lib/JsonHelper.php';
+//todo make sure do not return deleted things when asked for current
 
 
 
@@ -27,6 +28,10 @@ class ApiGateway {
 	protected $latest_version_id = null;
 
 	/**
+	 * @var integer|null the id of the page load
+	 */
+	protected $page_load_id = null;
+	/**
 	 * ApiGateway constructor.
 	 *
 	 * @param MYDB $mydb
@@ -36,44 +41,111 @@ class ApiGateway {
 
 		$this->mydb = $mydb;
 		$this->latest_version_id     = $version_id;
+		$this->page_load_id = null;
+	}
+
+	/**
+	 * @return GKA_Everything
+	 * @throws \JsonException
+	 * @throws \InvalidArgumentException
+	 */
+	protected function get_everything(){
+		$the_json = Input::get( 'gokabam_api_json', Input::THROW_IF_EMPTY );
+
+		/**
+		 * @var GKA_Everything $purk
+		 */
+		$purk = JsonHelper::fromString($the_json,true,false);
+		return $purk;
+
 	}
 
 	/**
 	 * Reads from post, if any commands that are recognized will do them and return result
 	 * if error or not sufficient information will return an error result
 	 * This function does all create, update and delete, as well as gets status and initial data
-	 * @return array
+	 * @return GKA_Everything
 	 */
 	public function all() {
-		$ret = ['is_valid' => true];
-		$action = null;
-		try {
-			$action = Input::get( 'action', Input::THROW_IF_EMPTY );
 
-			switch ($action) {
-				case 'create':
-					{
-						$class = Input::get( 'class', Input::THROW_IF_EMPTY );
-						$parent = Input::get( 'parent', Input::THROW_IF_MISSING );
-						if (empty($parent)) {$parent = null;}
-						$params = Input::get( 'params', Input::THROW_IF_EMPTY );
-						if (!is_array($params)) {
-							throw new \InvalidArgumentException("Params needs to be an object, not just a scalar");
-						}
-						$ret['data'] = $this->create($class,$parent,$params);
-						break;
-					}
+		try {
+
+			/**
+			 * @var GKA_Everything $everything
+			 */
+			$everything = $this->get_everything();
+
+			switch ($everything->action) {
+				case 'update': {
+					$ret = $this->update($everything);
+					break;
+				}
+				case 'save': {
+					$ret = $this->save($everything);
+					break;
+				}
+				case 'get': {
+					$ret = $this->get($everything);
+					break;
+				}
+				case 'report': {
+					$ret = $this->report($everything);
+					break;
+				}
 				default: {
-					throw new \InvalidArgumentException("No case for action: [$action]");
+					throw new \InvalidArgumentException("No case for action: [{$everything->action}]");
 				}
 			}
-			$ret['action'] = $action;
+
+
+			return $ret;
 		} catch (\Exception $e) {
-			$exception_info = ErrorLogger::saveException($e);
-			$ret = ['is_valid' => false, 'message' => $e->getMessage(), 'exception'=>$exception_info, 'action' =>$action ]	;
+			if (isset($everything)) {
+				$pass_through = $everything->pass_through_data;
+			}
+			else {
+				$pass_through = null;
+			}
+			$ret = $this->create_error_response($e,$pass_through);
 		}
 		return $ret;
 
+	}
+
+	protected function create_error_response(\Exception $e,string $pass_through_data) {
+		$this->start_userspace("For Error Report");
+		$exception_info = ErrorLogger::saveException($e);
+		$everything = new GKA_Everything();
+		$everything->is_valid = false;
+		$everything->exception_info = $exception_info;
+		$everything->message = $e->getMessage();
+		$everything->pass_through_data = $pass_through_data;
+		$this->end_userspace(ErrorLogger::$last_error_id);
+		return $everything;
+	}
+
+	/**
+	 * @param GKA_Everything $everything
+	 *
+	 * @return GKA_Everything
+	 * @throws SQLException
+	 */
+	protected function update(GKA_Everything $everything) {
+		$this->start_userspace();
+		$this->end_userspace(); //will end it here normally , or exception handler will
+		return $everything;
+	}
+
+	protected function save(GKA_Everything $everything) {
+		return $everything;
+	}
+
+	protected function get(GKA_Everything $everything) {
+		return $everything;
+	}
+
+	protected function report(GKA_Everything $everything) {
+		return $everything;
 	}
 	/*
 	 * @param string $what <p>
@@ -103,6 +175,7 @@ begin_timestamp: null or timestamp
 end_timestamp: null or timestamp
 save_name: null or name
 operation_status: an overview of the entire operation
+objects:
 words: array 0 or more
 word
 	parent: [kid] is anything,not null, cannot be another word or tag
@@ -287,19 +360,52 @@ api_use_case
 	 *
 	 * @return array
 	 */
-	protected function create($what,$parent,$params) {
-		$ret = [];
 
 
-
-		return $ret;
+	/**
+	 * creates a gokabam_api_page_loads and returns its primary key
+	 * @param string $reason - optional reason of why this is called
+	 * @return int
+	 * @throws SQLException
+	 */
+	protected function start_userspace($reason = null) {
+		if ($this->page_load_id) {
+			return false;
+		}
+		$start =  microtime(true);
+		$user_id = get_current_user_id();
+		$user_info = get_userdata( $user_id );
+		$user_roles = implode(', ', $user_info->roles);
+		$user_name = $user_info->display_name;
+		$err_info = ErrorLogger::get_call_info();
+		$is_dirty = $err_info['is_commit_modified'] ;
+		$git_branch = $err_info['branch'];
+		$git_commit = $err_info['last_commit_hash'];
+		$ip_address = $err_info['caller_ip_address'];
+		$page_load_id = $this->mydb->execSQL(
+		"INSERT INTO gokabam_api_page_loads(
+			   user_id,ip,git_commit_hash,is_git_dirty,git_branch,start_micro_time,person_name,user_roles,reason)
+			  VALUES (?,INET6_NTOA(?),?,?,?,?,?,?,?)",
+			['ississsss',
+				$user_id,$ip_address,$git_commit,$is_dirty,$git_branch,
+				$start,$user_name,$user_roles,$reason],
+			MYDB::LAST_ID
+		);
+		$this->page_load_id = $page_load_id;
+		return true;
 	}
 
-	protected function update($kid,$params) {
-		$ret = [];
-
-
-
-		return $ret;
+	/**
+	 * Finishes up user space
+	 * @throws SQLException
+	 */
+	protected function end_userspace($error_id=null) {
+		if (!$this->page_load_id) {
+			return;
+		}
+		$end =  microtime(true);
+		$this->mydb->execSQL("UPDATE gokabam_api_page_loads SET stop_micro_time = ?,error_log_id=? WHERE id = ?",
+			['si',$end,$this->page_load_id] );
+		$this->page_load_id = null;
 	}
 }

@@ -100,20 +100,21 @@ class JsonHelper {
      *  will throw an exception if is not proper json if true
      *  will return the string if not proper json
      * </p>
+     * @param bool $b_association - default true (which is the reverse of normal)
      * @return array|mixed|null
-     * @throws \Exception if json error
+     * @throws \JsonException if json error
      */
-    public static function fromString($what,$b_exception=true) {
+    public static function fromString($what,$b_exception=true,$b_association=true) {
         if (is_null($what) ) { return null;}
         if (empty($what)) {return [];}
         $what = strval($what);
         if ( strcasecmp($what,'null') == 0) {return null;}
-        $out = json_decode(strval($what), true);
+        $out = json_decode(strval($what), $b_association);
         if (is_null($out)) {
             if ($b_exception) {
                 $oops =  json_last_error_msg();
                 $oops .= "\n Data: \n". $what;
-                throw  new \Exception($oops);
+                throw  new \JsonException($oops);
             }else {
                 return $what;
             }
@@ -251,7 +252,7 @@ class JsonHelper {
      * called in the constructor
      * @param $data_type string a valid category name, will throw exception if not valid
      * @param $what string the thing to cast as a string. If this is null the return will be null regardless of the category
-     * @throws \Exception if not a recognized name, if json what is not an array
+     * @throws \JsonException if not a recognized name, if json what is not an array
      * @return mixed <p> returns a string whose value depends on
      *  what the meta type is
      *      'boolean' must be integer or string representation. 0 is false, anything else is true
@@ -281,19 +282,19 @@ class JsonHelper {
                 if (is_numeric($what)) {
                     return intval($what);
                 } else {
-                    throw  new \Exception("[$what] is not numeric so cannot convert to integer");
+                    throw  new \JsonException("[$what] is not numeric so cannot convert to integer");
                 }
 
             case 'float':
                 if (is_numeric($what)) {
                     return floatval($what);
                 } else {
-                    throw  new \Exception("[$what] is not numeric so cannot convert to float");
+                    throw  new \JsonException("[$what] is not numeric so cannot convert to float");
                 }
 
             case 'text':
                 if (is_array($what)) {
-                    throw  new \Exception("Cannot convert array to $data_type");
+                    throw  new \JsonException("Cannot convert array to $data_type");
                 } else {
                     return strval($what);
                 }
@@ -311,10 +312,10 @@ class JsonHelper {
                 if ($test) {
                     return $test;
                 } else {
-                    throw  new \Exception("Cannot convert [$what] to UTC time");
+                    throw  new \JsonException("Cannot convert [$what] to UTC time");
                 }
             default:
-                throw new \Exception("[$data_type] not recognized as a data type")   ;
+                throw new \JsonException("[$data_type] not recognized as a data type")   ;
 
         }
     }
