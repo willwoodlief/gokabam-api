@@ -1150,7 +1150,7 @@ class MYDB
 				throw new SQLException("Cannot Find the folder path $folder_path");
 			}
 
-			$files = self::rsearch($dir,'/*.sql/');
+			$files = self::rsearch($dir,'/.*\.sql$/');
 
 			foreach ($files as $file) {
 				$sql = trim(file_get_contents($file));

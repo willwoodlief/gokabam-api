@@ -36,16 +36,6 @@ CREATE TRIGGER trigger_after_update_gokabam_api_inputs
 
     SET @edit_log_id := (select last_insert_id());
 
-/**
-CONCAT(
-
-            coalesce(NEW.,' '),
-            coalesce(NEW.,' '),
-            coalesce(NEW.api_id,' '),
-
-
-        )
- */
 
     IF (NEW.source_name <> OLD.source_name) OR (NEW.source_name IS NULL AND OLD.source_name IS NOT NULL) OR (NEW.source_name IS NOT NULL AND OLD.source_name IS  NULL)
     THEN

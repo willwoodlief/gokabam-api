@@ -1,4 +1,4 @@
-CREATE TRIGGER trigger_after_update_gokabam_api_inputs
+CREATE TRIGGER trigger_after_update_gokabam_api_outputs
   BEFORE UPDATE ON gokabam_api_outputs
   FOR EACH ROW
   BEGIN

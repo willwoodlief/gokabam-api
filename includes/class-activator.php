@@ -23,7 +23,7 @@ class Activator {
 	 * @since    1.0.0
 	 */
 
-	const DB_VERSION = 0.173;
+	const DB_VERSION = 0.174;
 
 
 	/**
@@ -1454,7 +1454,7 @@ data_group_examples
 
 
 			//NOW UPDATE THE TRIGGERS !
-		//	$mydb->execute_nested_sql_files(PLUGIN_PATH.'includes/triggers');
+			$mydb->execute_nested_sql_files(PLUGIN_PATH.'includes/triggers');
 
 			update_option( "_".strtolower( PLUGIN_NAME) ."_db_version" , Activator::DB_VERSION );
 		}

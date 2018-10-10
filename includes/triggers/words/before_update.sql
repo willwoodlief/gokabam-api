@@ -45,7 +45,7 @@ CREATE TRIGGER trigger_before_update_gokabam_api_words
             coalesce(NEW.da_words,' '),
             coalesce(NEW.word_code_enum,' '),
             coalesce(NEW.iso_639_1_language_code,' '),
-            coalesce(NEW.is_deleted,' '),
+            coalesce(NEW.is_deleted,' ')
         )
     );
 

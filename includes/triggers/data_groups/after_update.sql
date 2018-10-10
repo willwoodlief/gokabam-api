@@ -5,19 +5,23 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
     DECLARE done INT DEFAULT FALSE;
 
     DECLARE a_use_case_part_id INT;
+    DECLARE a_output_header_id INT;
+    DECLARE a_output_id INT;
+    DECLARE a_input_id INT;
+
     DECLARE use_case_parts_cur CURSOR FOR SELECT DISTINCT s.id FROM gokabam_api_use_case_parts s
                                           WHERE (s.in_data_group_id = NEW.id) OR
                                                 (s.out_data_group_id = NEW.id) ;
 
-    DECLARE a_output_header_id INT;
+
     DECLARE output_header_cur CURSOR FOR SELECT DISTINCT s.id FROM gokabam_api_output_headers s
                                          WHERE (s.out_data_group_id = NEW.id)  ;
 
-    DECLARE a_output_id INT;
+
     DECLARE output_cur CURSOR FOR SELECT DISTINCT s.id FROM gokabam_api_outputs s
                                   WHERE (s.out_data_group_id = NEW.id)  ;
 
-    DECLARE a_input_id INT;
+
     DECLARE input_cur CURSOR FOR SELECT DISTINCT s.id FROM gokabam_api_inputs s
                                  WHERE (s.in_data_group_id = NEW.id)  ;
 

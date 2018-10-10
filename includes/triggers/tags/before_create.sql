@@ -27,7 +27,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_tags
             coalesce(NEW.target_object_id,' '),
             coalesce(NEW.tag_label,' '),
             coalesce(NEW.tag_value,' '),
-            coalesce(NEW.is_deleted,' '),
+            coalesce(NEW.is_deleted,' ')
         )
     );
 
