@@ -1,20 +1,16 @@
 === GoKabam Api  ===
- to change, substitute the word gokabam_api for the new plugin name and then change the file name to the new plugin name
+ This is software to develop an api I am working on.
 
 
-== Description ==
+ I had issues finding development software for api/database/user flow work so I am making my own.
+ its a hassel, really. But I think I will save time in the long run. Because this will optimize my work and since I am the only person working on this, I can make it match how my mind works lol
 
-Install by
 
-1) unzipping and putting into wp-content/plugins directory
-2) going into wordpress and clicking install for the plugin
 
-== To use ==
+ I want to get this functional enough to where I can start entering data and working on the real api, while I am still working on this too
 
-Shortcode
-[plugin_name]
-Optional text or html
-[/plugin_name]
+
+
 
 
 
