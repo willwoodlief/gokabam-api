@@ -50,14 +50,22 @@ class ApiGateway {
 	 * @throws \InvalidArgumentException
 	 */
 	protected function get_everything(){
-		$the_json = Input::get( 'gokabam_api_json', Input::THROW_IF_EMPTY );
-
+		$the_json = Input::get( 'gokabam_api_data', Input::THROW_IF_EMPTY );
+		if (is_array($the_json)) { return $this->convert_array_to_everything($the_json); }
 		/**
 		 * @var GKA_Everything $purk
 		 */
-		$purk = JsonHelper::fromString($the_json,true,false);
-		return $purk;
+		$purk = JsonHelper::fromString($the_json,true,true);
+		return $this->convert_array_to_everything($purk);
 
+	}
+
+	function convert_array_to_everything($purk) {
+
+		$everything = new GKA_Everything();
+		$everything->api_action = $purk['api_action'];
+		$everything->pass_through_data = $purk['pass_through_data'];
+		return $everything;
 	}
 
 	/**
@@ -69,13 +77,13 @@ class ApiGateway {
 	public function all() {
 
 		try {
-
+			$this->mydb->beginTransaction();
 			/**
 			 * @var GKA_Everything $everything
 			 */
 			$everything = $this->get_everything();
 
-			switch ($everything->action) {
+			switch ($everything->api_action) {
 				case 'update': {
 					$ret = $this->update($everything);
 					break;
@@ -92,32 +100,58 @@ class ApiGateway {
 					$ret = $this->report($everything);
 					break;
 				}
+				case 'init': {
+					//give an empty structure to work with
+					$ret = new GKA_Everything();
+					$ret->pass_through_data = $everything->pass_through_data;
+					$ret->api_action = 'blank';
+					break;
+				}
 				default: {
 					throw new \InvalidArgumentException("No case for action: [{$everything->action}]");
 				}
 			}
 
+			$this->mydb->commit();
 
-			return $ret;
+
 		} catch (\Exception $e) {
+			$this->mydb->rollback();
 			if (isset($everything)) {
 				$pass_through = $everything->pass_through_data;
 			}
 			else {
 				$pass_through = null;
 			}
-			$ret = $this->create_error_response($e,$pass_through);
+			try {
+				$exception_info = null;
+				$ret = $this->create_error_response( $e, $pass_through,$exception_info );
+			} catch (\Exception $f) {
+				//if everything is just falling apart send back some data
+				$ret = new GKA_Everything();
+				$ret->is_valid = false;
+				$ret->message = $f->getMessage() . "\n" . $f->getTraceAsString();
+				$ret->exception_info = $exception_info;
+			}
 		}
+		$this->finalize_everything_out($ret);
 		return $ret;
 
 	}
 
-	protected function create_error_response(\Exception $e,string $pass_through_data) {
+	/**
+	 * @param \Exception $e
+	 * @param string $pass_through_data
+	 * @param array $exception_info
+	 * @return GKA_Everything
+	 * @throws SQLException
+	 */
+	protected function create_error_response(\Exception $e,string $pass_through_data,&$exception_info) {
 		$this->start_userspace("For Error Report");
 		$exception_info = ErrorLogger::saveException($e);
 		$everything = new GKA_Everything();
 		$everything->is_valid = false;
-		$everything->exception_info = $exception_info;
+		$everything->exception_info = (object)$exception_info;
 		$everything->message = $e->getMessage();
 		$everything->pass_through_data = $pass_through_data;
 		$this->end_userspace(ErrorLogger::$last_error_id);
@@ -146,6 +180,13 @@ class ApiGateway {
 
 	protected function report(GKA_Everything $everything) {
 		return $everything;
+	}
+
+	protected function finalize_everything_out(GKA_Everything $everything) {
+		$everything->server =  new GKA_ServerData();
+		$everything->server->server_time = date('M d Y h:i:s a', time());
+		$everything->server->server_timezone = date_default_timezone_get();
+		$everything->server->server_timestamp = time();
 	}
 	/*
 	 * @param string $what <p>
@@ -385,7 +426,7 @@ api_use_case
 		$page_load_id = $this->mydb->execSQL(
 		"INSERT INTO gokabam_api_page_loads(
 			   user_id,ip,git_commit_hash,is_git_dirty,git_branch,start_micro_time,person_name,user_roles,reason)
-			  VALUES (?,INET6_NTOA(?),?,?,?,?,?,?,?)",
+			  VALUES (?,?,?,?,?,?,?,?,?)",
 			['ississsss',
 				$user_id,$ip_address,$git_commit,$is_dirty,$git_branch,
 				$start,$user_name,$user_roles,$reason],
@@ -397,6 +438,7 @@ api_use_case
 
 	/**
 	 * Finishes up user space
+	 * @param int|null $error_id
 	 * @throws SQLException
 	 */
 	protected function end_userspace($error_id=null) {
@@ -405,7 +447,7 @@ api_use_case
 		}
 		$end =  microtime(true);
 		$this->mydb->execSQL("UPDATE gokabam_api_page_loads SET stop_micro_time = ?,error_log_id=? WHERE id = ?",
-			['si',$end,$this->page_load_id] );
+			['sii',$end,$this->page_load_id,$error_id] );
 		$this->page_load_id = null;
 	}
 }

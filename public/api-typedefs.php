@@ -361,9 +361,14 @@ word
 			public $examples = [];
 
 			/**
-			 * @var GKA_Element[]|string[] $members array of zero or more members
+			 * @var GKA_Element[]|string[] $members array of zero or more members, pass in kid to copy if not already a member
 			 */
 			public $members = [];
+
+			/**
+			 * @var string $json_mockup, system will generate json to show what this looks like, but the values will be empty, just keys and structure
+			 */
+			public $json_mockup = '';
 		}
 
 /* header
@@ -873,8 +878,25 @@ use_case
 
 
 
+/*
+ * Some server data
+ * */
+class GKA_ServerData {
+	/**
+	 * @var string $server_time - human readable time
+	 */
+	public $server_time = '';
 
+	/**
+	 * @var string $server_timezone - human readable timezone
+	 */
+	public $server_timezone = '';
 
+	/**
+	 * @var int $server_timestamp - unix timestamp
+	 */
+	public $server_timestamp = 0;
+}
 		 
 
 /*
@@ -899,17 +921,50 @@ api_versions
 */
 
 
+
 /**
  * Class GKA_Everything
  * @package gokabam_api
  * @todo http://php.net/manual/en/jsonserializable.jsonserialize.php
+ *
+ * @see https://stackoverflow.com/questions/3243900/convert-cast-an-stdclass-object-to-another-class
+ *
+ * This class needs to be able to copy the json from the web over to it, and report on any critical missing properties
+ * while it is copying
+ *
+ * Also, this needs to convert back to json
+ * STEPS
+ *  set up postman to call this and get an empty default response
+ *  Add ability to cast from json stdobj/array to this (static method?) can do a bit at a time as I work on the code
+ *  Have ability to have callback walk through each new thing that needs to be made, in order, and have reference to parents
+ *          if cannot do things yet because not enough information, put the job on a stack to do later, with a reference where to put completed information
+ *
+ * Have ability to convert this class back to json
+ *      start Version
+ *            tags
+ *              journal
+ *              words
+ *              api version
+ *              header
+ *              data group
+ *              element
+ *              element object
+ *              examples
+ *              api
+ *              input
+ *              output
+ *              use case
+ *              use case part
+ *              use case connection
+ *              sql part
+ *
  */
 class GKA_Everything
 {
 	/**
-	 * @var string $action - update|save|report|get
+	 * @var string $api_action - update|save|report|get
 	 */
-	public $action = '';
+	public $api_action = '';
 
 	/**
 	 * @var int|null $begin_timestamp - needed for report, and filled if for get
@@ -976,6 +1031,23 @@ class GKA_Everything
 	 * @var string $pass_through_data - anything the caller wants to put here is passed back without looking at it
 	 */
 	public $pass_through_data = '';
+
+	/**
+	 * WP Action
+	 * @var string $action
+	 */
+	public $action = '';
+
+	/**
+	 * WP nonce
+	 * @var string|null $_ajax_nonce
+	 */
+	public $_ajax_nonce = '';
+
+	/**
+	 * @var GKA_ServerData|null $server
+	 */
+	public $server = null;
 }
 
 

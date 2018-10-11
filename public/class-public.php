@@ -119,20 +119,31 @@ class Plugin_Public
 
 
     public function send_survey_ajax_handler() {
-
-
+		global $GokabamGoodies;
+		require_once PLUGIN_PATH . 'lib/Input.php';
+	    require_once PLUGIN_PATH . 'public/api-gateway.php';
 	    check_ajax_referer( strtolower( PLUGIN_NAME) . 'public_nonce' );
 
-	    if (array_key_exists( 'method',$_POST) && $_POST['method'] == 'survey_answer') {
+	    if (array_key_exists( 'method',$_POST) && $_POST['method'] == 'echo') {
 
 		    try {
-			    $response_id = null;
-			    wp_send_json(['is_valid' => true, 'data' => $response_id, 'action' => 'updated_survey_answer']);
+		    	$echo = Input::get('data', Input::THROW_IF_MISSING);
+		    	$data = [];
+		    	$data['data'] = $echo;
+		    	$data['handler_says'] = 'Echoed Data, have a nice day';
+		    	$data['server_time'] = date('M d Y h:i:s a', time());
+		    	$data['server_timezone'] = date_default_timezone_get();
+			    wp_send_json(['is_valid' => true, 'data' => $data, 'handler_says' => 'Thank you echo service!']);
 			    die();
 		    } catch (\Exception $e) {
 			    wp_send_json(['is_valid' => false, 'message' => $e->getMessage(), 'trace'=>$e->getTrace(), 'action' => 'stats' ]);
 			    die();
 		    }
+	    } elseif (array_key_exists( 'method',$_POST) && $_POST['method'] == 'gokabam_api' ) {
+			$gateway = new ApiGateway($GokabamGoodies->get_mydb(),$GokabamGoodies->get_current_version_id());
+			$response = $gateway->all();
+		    wp_send_json(['is_valid' => true, 'data' => $response, 'handler_says' => 'GoKabam API Response']);
+		    die();
 	    }
 
 	    else {
@@ -150,7 +161,7 @@ class Plugin_Public
     	global $is_wp_init_called;
 	    $is_wp_init_called = true;
 	    global $GokabamGoodies;
-	    $GokabamGoodies = new GoKabamGoodies();
+	    $GokabamGoodies = new GoKabamGoodies(); //put here, because its the right timing
         add_shortcode($this->plugin_name, array($this, 'manage_shortcut'));
 
     }

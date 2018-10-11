@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Ace-diff - Demo #1</title>
+    <!-- Include Ace editor first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.3/ace.js"></script>
+    <!-- Include Ace-diff JS and CSS (using unpkg.com CDN in this case) -->
+    <script src="https://unpkg.com/ace-diff@^2"></script>
+    <link href="https://unpkg.com/ace-diff@^2/dist/ace-diff.min.css" rel="stylesheet">
+</head>
+
+<body>
+<!-- Element we will use to render the Ace-diff -->
+<div class="custom"></div>
+
+<script>
+    var aceDiffer = new AceDiff({
+        mode: 'ace/mode/json',
+        element: '.custom',
+        left: {
+            content: '{\n' +
+                '                    "client_id": "2802",\n' +
+                '                    "profile_id": "1",\n' +
+                '                    "uploader_email": "feedleadcalls@gmail.com",\n' +
+                '                    "bucket": "enrich-scanner",\n' +
+                '                    "side_a_key": "e_img43b_id2813_p2_20170105.jpg",\n' +
+                '                    "side_b_key": "e_img43a_id2813_p2_20170105.jpg",\n' +
+                '                    "notes": "this is an example json used to send in the body of the sns, here is it filled with some data",\n' +
+                '                    "tags":[{"tag_name":"Place Uploaded","tag_value":"Scansville,NJ"},{"tag_name":"Test Data","tag_value":null},{"tag_name":"When-Uploaded","tag_value": "June 24,2017"}]\n' +
+                '                    }',
+        },
+        right: {
+            content: '{\n' +
+                '                    "client_id": "2802",\n' +
+                '                    "profile_id": "1",\n' +
+                '                    "uploader_email": "feedleadcalls@gmail.com",\n' +
+                '                    "bucket": "enrich-scanner",\n' +
+                '                    "side_a_key": "e_img43b_id2813_p2_20170105.jpg",\n' +
+                '                    "side_b_key": "e_img43a_id2813_p2_20170105.jpg",\n' +
+                '                    "notes": "this is an example json used to send in the body of the sns, here is it filled with some data",\n' +
+                '                    "tags":[{"tag_name":"Place Uploaded","tag_value":"Scansville,NJ"},{"tag_name":"Test Data","tag_value":null},{"tag_name":"When-Uploaded","tag_value": "June 24,2017"}]\n' +
+                '                    }',
+        },
+    });
+</script>
+</body>
+</html>
+

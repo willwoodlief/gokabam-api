@@ -104,14 +104,17 @@ class  ErrorLogger {
 
 	/**
 	 * @param $e \Exception
-	 * @return int, the saved exception id
+	 * @return array, exception info
+	 *      with extra key of id
 	 */
     public static function saveException($e) {
     	$info = null;
     	try {
 		    $info = self::getExceptionInfo( $e );
 			self::$exceptions[] = $info;
-		    return self::saveErrorInfo( $info );
+			$last_id = self::saveErrorInfo( $info );
+			$info['id'] = $last_id;
+			return $info;
 	    } catch (SecondTryException $s) {
     		JsonHelper::print_nice($info);
     		die("Cannot save or process Exception of ". $e->getMessage());
