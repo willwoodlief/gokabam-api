@@ -6,6 +6,8 @@ namespace gokabam_api;
 require_once PLUGIN_PATH . 'public/gateway/api-typedefs.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/version.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/tag.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/word.parser.php';
+
 
 /**
  * @param KidTalk $kid_talk
@@ -48,7 +50,8 @@ class ParserManager {
 
 	protected static $map = [
 		'versions' =>	"gokabam_api\\ParseVersion",
-		'tags' =>       "gokabam_api\\ParseTag"
+		'tags' =>       "gokabam_api\\ParseTag",
+		'words' =>       "gokabam_api\\ParseWord"
 	];
 
 	/**

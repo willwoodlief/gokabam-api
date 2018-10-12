@@ -13,7 +13,7 @@ require_once    PLUGIN_PATH.'lib/RecursiveClasses.php';
 
 
 
-//todo make sure do not return deleted things when asked for current
+
 
 class ApiParseException extends \Exception {}
 
@@ -117,7 +117,7 @@ class ApiGateway {
 	 * @throws JsonException
 	 * @throws SQLException
 	 */
-	protected function get_everything($init_everything){
+	protected function update_everything($init_everything){
 		$the_json = Input::get( 'gokabam_api_data', Input::THROW_IF_EMPTY );
 		if (!is_array($the_json)) {
 			$the_json = JsonHelper::fromString($the_json,true,true);
@@ -154,25 +154,26 @@ class ApiGateway {
 
 			switch ($everything->api_action) {
 				case 'update': {
+					/*
+					 * Update here does all inserts, updates and deletions for the objects
+					 */
 					$this->start_userspace();
-					$ret = $this->get_everything($everything);
+					$ret = $this->update_everything($everything);
 					$this->end_userspace(); //this will be called later if exception above
 					break;
 				}
-				case 'save': {
-					$ret = $this->save($everything);
-					break;
-				}
+
 				case 'get': {
+					/*
+					 * the main search function, used by the client to update itself and also get the initial stuff
+					 */
 					$ret = $this->get($everything);
 					break;
 				}
-				case 'report': {
-					$ret = $this->report($everything);
-					break;
-				}
+
 				case 'init': {
 					//give an empty structure to work with
+					//this is helpful to both clients and testers
 					$ret = new GKA_Everything();
 					$ret->pass_through_data = $everything->pass_through_data;
 					$ret->api_action = 'update';
@@ -233,17 +234,14 @@ class ApiGateway {
 
 
 
-	protected function save(GKA_Everything $everything) {
-		return $everything;
-	}
+
 
 	protected function get(GKA_Everything $everything) {
+		//todo make sure do not return deleted things when asked for current
 		return $everything;
 	}
 
-	protected function report(GKA_Everything $everything) {
-		return $everything;
-	}
+
 
 	protected function finalize_everything_out(GKA_Everything $everything) {
 		$everything->server =  new GKA_ServerData();
