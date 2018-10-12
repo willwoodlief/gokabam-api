@@ -1,12 +1,21 @@
 <?php
 
 namespace gokabam_api;
-require_once  'gokabam.goodies.php';
-require_once 'api-typedefs.php';
-require_once  PLUGIN_PATH.'lib/Input.php';
-require_once  PLUGIN_PATH.'lib/ErrorLogger.php';
-require_once  PLUGIN_PATH.'lib/JsonHelper.php';
+require_once    PLUGIN_PATH.'public/gokabam.goodies.php';
+require_once    PLUGIN_PATH.'public/gateway/api-typedefs.php';
+require_once    PLUGIN_PATH.'public/gateway/parser-manager.php';
+require_once    PLUGIN_PATH.'vendor/autoload.php';
+require_once    PLUGIN_PATH.'public/gateway/kid.php';
+require_once    PLUGIN_PATH.'lib/Input.php';
+require_once    PLUGIN_PATH.'lib/ErrorLogger.php';
+require_once    PLUGIN_PATH.'lib/JsonHelper.php';
+require_once    PLUGIN_PATH.'lib/RecursiveClasses.php';
+
+
+
 //todo make sure do not return deleted things when asked for current
+
+class ApiParseException extends \Exception {}
 
 
 
@@ -31,6 +40,17 @@ class ApiGateway {
 	 * @var integer|null the id of the page load
 	 */
 	protected $page_load_id = null;
+
+	/**
+	 * @var KidTalk|null $kid_talk
+	 */
+	protected $kid_talk = null;
+
+	/**
+	 * @var ParserManager|null $parser_manager
+	 */
+	protected $parser_manager = null;
+
 	/**
 	 * ApiGateway constructor.
 	 *
@@ -39,34 +59,82 @@ class ApiGateway {
 	 */
 	public function __construct( $mydb, $version_id ) {
 
-		$this->mydb = $mydb;
-		$this->latest_version_id     = $version_id;
-		$this->page_load_id = null;
+		try {
+			$this->mydb              = $mydb;
+			$this->latest_version_id = $version_id;
+			$this->page_load_id      = null;
+			$this->kid_talk          = new KidTalk( $this->mydb );
+		} catch (\Exception $e) {
+			$info = ErrorLogger::saveException($e);
+			wp_send_json(['is_valid' => false,'data'=> $info, 'message' => "initialiation error"]);
+			die();
+		}
 	}
 
 	/**
 	 * @return GKA_Everything
-	 * @throws \JsonException
-	 * @throws \InvalidArgumentException
+	 * @throws JsonException
 	 */
-	protected function get_everything(){
+	protected function find_action_stuff() {
 		$the_json = Input::get( 'gokabam_api_data', Input::THROW_IF_EMPTY );
-		if (is_array($the_json)) { return $this->convert_array_to_everything($the_json); }
-		/**
-		 * @var GKA_Everything $purk
-		 */
-		$purk = JsonHelper::fromString($the_json,true,true);
-		return $this->convert_array_to_everything($purk);
-
-	}
-
-	function convert_array_to_everything($purk) {
-
+		if (!is_array($the_json)) {
+			$the_json = JsonHelper::fromString($the_json,true,true);
+		}
 		$everything = new GKA_Everything();
-		$everything->api_action = $purk['api_action'];
-		$everything->pass_through_data = $purk['pass_through_data'];
+		$everything->api_action = 'init';
+		$everything->pass_through_data = null;
+		if (is_array($the_json)) {
+
+			if (array_key_exists('api_action',$the_json)) {
+				$everything->api_action = $the_json['api_action'];
+			}
+
+			if (array_key_exists('pass_through_data',$the_json)) {
+				$everything->pass_through_data = $the_json['pass_through_data'];
+			}
+
+			if (array_key_exists('begin_timestamp',$the_json)) {
+				$everything->begin_timestamp = $the_json['begin_timestamp'];
+			}
+
+			if (array_key_exists('end_timestamp',$the_json)) {
+				$everything->end_timestamp = $the_json['end_timestamp'];
+			}
+
+			if (array_key_exists('save_name',$the_json)) {
+				$everything->save_name = $the_json['save_name'];
+			}
+		}
+
 		return $everything;
+
+
 	}
+	/**
+	 * @param GKA_Everything $init_everything
+	 * @return GKA_Everything
+	 * @throws ApiParseException
+	 * @throws JsonException
+	 * @throws SQLException
+	 */
+	protected function get_everything($init_everything){
+		$the_json = Input::get( 'gokabam_api_data', Input::THROW_IF_EMPTY );
+		if (!is_array($the_json)) {
+			$the_json = JsonHelper::fromString($the_json,true,true);
+		}
+		if (!is_array($the_json)  || empty($the_json)) {
+			throw new ApiParseException("No data found in request send under the key of gokabam_api_data");
+		}
+		$everything = new GKA_Everything();
+		$everything->api_action = $init_everything->api_action;
+		$everything->pass_through_data = $init_everything->pass_through_data;
+
+		$this->parser_manager    = new ParserManager($this->kid_talk,$this->mydb,$everything,$this->page_load_id,$the_json);
+		return $everything;
+
+	}
+
+
 
 	/**
 	 * Reads from post, if any commands that are recognized will do them and return result
@@ -80,12 +148,15 @@ class ApiGateway {
 			$this->mydb->beginTransaction();
 			/**
 			 * @var GKA_Everything $everything
+			 *  here we are getting the basic stuff
 			 */
-			$everything = $this->get_everything();
+			$everything = $this->find_action_stuff();
 
 			switch ($everything->api_action) {
 				case 'update': {
-					$ret = $this->update($everything);
+					$this->start_userspace();
+					$ret = $this->get_everything($everything);
+					$this->end_userspace(); //this will be called later if exception above
 					break;
 				}
 				case 'save': {
@@ -141,12 +212,12 @@ class ApiGateway {
 
 	/**
 	 * @param \Exception $e
-	 * @param string $pass_through_data
+	 * @param string|null $pass_through_data
 	 * @param array $exception_info
 	 * @return GKA_Everything
 	 * @throws SQLException
 	 */
-	protected function create_error_response(\Exception $e,string $pass_through_data,&$exception_info) {
+	protected function create_error_response(\Exception $e, $pass_through_data,&$exception_info) {
 		$this->start_userspace("For Error Report");
 		$exception_info = ErrorLogger::saveException($e);
 		$everything = new GKA_Everything();
@@ -158,17 +229,7 @@ class ApiGateway {
 		return $everything;
 	}
 
-	/**
-	 * @param GKA_Everything $everything
-	 *
-	 * @return GKA_Everything
-	 * @throws SQLException
-	 */
-	protected function update(GKA_Everything $everything) {
-		$this->start_userspace();
-		$this->end_userspace(); //will end it here normally , or exception handler will
-		return $everything;
-	}
+
 
 	protected function save(GKA_Everything $everything) {
 		return $everything;
@@ -447,7 +508,7 @@ api_use_case
 		}
 		$end =  microtime(true);
 		$this->mydb->execSQL("UPDATE gokabam_api_page_loads SET stop_micro_time = ?,error_log_id=? WHERE id = ?",
-			['sii',$end,$this->page_load_id,$error_id] );
+			['sii',$end,$error_id,$this->page_load_id] );
 		$this->page_load_id = null;
 	}
 }

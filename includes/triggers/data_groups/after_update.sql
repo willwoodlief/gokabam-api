@@ -66,10 +66,10 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
 
     if NEW.is_deleted = 0 THEN
       INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_elements,is_group_members,is_examples)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_members_changed,@has_examples_changed);
+      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_members_changed,@has_examples_changed);
     ELSE
       INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_elements,is_group_members,is_examples)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_members_changed,@has_examples_changed);
+      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_members_changed,@has_examples_changed);
     END IF;
 
 

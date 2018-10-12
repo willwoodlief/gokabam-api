@@ -121,7 +121,7 @@ class Plugin_Public
     public function send_survey_ajax_handler() {
 		global $GokabamGoodies;
 		require_once PLUGIN_PATH . 'lib/Input.php';
-	    require_once PLUGIN_PATH . 'public/api-gateway.php';
+	    require_once PLUGIN_PATH . 'public/gateway/api-gateway.php';
 	    check_ajax_referer( strtolower( PLUGIN_NAME) . 'public_nonce' );
 
 	    if (array_key_exists( 'method',$_POST) && $_POST['method'] == 'echo') {

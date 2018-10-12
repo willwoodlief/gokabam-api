@@ -23,7 +23,7 @@ class Activator {
 	 * @since    1.0.0
 	 */
 
-	const DB_VERSION = 0.183;
+	const DB_VERSION = 0.184;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -31,7 +31,8 @@ class Activator {
 	 * .182     added connection table for use case parts, this is a full object which can be annotated and tagged and
 	 *          journaled. It also updates the parts when they are connected. Took out the old children string from the parts
 	 * .183     Added reason and error_log_id to page_loads
-	 */
+	 * .184     After Update Triggers now put old page load id into the log instead of new
+	*/
 
 
 	/**

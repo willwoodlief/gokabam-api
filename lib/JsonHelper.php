@@ -2,6 +2,8 @@
 namespace gokabam_api;
 require_once realpath(dirname(__FILE__)) . '/../vendor/autoload.php';
 
+class JsonException extends \Exception {}
+
 class JsonHelper {
 
 
@@ -77,7 +79,7 @@ class JsonHelper {
      * @param $phpArray mixed
      * @param $options integer - any options to pass to json_encode
      * @return string
-     * @throws \Exception if json error
+     * @throws JsonException if json error
      */
     public static function toString( $phpArray,$options=0) {
         $out = json_encode($phpArray, $options );
@@ -86,7 +88,7 @@ class JsonHelper {
         } else {
             print "error in json\n";
             $oops =  json_last_error_msg();
-            throw  new \Exception($oops);
+            throw  new JsonException($oops);
         }
     }
 
@@ -102,11 +104,11 @@ class JsonHelper {
      * </p>
      * @param bool $b_association - default true (which is the reverse of normal)
      * @return array|mixed|null
-     * @throws \JsonException if json error
+     * @throws JsonException if json error
      */
     public static function fromString($what,$b_exception=true,$b_association=true) {
         if (is_null($what) ) { return null;}
-        if (empty($what)) {return [];}
+        if (empty($what) && !is_numeric($what)) {return [];}
         $what = strval($what);
         if ( strcasecmp($what,'null') == 0) {return null;}
         $out = json_decode(strval($what), $b_association);
@@ -114,7 +116,7 @@ class JsonHelper {
             if ($b_exception) {
                 $oops =  json_last_error_msg();
                 $oops .= "\n Data: \n". $what;
-                throw  new \JsonException($oops);
+                throw  new JsonException($oops);
             }else {
                 return $what;
             }
@@ -148,7 +150,7 @@ class JsonHelper {
         	$what = self::to_utf8($what);
         	$what = trim($what);
         }
-        if ($b_empty_is_null && empty($what)) {return null;}
+        if ($b_empty_is_null && empty($what) && !is_numeric($what)) {return null;}
 
         if (is_bool($what)) {
             if ($b_cast_bools_as_int) {
@@ -252,7 +254,7 @@ class JsonHelper {
      * called in the constructor
      * @param $data_type string a valid category name, will throw exception if not valid
      * @param $what string the thing to cast as a string. If this is null the return will be null regardless of the category
-     * @throws \JsonException if not a recognized name, if json what is not an array
+     * @throws JsonException if not a recognized name, if json what is not an array
      * @return mixed <p> returns a string whose value depends on
      *  what the meta type is
      *      'boolean' must be integer or string representation. 0 is false, anything else is true
@@ -282,19 +284,19 @@ class JsonHelper {
                 if (is_numeric($what)) {
                     return intval($what);
                 } else {
-                    throw  new \JsonException("[$what] is not numeric so cannot convert to integer");
+                    throw  new JsonException("[$what] is not numeric so cannot convert to integer");
                 }
 
             case 'float':
                 if (is_numeric($what)) {
                     return floatval($what);
                 } else {
-                    throw  new \JsonException("[$what] is not numeric so cannot convert to float");
+                    throw  new JsonException("[$what] is not numeric so cannot convert to float");
                 }
 
             case 'text':
                 if (is_array($what)) {
-                    throw  new \JsonException("Cannot convert array to $data_type");
+                    throw  new JsonException("Cannot convert array to $data_type");
                 } else {
                     return strval($what);
                 }
@@ -312,10 +314,10 @@ class JsonHelper {
                 if ($test) {
                     return $test;
                 } else {
-                    throw  new \JsonException("Cannot convert [$what] to UTC time");
+                    throw  new JsonException("Cannot convert [$what] to UTC time");
                 }
             default:
-                throw new \JsonException("[$data_type] not recognized as a data type")   ;
+                throw new JsonException("[$data_type] not recognized as a data type")   ;
 
         }
     }
@@ -533,7 +535,7 @@ class JsonHelper {
      * @return string
      */
     public static function to_utf8($what) {
-        if (empty($what)) {return '';}
+        if (empty($what) && !is_numeric($what)) {return '';}
         return \ForceUTF8\Encoding::toUTF8($what);
     }
 
@@ -572,7 +574,7 @@ class JsonHelper {
           // the output headers and charsets in the forms and internal encoding and db connections
           // for all the setting pages
 
-        if (empty($string)) {return '';}
+        if (empty($string) && !is_numeric($string)) {return '';}
 
 
 

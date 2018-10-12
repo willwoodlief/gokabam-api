@@ -7,10 +7,10 @@ CREATE TRIGGER trigger_after_update_gokabam_api_tags
 
     if NEW.is_deleted = 0 THEN
       INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'edit');
+      VALUES (NEW.object_id,OLD.last_page_load_id,'edit');
     ELSE
       INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'delete');
+      VALUES (NEW.object_id,OLD.last_page_load_id,'delete');
     END IF;
 
     SET @edit_log_id := (select last_insert_id());

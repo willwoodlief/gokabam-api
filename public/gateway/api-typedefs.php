@@ -1,6 +1,39 @@
 <?php
+
 namespace gokabam_api;
 
+		/**
+		 * Not meant for human or client consumption, an intermediate step for the server
+		 * Class GKA_Kid
+		 * @package gokabam_api
+		 */
+		class GKA_Kid {
+
+			/**
+			 * @var string $kid
+			 */
+			public $kid = '';
+
+			/**
+			 * @var int $object_id
+			 */
+
+			public $object_id = 0;
+			/**
+			 * @var string $table
+			 */
+			public $table = '';
+
+			/**
+			 * @var integer $primary_id
+			 */
+			public $primary_id = 0;
+
+			/**
+			 * @var string $hint
+			 */
+			public $hint = '';
+		}
 /*
 word
 			parent: [kid] is anything,not null, cannot be another word or tag
@@ -14,7 +47,7 @@ word
 			class GKA_Word
 			{
 				/**
-				 * @var string|null $kid
+				 * @var GKA_Kid|string|null $kid
 				 */
 				public $kid = '';
 
@@ -58,7 +91,7 @@ word
 			class GKA_Version
 			{
 				/**
-				 * @var string|null $kid - kid format
+				 * @var GKA_Kid|string|null $kid - kid format
 				 */
 				public $kid = '';
 
@@ -72,9 +105,15 @@ word
 				public $delete = false;
 
 				/**
-				 * @var string|null $parent - kid format
+				 * @var string $git_tag
 				 */
-				public $parent = '';
+				public $git_tag = false;
+
+				/**
+				 * @var string $git_commit_id
+				 */
+				public $git_commit_id = false;
+
 
 				/**
 				 * @var string $text
@@ -92,7 +131,7 @@ word
 			class GKA_Journal
 			{
 				/**
-				 * @var string|null $kid - kid format
+				 * @var GKA_Kid|string|null $kid - kid format
 				 */
 				public $kid = '';
 
@@ -126,7 +165,7 @@ word
 			class GKA_Tag
 			{
 				/**
-				 * @var string|null $kid - kid format
+				 * @var GKA_Kid|string|null $kid - kid format
 				 */
 				public $kid = '';
 
@@ -198,7 +237,7 @@ word
 		class GKA_Element
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 
@@ -297,7 +336,7 @@ word
 		class GKA_DataExample
 		{
 			/**
-			 * @var string|null $kid
+			 * @var GKA_Kid|string|null $kid
 			 */
 			public $kid = '';
 
@@ -337,7 +376,7 @@ word
 		class GKA_DataGroup
 		{
 			/**
-			 * @var string|null $kid
+			 * @var GKA_Kid|string|null $kid
 			 */
 			public $kid = '';
 
@@ -381,7 +420,7 @@ word
 		class GKA_Header
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 
@@ -427,7 +466,7 @@ api_version
 		class GKA_API_Version
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 		
@@ -474,7 +513,7 @@ api_version
 		class GKA_Family
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 		
@@ -525,7 +564,7 @@ api_version
 		class GKA_Input
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 		
@@ -569,7 +608,7 @@ api_version
 		class GKA_Output
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 		
@@ -615,7 +654,7 @@ sql_part:
 		class GKA_SQL_Part
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 
@@ -669,7 +708,7 @@ sql_part:
 class GKA_Use_Part_Connection
 {
 	/**
-	 * @var string|null $kid - kid format
+	 * @var GKA_Kid|string|null $kid - kid format
 	 */
 	public $kid = '';
 
@@ -715,7 +754,7 @@ class GKA_Use_Part_Connection
 		class GKA_Use_Part
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 
@@ -785,7 +824,7 @@ use_case
 		class GKA_Use_Case
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 
@@ -831,7 +870,7 @@ use_case
 		class GKA_API
 		{
 			/**
-			 * @var string|null $kid - kid format
+			 * @var GKA_Kid|string|null $kid - kid format
 			 */
 			public $kid = '';
 		
