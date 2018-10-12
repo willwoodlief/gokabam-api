@@ -175,7 +175,7 @@ class ApiGateway {
 					//give an empty structure to work with
 					$ret = new GKA_Everything();
 					$ret->pass_through_data = $everything->pass_through_data;
-					$ret->api_action = 'blank';
+					$ret->api_action = 'update';
 					break;
 				}
 				default: {
@@ -183,6 +183,8 @@ class ApiGateway {
 				}
 			}
 
+			$ret->is_valid = true;
+			$ret->message = 'success';
 			$this->mydb->commit();
 
 
@@ -508,7 +510,8 @@ api_use_case
 		}
 		$end =  microtime(true);
 		$this->mydb->execSQL("UPDATE gokabam_api_page_loads SET stop_micro_time = ?,error_log_id=? WHERE id = ?",
-			['sii',$end,$error_id,$this->page_load_id] );
+			['sii',$end,$error_id,$this->page_load_id],
+			MYDB::ROWS_AFFECTED);
 		$this->page_load_id = null;
 	}
 }

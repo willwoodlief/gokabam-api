@@ -90,7 +90,7 @@ class KidTalk {
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
-	public  function generate_or_refresh_kid($kid_candidate,$table_expected,$table_id = null,$object_id = null) {
+	public  function generate_or_refresh_primary_kid($kid_candidate,$table_expected,$table_id = null,$object_id = null) {
 
 		if (empty($kid_candidate) && empty($table_id) && empty($object_id)) {
 			return null;
@@ -105,7 +105,7 @@ class KidTalk {
 			if ($table_id && $object_id) {
 				/** @noinspection SqlResolve */
 				$check = $this->mydb->execSQL("select o.id from gokabam_api_objects o INNER JOIN $table_expected t ON t.id = o.primary_key where t.id = ? and da_table_name = ? and o.id = ? ",
-					['isi',$table_id,$table_expected,$object_id],MYDB::RESULT_SET,"KidTalk::generate_or_refresh_kid/verify_full_$table_expected");
+					['isi',$table_id,$table_expected,$object_id],MYDB::RESULT_SET,"@sey@KidTalk::generate_or_refresh_kid/verify_full_$table_expected");
 				if (empty($check)) {
 					throw new ApiParseException("did not find an object for {$table_expected}, primary id of {$table_id} and object id of {$object_id}");
 				}
@@ -113,7 +113,7 @@ class KidTalk {
 			} elseif ($table_id) {
 				/** @noinspection SqlResolve */
 				$check = $this->mydb->execSQL("select o.id from gokabam_api_objects o INNER JOIN $table_expected t ON t.id = o.primary_key where t.id = ? and da_table_name = ?  ",
-					['is',$table_id,$table_expected],MYDB::RESULT_SET,"KidTalk::generate_or_refresh_kid/verify_with_table_$table_expected");
+					['is',$table_id,$table_expected],MYDB::RESULT_SET,"@sey@KidTalk::generate_or_refresh_kid/verify_with_table_$table_expected");
 				if (empty($check)) {
 					throw new ApiParseException("did not find an object for {$table_expected}, primary id of {$table_id}");
 				}
@@ -121,7 +121,7 @@ class KidTalk {
 			} elseif ($object_id) {
 				/** @noinspection SqlResolve */
 				$check = $this->mydb->execSQL("select t.id as table_id from gokabam_api_objects o INNER JOIN $table_expected t ON t.id = o.primary_key where  da_table_name = ?  and o.id = ? ",
-					['si',$table_expected,$object_id],MYDB::RESULT_SET,"KidTalk::generate_or_refresh_kid/verify_with_object_$table_expected");
+					['si',$table_expected,$object_id],MYDB::RESULT_SET,"@sey@KidTalk::generate_or_refresh_kid/verify_with_object_$table_expected");
 				if (empty($check)) {
 					throw new ApiParseException("did not find an object for {$table_expected}, primary id of {$table_id}");
 				}
@@ -139,7 +139,7 @@ class KidTalk {
 			$kid->table         = $table_expected;
 			$kid->primary_id    = $table_id;
 			$kid->object_id     = $object_id;
-			$kid->kid           = $encode_prefix . '_'. $encoding;
+			$kid->kid           = $encode_prefix . '_'. $encoding ;
 			$kid->hint          = '';
 			return $kid;
 		}
@@ -150,7 +150,10 @@ class KidTalk {
 				'/(?P<table>[a-z]*)_(?P<code>[[:alnum:]]*)(?P<hint>[^[:alnum:]][[:alnum:]]*)?/', $kid_candidate, $output_array ) ) {
 				$table_key = $output_array['table'];
 				$code      = $output_array['code'];
-				$hint      = $output_array['hint'];
+				$hint      = null;
+				if (array_key_exists('hint',$output_array) ) {
+					$hint = $output_array['hint'];
+				}
 				if ( ! array_key_exists( $table_key, self::$key_to_table_map ) ) {
 					throw new ApiParseException( "Cannot find a table match for the kid prefix of [$table_key], the kid was [$kid_candidate]" );
 				}
@@ -164,7 +167,7 @@ class KidTalk {
 				//the mydb class caches the compiled sql so its faster after the first lookup
 				/** @noinspection SqlResolve */
 				$check = $this->mydb->execSQL( "select t.id as table_id, o.id as object_id from gokabam_api_objects o INNER JOIN $table t ON t.id = o.primary_key where o.id = ? and da_table_name = ? ",
-					[ 'is', $object_primary_key, $table ], MYDB::RESULT_SET, "KidTalk::string_to_kid/find_$table" );
+					[ 'is', $object_primary_key, $table ], MYDB::RESULT_SET, "@sey@KidTalk::string_to_kid/find_$table" );
 				if ( empty( $check ) ) {
 					throw new ApiParseException( "the kid of [$kid_candidate] is not verified as belonging to $table_key" );
 				}
@@ -199,7 +202,7 @@ class KidTalk {
 						'is',
 						$kid_candidate->primary_id,
 						$kid_candidate->table
-					], MYDB::RESULT_SET, "KidTalk::kid_to_string/candidate_has_primary_$table" );
+					], MYDB::RESULT_SET, "@sey@KidTalk::kid_to_string/candidate_has_primary_$table" );
 				if ( empty( $check ) ) {
 					throw new ApiParseException( "did not find an object for {$kid_candidate->table}, id of {$kid_candidate->primary_id} " );
 				}
@@ -226,7 +229,7 @@ class KidTalk {
 						'is',
 						$kid_candidate->object_id,
 						$kid_candidate->table
-					], MYDB::RESULT_SET, "KidTalk::kid_to_string/get_pk_from_ok_$table" );
+					], MYDB::RESULT_SET, "@sey@KidTalk::kid_to_string/get_pk_from_ok_$table" );
 				if ( empty( $check ) ) {
 					throw new ApiParseException( "did not find an pk for {$kid_candidate->table}, object id of {$kid_candidate->object_id} " );
 				}
@@ -243,7 +246,7 @@ class KidTalk {
 
 			} else {
 				//not enough info in kid candidate
-				return $this->generate_or_refresh_kid(null,$table_expected,$table_id,$object_id);
+				return $this->generate_or_refresh_primary_kid(null,$table_expected,$table_id,$object_id);
 			}
 			$kid_candidate->object_id = $object_id;
 			$kid_candidate->table = $table;
@@ -258,6 +261,105 @@ class KidTalk {
 		} else {
 			throw new ApiParseException("Kid Candidate was not null, string or object");
 		}
+	}
+
+	/**
+	 *
+	 * This will do a one way conversion with the only checking is the code in the input string
+	 * @param string|null $string_kid
+	 * @param GKA_Kid $child
+	 * @param string $child_table_type
+	 *
+	 * @return GKA_Kid
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	public function convert_parent_string_kid($string_kid,$child,$child_table_type) {
+
+		$child_table_prefix = '';
+		if ($child_table_type) {
+			if (!array_key_exists($child_table_type,self::$table_to_key_map)) {
+				throw  new ApiParseException("Unexpected table of [$child_table_type]");
+			}
+			$child_table_prefix = self::$table_to_key_map[$child_table_type];
+		}
+
+
+		if(! is_string($string_kid)) {
+			if ($child) {
+				throw new ApiParseException("The parent of " .$child->kid . " is not a string");
+			} else {
+				throw new ApiParseException("The parent of a " .$child_table_prefix . " is not a string");
+			}
+
+		}
+
+		$string_kid = trim($string_kid);
+		if (empty($string_kid)) {
+
+			if ($child) {
+				throw new ApiParseException("The parent of " .$child->kid . " is empty");
+			} else {
+				throw new ApiParseException("The parent of a " .$child_table_prefix . " is not empty");
+			}
+		}
+
+		//break apart the kid to the hint and the code
+		if ( preg_match( /** @lang text */
+			'/(?P<table>[a-z]*)_(?P<code>[[:alnum:]]*)(?P<hint>[^[:alnum:]][[:alnum:]]*)?/', $string_kid, $output_array ) ) {
+			$table_key = $output_array['table'];
+			$code      = $output_array['code'];
+			$hint      = null;
+			if (array_key_exists('hint',$output_array) ) {
+				$hint = $output_array['hint'];
+			}
+			if ( ! array_key_exists( $table_key, self::$key_to_table_map ) ) {
+				throw new ApiParseException( "Cannot find a table match for the parent prefix of [$table_key], the child was [{$child->kid}]" );
+			}
+			$table = self::$key_to_table_map[ $table_key ];
+
+			$where              = $this->hashids->decode( $code );
+			$object_primary_key = $where[0];
+			//check to make sure is correct type for the prefix given
+			//the mydb class caches the compiled sql so its faster after the first lookup
+			/** @noinspection SqlResolve */
+			$check = $this->mydb->execSQL(
+				"select t.id as table_id, o.id as object_id 
+						from gokabam_api_objects o 
+						INNER JOIN $table t ON t.id = o.primary_key 
+						where o.id = ? and da_table_name = ? ",
+				[ 'is', $object_primary_key, $table ], MYDB::RESULT_SET, "@sey@KidTalk::convert_parent_string_kid/find_$table" );
+
+			if ( empty( $check ) ) {
+				if ($child) {
+					throw new ApiParseException("the kid of [$string_kid] is not verified as belonging to $table_key, this is the parent of {$child->kid}");
+				} else {
+					throw new ApiParseException("the kid of [$string_kid] is not verified as belonging to $table_key, this is the parent of a " .$child_table_prefix . " is not empty");
+				}
+			}
+
+			$primary_id = $check[0]->table_id;
+			$object_id  = $check[0]->object_id;
+
+			$kid             = new GKA_Kid();
+			$kid->table      = $table;
+			$kid->primary_id = $primary_id;
+			$kid->object_id  = $object_id;
+			$kid->kid        = $string_kid;
+			$kid->hint       = $hint;
+
+			return $kid;
+		}
+
+		if ($child) {
+			throw new ApiParseException("the kid of [$string_kid] does not have valid format of XXX_YYYYY(HHHHH) [example], this is the parent of {$child->kid} ");
+		} else {
+			throw new ApiParseException("the kid of [$string_kid] does not have valid format of XXX_YYYYY(HHHHH) [example], this is the parent of a " .$child_table_prefix );
+		}
+
+
+
+
 	}
 
 

@@ -523,6 +523,11 @@ class MYDB
      *     creating this class from an existing mysqli object
      *
      *   If $lookupKey is null this function will close the statement if no key if sql is a string
+     *   lookup keys must have the phrase @sey@ in them or else an exception is thrown
+     *   WARNING: USE AT OWN RISK, THIS IS NOT USED IN OTHER LIBRARIES FOR A VERY GOOD REASON.
+     *      Forgetting to change the key for different statements will lead to very hard to track down bugs and will shorten your lifespan
+     *   But, since I am the only one using this, I like it, because it increases speed a lot in some situations,
+     *    like when ten thousand things need to be updated
      * </p>
      * @return mixed. <p>
      *   The return is based on what the close param is
@@ -548,7 +553,13 @@ class MYDB
             $bIsStatement = true;
             $bStatementClose = false;
         } elseif ($lookupKey) {
-            //see if we previously put a statement in this key
+            //check to make sure it has @sey@
+	        if (strpos($lookupKey,'@sey@') === false) {
+	        	throw new SQLException("Lookup key does not have @sey@ in it somewhere");
+	        }
+
+        	//see if we previously put a statement in this key
+
             $previousStatement = null;
             if (isset($this->mysqli->statementCache[$lookupKey])) {
                 $previousStatement = $this->mysqli->statementCache[$lookupKey];

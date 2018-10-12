@@ -7,16 +7,16 @@ require_once( PLUGIN_PATH .'/lib/ErrorLogger.php' );
 require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 
-class ParseVersion {
+class ParseTag {
 
-	protected static  $keys_to_check = ['kid','text','delete','git_tag','git_commit_id'];
-	protected static  $reference_table = 'gokabam_api_versions';
+	protected static  $keys_to_check = ['kid','parent','text','delete','value'];
+	protected static  $reference_table = 'gokabam_api_tags';
 
 	/**
 	 * @param ParserManager $manager
 	 * @param mixed $input
 	 * @param null $parent
-	 * @return GKA_Version[]
+	 * @return GKA_TAG[]
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
@@ -30,7 +30,7 @@ class ParseVersion {
 		}
 
 		/**
-		 * @var GKA_Version[] $ret
+		 * @var GKA_TAG[] $ret
 		 */
 		$ret = [];
 
@@ -55,7 +55,7 @@ class ParseVersion {
 	 * @param ParserManager $manager
 	 * @param array $node
 	 *
-	 * @return GKA_Version
+	 * @return GKA_TAG
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
@@ -63,22 +63,34 @@ class ParseVersion {
 	protected static function convert($manager, $node) {
 
 		$classname = get_called_class();
-		$db_thing = new GKA_Version();
+		$db_thing = new GKA_TAG();
 		foreach (self::$keys_to_check as $what) {
 			if (!array_key_exists($what,$node)) {
 				$problem = JsonHelper::toString($node);
 				throw new ApiParseException("missing key in input: $classname cannot find $what in $problem");
 			}
-			if( is_string($what) && !is_numeric($what) && empty($what)) {$what=null;}
+
+			if (is_string($node[$what])) {
+				$node[$what] = trim($node[$what]);
+			}
+
+			if( is_string($node[$what]) && !is_numeric($node[$what]) && empty($node[$what])) {$node[$what]=null;}
+
 			$db_thing->$what = $node[$what];
 		}
 		if (is_null($db_thing->delete)) {$db_thing->delete = 0;}
+
+		if (empty($db_thing->parent)) {
+			throw new ApiParseException("Parent needs to be filled in for " . $db_thing->kid);
+		}
 		//copy over pass through
 		if (array_key_exists('pass_through',$node)) {
 			$db_thing->pass_through = $node['pass_through'];
 		}
 
 		$db_thing->kid = $manager->kid->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
+
+		$db_thing->parent = $manager->kid->convert_parent_string_kid($db_thing->parent,$db_thing->kid,self::$reference_table);
 
 
 		return $db_thing;
@@ -88,9 +100,9 @@ class ParseVersion {
 	/**
 	 * creates this if the kid is empty, or updates it if not empty
 	 * @param ParserManager $manager
-	 * @param GKA_Version $db_thing
+	 * @param GKA_TAG $db_thing
 	 *
-	 * @return GKA_Version
+	 * @return GKA_TAG
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
@@ -104,10 +116,10 @@ class ParseVersion {
 			}
 			//create this
 			$new_id = $manager->mydb->execSQL(
-				"INSERT INTO gokabam_api_versions(version,git_commit_id,git_tag,last_page_load_id) VALUES(?,?,?,?)",
-					['sssi',$db_thing->text,$db_thing->git_commit_id,$db_thing->git_tag,$last_page_load_id],
+				"INSERT INTO gokabam_api_tags(tag_label,tag_value,target_object_id,last_page_load_id) VALUES(?,?,?,?)",
+					['ssii',$db_thing->text,$db_thing->value,$db_thing->parent->object_id,$last_page_load_id],
 					MYDB::LAST_ID,
-					'@sey@ParseVersion::manage->insert'
+					'@sey@ParseTag::manage->insert'
 				);
 
 			$db_thing->kid = $manager->kid->generate_or_refresh_primary_kid(
@@ -121,10 +133,10 @@ class ParseVersion {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
 			$manager->mydb->execSQL(
-				"UPDATE gokabam_api_versions SET version = ?,git_commit_id = ?,git_tag=?,is_deleted = ?, last_page_load_id = ? WHERE id = ? ",
-					['sssiii',$db_thing->text,$db_thing->git_commit_id,$db_thing->git_tag,$db_thing->delete,$last_page_load_id,$id],
+				"UPDATE gokabam_api_tags SET tag_label = ?,tag_value = ?,target_object_id=?,is_deleted = ?, last_page_load_id = ? WHERE id = ? ",
+					['ssiiii',$db_thing->text,$db_thing->value,$db_thing->parent->object_id,$db_thing->delete,$last_page_load_id,$id],
 					MYDB::ROWS_AFFECTED,
-				'@sey@ParseVersion::manage->update'
+				'@sey@ParseTag::manage->update'
 				);
 		}
 		$db_thing->status = true; //right now we do not do much with status

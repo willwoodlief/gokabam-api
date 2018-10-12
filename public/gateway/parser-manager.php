@@ -5,6 +5,7 @@ namespace gokabam_api;
 
 require_once PLUGIN_PATH . 'public/gateway/api-typedefs.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/version.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/tag.parser.php';
 
 /**
  * @param KidTalk $kid_talk
@@ -39,8 +40,15 @@ class ParserManager {
 	 */
 	public $last_load_id = 0;
 
+	/**
+	 * @var GKA_Root[] $processed_roots
+	 *  all parsers add what they do to this, its used to finalize the data before sending it back out
+	 */
+	public $processed_roots = [];
+
 	protected static $map = [
-		'versions' =>	"gokabam_api\\ParseVersion"
+		'versions' =>	"gokabam_api\\ParseVersion",
+		'tags' =>       "gokabam_api\\ParseTag"
 	];
 
 	/**
@@ -59,11 +67,13 @@ class ParserManager {
 		$this->everything = $everything;
 		$this->kid = $kid_talk;
 		$this->mydb = $mydb;
+		$this->processed_roots = [];
 		$this->last_load_id = $last_load_id;
 		if (empty($last_load_id)) {
 			throw new ApiParseException("Expected a page load id");
 		}
 		$this->start_parse($info);
+		$this->finalize_processed_roots();
 	}
 
 	/** @noinspection PhpDocRedundantThrowsInspection */
@@ -90,6 +100,15 @@ class ParserManager {
 		}
 	}
 
+	protected function finalize_processed_roots() {
+		foreach ($this->processed_roots as $root) {
+			$root->kid = $root->kid->kid; //change the object back to a string
+			if ($root->parent) {
+				$root->parent = $root->parent->kid; //change the object back to a string
+			}
+		}
+	}
+
 	/**
 	 * //go down all parsable keys that may exist in info
 	 * @param array $info
@@ -102,10 +121,13 @@ class ParserManager {
 
 		//top level entries do not have parents, so always pass null as parent in this method
 
-		//do versions
-		if (array_key_exists('versions',$info)) {
-			$this->everything->versions = $this->call_parser('versions',$info['versions'],null);
+		$map_keys = array_keys(self::$map);
+		foreach ($map_keys as $key) {
+			if (array_key_exists($key,$info)) {
+				$this->everything->$key = $this->call_parser($key,$info[$key],null);
+			}
 		}
+
 
 	}
 }

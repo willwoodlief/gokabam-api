@@ -66,7 +66,7 @@ class ApiVersionsPage {
             INSERT INTO gokabam_api_journal_containers (container_notes) VALUES (?);
 SQL;
 			$notes = "For new API Version";
-			$container_id = $mydb->execSQL($sql, array('s', $notes), MYDB::LAST_ID, 'ApiVersion::create-constainer');
+			$container_id = $mydb->execSQL($sql, array('s', $notes), MYDB::LAST_ID, '@sey@ApiVersion::create-constainer');
 
 			//create the api version
 			$sql = <<<SQL
@@ -77,7 +77,7 @@ SQL;
 			$mydb->execSQL($sql, array('isssii',
 				$version_id,$version_number, $version_name,$version_notes,$version_ts,$container_id),
 				MYDB::LAST_ID,
-				'ApiVersion::create-version');		} catch (\Exception $e) {
+				'@sey@ApiVersion::create-version');		} catch (\Exception $e) {
 			ErrorLogger::saveException($e);
 		}
 

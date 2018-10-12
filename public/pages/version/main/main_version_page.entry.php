@@ -63,7 +63,7 @@ class MainVersionPage {
 			$sql = <<<SQL
             INSERT INTO gokabam_api_versions (version,version_name,version_notes,created_at_ts) VALUES (?,?,?,?);
 SQL;
-			$mydb->execSQL($sql, array('sssi', $version_number, $version_name,$version_notes,$version_ts), MYDB::LAST_ID, 'Tests::lock_resources');
+			$mydb->execSQL($sql, array('sssi', $version_number, $version_name,$version_notes,$version_ts), MYDB::LAST_ID, '@sey@Tests::lock_resources');
 		} catch (\Exception $e) {
 			ErrorLogger::saveException($e);
 		}

@@ -66,7 +66,7 @@ class ApiVersionHome {
             INSERT INTO gokabam_api_journal_containers (container_notes) VALUES (?);
 SQL;
 			$notes = "For new API Family";
-			$container_id = $mydb->execSQL($sql, array('s', $notes), MYDB::LAST_ID, 'ApiVersion::create-constainer');
+			$container_id = $mydb->execSQL($sql, array('s', $notes), MYDB::LAST_ID, '@sey@ApiVersion::create-constainer');
 
 			//add in the description as the first note
 			$sql = <<<SQL
@@ -84,7 +84,7 @@ SQL;
 						$current_ts
 				),
 				MYDB::LAST_ID,
-				'ApiVersion::create-journal-entry'
+				'@sey@ApiVersion::create-api-journal-entry'
 			);
 
 			//todo add in the tag api-family to the note and the container
@@ -106,7 +106,7 @@ SQL;
 							$family_notes
 							),
 					 MYDB::LAST_ID,
-				'ApiVersion::create-api-family');
+				'@sey@ApiVersion::create-api-family');
 		} catch (\Exception $e) {
 			ErrorLogger::saveException($e);
 		}

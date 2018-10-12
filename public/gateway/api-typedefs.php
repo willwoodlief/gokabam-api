@@ -34,6 +34,58 @@ namespace gokabam_api;
 			 */
 			public $hint = '';
 		}
+
+		class GKA_Root
+		{
+			/**
+			 * @var GKA_Kid|string|null $kid <p>
+			 *  if not set when sent, it means this is something to be created new
+			 *
+			 *  if this is set by client a string in the format prefix_code which is verified
+			 *  by the app to be the object id that exists for this type
+			 *     there is an alternative version of the string, which if set, will pass through custom data
+			 *      prefix_code_then_non_alphanumeric_and_any_characters
+			 *      basically any non alpha numeric character after the code will be ignored and passed back through
+			 *
+			 *  During processing, the app converts this to a GKA_Kid, but its converted back to just the string code
+			 *      before its sent back to the client
+			 * </p>
+			 */
+			public $kid = '';
+
+			/**
+			 * @var string|bool $status <p>
+			 *  This is either going to be
+			 *      false (meaning it died before being processed)
+			 *      true (everything is ok)
+			 *      a message (there was an issue, its put here. A message here is always not good news)
+			 * </p>
+			 */
+			public $status = false;
+			/**
+			 * @var bool $delete
+			 */
+			public $delete = false;
+
+			/**
+			 * @var GKA_Kid|string|null $parent - kid format
+			 *
+			 *  if this is set by client its a string in the format prefix_code which is verified
+			 *  by the app to be the object id that exists for this type
+			 *     there is an alternative version of the string, which if set, will pass through custom data
+			 *      prefix_code_then_non_alphanumeric_and_any_characters
+			 *      basically any non alpha numeric character after the code will be ignored and passed back through
+			 *
+			 *  During processing, the app converts this to a GKA_Kid, but its converted back to just the string code
+			 *      before its sent back to the client
+			 */
+			public $parent = '';
+
+			/**
+			 * @var string|null $pass_through - kid format
+			 */
+			public $pass_through = '';
+		}
 /*
 word
 			parent: [kid] is anything,not null, cannot be another word or tag
@@ -44,26 +96,8 @@ word
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
 
-			class GKA_Word
+			class GKA_Word extends GKA_Root
 			{
-				/**
-				 * @var GKA_Kid|string|null $kid
-				 */
-				public $kid = '';
-
-				/**
-				 * @var string|null $status
-				 */
-				public $status = '';
-				/**
-				 * @var bool $delete
-				 */
-				public $delete = false;
-
-				/**
-				 * @var string|null $parent - kid format
-				 */
-				public $parent = '';
 
 				/**
 				 * @var string $type name,title,blurb,description,overview,data
@@ -88,21 +122,9 @@ word
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
 
-			class GKA_Version
+			class GKA_Version extends GKA_Root
 			{
-				/**
-				 * @var GKA_Kid|string|null $kid - kid format
-				 */
-				public $kid = '';
 
-				/**
-				 * @var string|null $status
-				 */
-				public $status = '';
-				/**
-				 * @var bool $delete
-				 */
-				public $delete = false;
 
 				/**
 				 * @var string $git_tag
@@ -116,6 +138,9 @@ word
 
 
 				/**
+				 * This is the internal name for the version, it can be annotated for title and description
+				 * using words, it can also be tags, and notes attached to it
+				 * but this is just the constant name
 				 * @var string $text
 				 */
 				public $text = '';
@@ -128,27 +153,8 @@ word
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
 
-			class GKA_Journal
+			class GKA_Journal extends GKA_Root
 			{
-				/**
-				 * @var GKA_Kid|string|null $kid - kid format
-				 */
-				public $kid = '';
-
-
-				/**
-				 * @var string|null $status
-				 */
-				public $status = '';
-				/**
-				 * @var bool $delete
-				 */
-				public $delete = false;
-
-				/**
-				 * @var string|null $parent - kid format
-				 */
-				public $parent = '';
 
 				/**
 				 * @var string $text
@@ -162,27 +168,9 @@ word
 			kid: null or this is an update and not an insert, if update only non null values changed
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
-			class GKA_Tag
+			class GKA_Tag extends GKA_Root
 			{
-				/**
-				 * @var GKA_Kid|string|null $kid - kid format
-				 */
-				public $kid = '';
 
-
-				/**
-				 * @var string|null $status
-				 */
-				public $status = '';
-				/**
-				 * @var bool $delete
-				 */
-				public $delete = false;
-
-				/**
-				 * @var string|null $parent - kid format
-				 */
-				public $parent = '';
 				/**
 				 * @var string $text, the key of the tag, what is seen
 				 */
@@ -234,28 +222,8 @@ word
 					radio_group: if given a non null value, only one thing in this group can be used in the array */
 
 
-		class GKA_Element
+		class GKA_Element extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-
-
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
 
 			/**
 			 * @var string $text - the element name
@@ -333,27 +301,9 @@ word
  *      holds example for a data group, can be tagged and annotated
  */
 
-		class GKA_DataExample
+		class GKA_DataExample extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid
-			 */
-			public $kid = '';
 
-
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent
-			 */
-			public $parent = '';
 			/**
 			 * @var string $example, json  of the example
 			 */
@@ -373,27 +323,9 @@ word
 			delete: null or missing or true. If true, then kid must be entered also
 		 */
 
-		class GKA_DataGroup
+		class GKA_DataGroup extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid
-			 */
-			public $kid = '';
 
-
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent
-			 */
-			public $parent = '';
 			/**
 			 * @var GKA_DataExample[]|string[] $examples, array of zero or more full json examples of this data type
 			 */
@@ -417,27 +349,9 @@ word
 			data_group: null or elements must match the regex group names of the value
 			kid: null or this is an update and not an insert, if update only non null values changed */
 
-		class GKA_Header
+		class GKA_Header extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
 
-
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
 			/**
 			 * @var string $name - string header name
 			 */
@@ -463,27 +377,9 @@ api_version
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
 
-		class GKA_API_Version
+		class GKA_API_Version extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-		
-		
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-		
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
+
 			/**
 			 * @var string $text - this is the internal name of the version
 			 */
@@ -510,27 +406,9 @@ api_version
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
 		
-		class GKA_Family
+		class GKA_Family extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-		
-		
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-		
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
+
 			/**
 			 * @var string $text, this is the internal name of the family
 			 */
@@ -561,27 +439,9 @@ api_version
 			data_group: can be any, unless url or header is selected, then must match them (defined here or by kid)
 			kid: null or this is an update and not an insert, if update only non null values changed */
 
-		class GKA_Input
+		class GKA_Input extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-		
-		
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-		
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
+
 			/**
 			 * @var string $origin - url,query,body,header
 			 */
@@ -605,27 +465,9 @@ api_version
 			headers: null or array of headers (defined here)
 			kid: null or this is an update and not an insert, if update only non null values changed */
 
-		class GKA_Output
+		class GKA_Output extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-		
-		
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-		
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
+
 			/**
 			 * @var int $http_code - response code
 			 */
@@ -651,27 +493,8 @@ sql_part:
 			outside_element: reference id, from any input group in this use case
 			text: describes what the part does, and adds details mentioning operations and constants
  */
-		class GKA_SQL_Part
+		class GKA_SQL_Part extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
 
 			/**
 			 * @var string $sql_part_enum - select,from,joins,where,limit,offset,ordering
@@ -705,22 +528,8 @@ sql_part:
 				child_use_case_part_id
 				rank
 		*/
-class GKA_Use_Part_Connection
+class GKA_Use_Part_Connection extends GKA_Root
 {
-	/**
-	 * @var GKA_Kid|string|null $kid - kid format
-	 */
-	public $kid = '';
-
-	/**
-	 * @var string|null $status
-	 */
-	public $status = '';
-
-	/**
-	 * @var bool $delete
-	 */
-	public $delete = false;
 
 	/**
 	 * @var string $parent_part - kid format OR use ref id for new things that have no kid yet
@@ -751,27 +560,9 @@ class GKA_Use_Part_Connection
 				sql_parts:
 
 		 */
-		class GKA_Use_Part
+		class GKA_Use_Part extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
 
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
 
 			/**
 			 * @var GKA_DataGroup|string|null $in_data_group -  null or  defined here or any KID inside parent
@@ -821,27 +612,8 @@ use_case
 			status: (put here on return ) also kid will be filled out if this is an insert
 
  */
-		class GKA_Use_Case
+		class GKA_Use_Case extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
 
 			/**
 			 * @var GKA_Use_Part[]|string[] $use_parts -  zero or more use case parts
@@ -867,27 +639,8 @@ use_case
 			headers
 		 */
 
-		class GKA_API
+		class GKA_API extends GKA_Root
 		{
-			/**
-			 * @var GKA_Kid|string|null $kid - kid format
-			 */
-			public $kid = '';
-		
-		
-			/**
-			 * @var string|null $status
-			 */
-			public $status = '';
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-		
-			/**
-			 * @var string|null $parent - kid format
-			 */
-			public $parent = '';
 			/**
 			 * @var string $text - this is the name of the api call
 			 */
@@ -964,44 +717,12 @@ api_versions
 /**
  * Class GKA_Everything
  * @package gokabam_api
- * @todo http://php.net/manual/en/jsonserializable.jsonserialize.php
- *
- * @see https://stackoverflow.com/questions/3243900/convert-cast-an-stdclass-object-to-another-class
- *
- * This class needs to be able to copy the json from the web over to it, and report on any critical missing properties
- * while it is copying
- *
- * Also, this needs to convert back to json
- * STEPS
- *  set up postman to call this and get an empty default response
- *  Add ability to cast from json stdobj/array to this (static method?) can do a bit at a time as I work on the code
- *  Have ability to have callback walk through each new thing that needs to be made, in order, and have reference to parents
- *          if cannot do things yet because not enough information, put the job on a stack to do later, with a reference where to put completed information
- *
- * Have ability to convert this class back to json
- *      start Version
- *            tags
- *              journal
- *              words
- *              api version
- *              header
- *              data group
- *              element
- *              element object
- *              examples
- *              api
- *              input
- *              output
- *              use case
- *              use case part
- *              use case connection
- *              sql part
  *
  */
 class GKA_Everything
 {
 	/**
-	 * @var string $api_action - update|save|report|get
+	 * @var string $api_action - update|save|report|get|init
 	 */
 	public $api_action = '';
 
@@ -1021,7 +742,7 @@ class GKA_Everything
 	public $save_name = '';
 
 	/**
-	 * @var string $message - talks about the overall operation
+	 * @var string $message - talks about the overall operation. Will be success or an error message
 	 */
 	public $message = '';
 
