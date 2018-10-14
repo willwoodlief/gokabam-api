@@ -7,10 +7,10 @@ require_once( PLUGIN_PATH .'/lib/ErrorLogger.php' );
 require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 
-class ParseVersion {
+class ParseApiVersion {
 
-	protected static  $keys_to_check = ['kid','text','delete','git_tag','git_commit_id'];
-	protected static  $reference_table = 'gokabam_api_versions';
+	protected static  $keys_to_check = ['kid','text','delete'];
+	protected static  $reference_table = 'gokabam_api_api_versions';
 
 	/**
 	 * @param ParserManager $manager
@@ -82,14 +82,13 @@ class ParseVersion {
 	 */
 	protected static function convert($manager, $node,$parent) {
 
-		 //version is always top level
 		if ( !empty($parent) ) {
-			throw new ApiParseException("Version never has a parent, and is always top level");
+			throw new ApiParseException("API Version never has a parent, and is always top level");
 		}
 
 		if (array_key_exists('parent',$node)) {
 			if ( !empty($node['parent']) ) {
-				throw new ApiParseException("Version never has a parent, and is always top level");
+				throw new ApiParseException("API Version never has a parent, and is always top level");
 			}
 		}
 		$classname = get_called_class();
@@ -134,24 +133,20 @@ class ParseVersion {
 			}
 			//create this
 			$new_id = $manager->mydb->execSQL(
-				"INSERT INTO gokabam_api_versions(
-						version,
-						git_commit_id,
-						git_tag,
+				"INSERT INTO gokabam_api_api_versions(
+						api_version,
 						last_page_load_id,
 						initial_page_load_id
 						) 
-						VALUES(?,?,?,?,?)",
+						VALUES(?,?,?)",
 					[
-						'sssii',
+						'sii',
 						$db_thing->text,
-						$db_thing->git_commit_id,
-						$db_thing->git_tag,
 						$last_page_load_id,
 						$last_page_load_id
 					],
 					MYDB::LAST_ID,
-					'@sey@ParseVersion::manage->insert'
+					'@sey@ParseAoiVersion::manage->insert'
 				);
 
 			$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid(
@@ -165,10 +160,20 @@ class ParseVersion {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
 			$manager->mydb->execSQL(
-				"UPDATE gokabam_api_versions SET version = ?,git_commit_id = ?,git_tag=?,is_deleted = ?, last_page_load_id = ? WHERE id = ? ",
-					['sssiii',$db_thing->text,$db_thing->git_commit_id,$db_thing->git_tag,$db_thing->delete,$last_page_load_id,$id],
+				"UPDATE gokabam_api_api_versions SET 
+					api_version = ?,
+					is_deleted = ?,
+				    last_page_load_id = ?
+				     WHERE id = ? ",
+					[
+						'siii',
+						$db_thing->text,
+						$db_thing->delete,
+						$last_page_load_id,
+						$id
+					],
 					MYDB::ROWS_AFFECTED,
-				'@sey@ParseVersion::manage->update'
+				'@sey@ParseApiVersion::manage->update'
 				);
 		}
 		$db_thing->status = true; //right now we do not do much with status

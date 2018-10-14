@@ -3,10 +3,8 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
   FOR EACH ROW
   BEGIN
     DECLARE done INT DEFAULT FALSE;
-    DECLARE a_group_id INT;
-    DECLARE a_part_sql_id INT;
 
-    DECLARE cur CURSOR FOR SELECT DISTINCT group_id FROM gokabam_api_data_group_members WHERE data_element_id = NEW.id;
+    DECLARE a_part_sql_id INT;
 
     DECLARE parts_sql_cur CURSOR FOR SELECT DISTINCT s.id FROM gokabam_api_use_case_parts_sql s
                                      WHERE (s.outside_element_id = NEW.id) OR
@@ -29,8 +27,15 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
       SET @has_words_changed := 0;
     END IF;
 
+    IF (NEW.md5_checksum_journals <> OLD.md5_checksum_journals) OR (NEW.md5_checksum_journals IS NULL AND OLD.md5_checksum_journals IS NOT NULL) OR (NEW.md5_checksum_journals IS NOT NULL AND OLD.md5_checksum_journals IS  NULL)
+    THEN
+      SET @has_journals_changed := 1;
+    ELSE
+      SET @has_journals_changed := 0;
+    END IF;
 
-    IF (NEW.md5_checksum_element_objects <> OLD.md5_checksum_element_objects) OR (NEW.md5_checksum_element_objects IS NULL AND OLD.md5_checksum_element_objects IS NOT NULL) OR (NEW.md5_checksum_element_objects IS NOT NULL AND OLD.md5_checksum_element_objects IS  NULL)
+
+    IF (NEW.md5_checksum_elements <> OLD.md5_checksum_elements) OR (NEW.md5_checksum_elements IS NULL AND OLD.md5_checksum_elements IS NOT NULL) OR (NEW.md5_checksum_elements IS NOT NULL AND OLD.md5_checksum_elements IS  NULL)
     THEN
       SET @has_objects_changed := 1;
     ELSE
@@ -38,11 +43,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
     END IF;
 
     if NEW.is_deleted = 0 THEN
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_element_objects)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_objects_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_journals)
+      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_journals_changed);
     ELSE
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_element_objects)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_objects_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_journals)
+      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_journals_changed);
     END IF;
 
 
@@ -120,17 +125,41 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
       VALUES (@edit_log_id,'is_deleted',OLD.is_deleted);
     END IF;
 
-    #calculate elements md5
-    #0 or more data groups can be using this element
-    # get all the data groups members, and for each member checksum all the elements in it
-    # and put that one answer into md5_checksum_elements of the group
+    IF (NEW.is_optional <> OLD.is_optional) OR (NEW.is_optional IS NULL AND OLD.is_optional IS NOT NULL) OR (NEW.is_optional IS NOT NULL AND OLD.is_optional IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'is_optional',OLD.is_optional);
+    END IF;
 
-    OPEN cur;
-    ins_loop: LOOP
-      FETCH cur INTO a_group_id;
-      IF done THEN
-        LEAVE ins_loop;
-      END IF;
+    IF (NEW.radio_group <> OLD.radio_group) OR (NEW.radio_group IS NULL AND OLD.radio_group IS NOT NULL) OR (NEW.radio_group IS NOT NULL AND OLD.radio_group IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'radio_group',OLD.radio_group);
+    END IF;
+
+    IF (NEW.rank <> OLD.rank) OR (NEW.rank IS NULL AND OLD.rank IS NOT NULL) OR (NEW.rank IS NOT NULL AND OLD.rank IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'rank',OLD.rank);
+    END IF;
+
+    IF (NEW.parent_element_id <> OLD.parent_element_id) OR (NEW.parent_element_id IS NULL AND OLD.parent_element_id IS NOT NULL) OR (NEW.parent_element_id IS NOT NULL AND OLD.parent_element_id IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'parent_element_id',OLD.parent_element_id);
+    END IF;
+
+    IF (NEW.group_id <> OLD.group_id) OR (NEW.group_id IS NULL AND OLD.group_id IS NOT NULL) OR (NEW.group_id IS NOT NULL AND OLD.group_id IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'group_id',OLD.group_id);
+    END IF;
+
+
+    # update the group: if group_id is set get all fellow elements, sum up the checksums, and update the parent group
+
+    IF NEW.group_id IS NOT NULL
+    THEN
 
       set @crc := '';
 
@@ -140,10 +169,8 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
                                      sha1(concat_ws('#', e.md5_checksum)))))
                  ) as discard
           INTO @off
-      FROM  gokabam_api_data_group_members m
-              INNER JOIN gokabam_api_data_elements e ON e.id = m.data_element_id
-      WHERE group_id = a_group_id;
-
+      FROM  gokabam_api_data_elements e
+      WHERE group_id = NEW.group_id;
 
       IF @crc = ''
       THEN
@@ -151,10 +178,45 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
       END IF;
 
       UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc
-      WHERE g.id = a_group_id;
+      WHERE g.id = NEW.group_id;
 
-    END LOOP;
-    CLOSE cur;
+    end if;
+
+
+
+    # update the parent element: if parent_element_id is set get all fellow elements,
+    #  sum up the checksums, and update the parent element
+
+    IF NEW.parent_element_id IS NOT NULL
+    THEN
+
+      set @crc := '';
+
+      SELECT min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', e.md5_checksum)))))
+                 ) as discard
+          INTO @off
+      FROM  gokabam_api_data_elements e
+      WHERE parent_element_id = NEW.parent_element_id;
+
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc
+      WHERE g.id = NEW.parent_element_id;
+
+    end if;
+
+
+
+
+
+
+
 
     #now do all the sql use case parts that has this element, there are three potential places
     SET done := false;

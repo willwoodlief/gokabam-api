@@ -7,6 +7,11 @@ require_once PLUGIN_PATH . 'public/gateway/api-typedefs.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/version.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/tag.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/word.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/journal.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/family.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/api-version.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/header.parser.php';
+
 
 
 /**
@@ -27,9 +32,9 @@ class ParserManager {
 	public $mydb = null;
 
 	/**
-	 * @var KidTalk $kid
+	 * @var KidTalk $kid_talk
 	 */
-	public $kid = null;
+	public $kid_talk = null;
 
 	/**
 	 * @var GKA_Everything $everything
@@ -43,15 +48,40 @@ class ParserManager {
 	public $last_load_id = 0;
 
 	/**
+	 * @var int $current_version_id;
+	 */
+	public $current_version_id = 0;
+
+	/**
 	 * @var GKA_Root[] $processed_roots
 	 *  all parsers add what they do to this, its used to finalize the data before sending it back out
 	 */
 	public $processed_roots = [];
 
+	/**
+	 * @var array $processed_array
+	 */
+	public $processed_array = [];
+
+	/**
+	 * @var GKA_Kid|null $parent_kid
+	 */
+	public $parent_kid = null;
+
+	/**
+	 * @var ParserManager|null
+	 */
+	public $parser_master = null;
+
 	protected static $map = [
-		'versions' =>	"gokabam_api\\ParseVersion",
-		'tags' =>       "gokabam_api\\ParseTag",
-		'words' =>       "gokabam_api\\ParseWord"
+		'versions'      =>	"gokabam_api\\ParseVersion",
+		'tags'          =>  "gokabam_api\\ParseTag",
+		'words'         =>  "gokabam_api\\ParseWord",
+		'journals'      =>  "gokabam_api\\ParseJournal",
+		'api_versions'  =>  "gokabam_api\\ParseApiVersion",
+		'families'      =>  "gokabam_api\\ParseFamily",
+		'headers'      =>   "gokabam_api\\ParseHeader",
+		'elements'      =>  "gokabam_api\\ParseElement"
 	];
 
 	/**
@@ -59,24 +89,42 @@ class ParserManager {
 	 *
 	 * @param KidTalk $kid_talk
 	 * @param MYDB $mydb
-	 * @param GKA_Everything $everything
+	 * @param GKA_Everything|null $everything
 	 * @param integer $last_load_id
 	 * @param array $info
+	 * @param GKA_Kid|null $parent_kid
+	 * @param ParserManager|null $parser_master
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
 	 */
-	public function __construct($kid_talk, $mydb,$everything ,$last_load_id,$info) {
-		$this->everything = $everything;
-		$this->kid = $kid_talk;
-		$this->mydb = $mydb;
-		$this->processed_roots = [];
-		$this->last_load_id = $last_load_id;
+	public function __construct($kid_talk, $mydb,$everything ,$last_load_id,$info,$parent_kid=null,$parser_master=null) {
+		global $GokabamGoodies;
+		$this->current_version_id = $GokabamGoodies->get_current_version_id();
+		$this->everything         = $everything;
+		$this->kid_talk           = $kid_talk;
+		$this->mydb               = $mydb;
+		$this->parent_kid         = $parent_kid;
+		$this->processed_roots    = [];
+		$this->processed_array    = [];
+		$this->last_load_id       = $last_load_id;
+		$this->parser_master = $parser_master;
 		if (empty($last_load_id)) {
 			throw new ApiParseException("Expected a page load id");
 		}
 		$this->start_parse($info);
 		$this->finalize_processed_roots();
+	}
+
+	/**
+	 * @param GKA_Root $root
+	 */
+	public function add_to_finalize_roots($root) {
+		if ($this->parser_master) {
+			$this->parser_master->add_to_finalize_roots($root);
+		} else {
+			$this->processed_roots[] = $root;
+		}
 	}
 
 	/** @noinspection PhpDocRedundantThrowsInspection */
@@ -118,19 +166,27 @@ class ParserManager {
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
-	 * return void
+	 * @return void
 	 */
 	protected function start_parse($info) {
 
 		//top level entries do not have parents, so always pass null as parent in this method
 
+		//deep copy info
+		$copy_string = JsonHelper::toString($info);
+		$copy = JsonHelper::fromString($copy_string);
 		$map_keys = array_keys(self::$map);
 		foreach ($map_keys as $key) {
 			if (array_key_exists($key,$info)) {
-				$this->everything->$key = $this->call_parser($key,$info[$key],null);
+				$results =  $this->call_parser($key,$info[$key],$this->parent_kid);
+				$copy[$key] = $results;
+				if ($this->everything) {
+					$this->everything->$key = $results;
+				}
+
 			}
 		}
-
+		$this->processed_array = $copy;
 
 	}
 }

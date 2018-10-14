@@ -86,7 +86,6 @@ class JsonHelper {
         if ($out) {
             return $out;
         } else {
-            print "error in json\n";
             $oops =  json_last_error_msg();
             throw  new JsonException($oops);
         }

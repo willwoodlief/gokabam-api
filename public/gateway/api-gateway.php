@@ -471,6 +471,7 @@ api_use_case
 	 * @throws SQLException
 	 */
 	protected function start_userspace($reason = null) {
+		global $GokabamGoodies;
 		if ($this->page_load_id) {
 			return false;
 		}
@@ -484,16 +485,40 @@ api_use_case
 		$git_branch = $err_info['branch'];
 		$git_commit = $err_info['last_commit_hash'];
 		$ip_address = $err_info['caller_ip_address'];
+		$current_version_id = $GokabamGoodies->get_current_version_id();
 		$page_load_id = $this->mydb->execSQL(
 		"INSERT INTO gokabam_api_page_loads(
-			   user_id,ip,git_commit_hash,is_git_dirty,git_branch,start_micro_time,person_name,user_roles,reason)
-			  VALUES (?,?,?,?,?,?,?,?,?)",
-			['ississsss',
-				$user_id,$ip_address,$git_commit,$is_dirty,$git_branch,
-				$start,$user_name,$user_roles,$reason],
+			   user_id,
+			   ip,
+			   git_commit_hash,
+			   is_git_dirty,
+			   git_branch,
+			   start_micro_time,
+			   person_name,
+			   user_roles,
+			   reason,
+			   version_id
+			   )
+			  VALUES (?,?,?,?,?,?,?,?,?,?)",
+			[
+				'ississsssi',
+				$user_id,
+				$ip_address,
+				$git_commit,
+				$is_dirty,
+				$git_branch,
+				$start,
+				$user_name,
+				$user_roles,
+				$reason,
+				$current_version_id
+			],
 			MYDB::LAST_ID
 		);
 		$this->page_load_id = $page_load_id;
+		if (isset($GokabamGoodies) && !empty($GokabamGoodies)) {
+			$GokabamGoodies->set_page_load_id($page_load_id);
+		}
 		return true;
 	}
 

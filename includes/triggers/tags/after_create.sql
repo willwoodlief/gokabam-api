@@ -45,11 +45,6 @@ CREATE TRIGGER trigger_after_create_gokabam_api_tags
       WHERE id = local_primary_key;
     END IF;
 
-    IF local_table_name = 'gokabam_api_data_element_objects'
-    THEN
-      UPDATE gokabam_api_data_element_objects SET md5_checksum_tags = @crc
-      WHERE id = local_primary_key;
-    END IF;
 
     IF local_table_name = 'gokabam_api_data_groups'
     THEN
@@ -57,11 +52,6 @@ CREATE TRIGGER trigger_after_create_gokabam_api_tags
       WHERE id = local_primary_key;
     END IF;
 
-    IF local_table_name = 'gokabam_api_data_group_members'
-    THEN
-      UPDATE gokabam_api_data_group_members SET  md5_checksum_tags = @crc
-      WHERE id = local_primary_key;
-    END IF;
 
     IF local_table_name = 'gokabam_api_data_group_examples'
     THEN
@@ -115,6 +105,12 @@ CREATE TRIGGER trigger_after_create_gokabam_api_tags
     IF local_table_name = 'gokabam_api_use_case_parts'
     THEN
       UPDATE gokabam_api_use_case_parts SET md5_checksum_tags = @crc
+      WHERE id = local_primary_key;
+    END IF;
+
+    IF local_table_name = 'gokabam_api_use_case_part_connections'
+    THEN
+      UPDATE gokabam_api_use_case_part_connections SET md5_checksum_tags = @crc
       WHERE id = local_primary_key;
     END IF;
 

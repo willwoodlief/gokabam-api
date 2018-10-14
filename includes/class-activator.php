@@ -23,7 +23,7 @@ class Activator {
 	 * @since    1.0.0
 	 */
 
-	const DB_VERSION = 0.184;
+	const DB_VERSION = 0.186;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -32,6 +32,27 @@ class Activator {
 	 *          journaled. It also updates the parts when they are connected. Took out the old children string from the parts
 	 * .183     Added reason and error_log_id to page_loads
 	 * .184     After Update Triggers now put old page load id into the log instead of new
+	 * .185
+	          Make element structures simpler and more like the rest of the tables:
+	            We are only storing element relationships, and not doing calculations on them while in the database
+	            The extra complexity is making the code harder and is not necessary for any app functions,
+	            and the logic of these extra tables is not reflected or needed in the code.
+				The changes below make things simpler:
+	           * Remove the tables: gokabam_api_data_group_members, group membership now in the elements class,
+	           * Remove gokabam_api_data_element_objects, parent element id and display rank is now in the elements class
+	           * gokabam_api_data_elements (the elements class) adds the columns: group_id, parent_element_id ,radio_group, is_optional and rank
+	           * gokabam_api_change_log removes its_element_objects and is_group_members
+	           * md5_checksum_group_members and md5_checksum_element_objects removed from all tables and triggers
+	           * add md5_checksum_elements to the elements table
+	           * add md5_checksum_journals to all regular tables, add is_journals to gokabam_api_change_log
+	           * add  md5_checksum_words (as well as journals and tags) to versions table and update its trigger to process the changes and make sure
+	           * change is_journals to all the tables
+	           * remove  gokabam_api_history table (out of scope of project)
+	           * add original_page_load_id to all regular tables, add version_id to page_load table , remove version_id from journals
+	                This adds a double fk into the version and page load tables, but on different fields
+			   * took out unused value header_value_regex from headers
+
+
 	*/
 
 
@@ -46,7 +67,7 @@ class Activator {
 		$b_safety_swith = false; // turn to true while working on this
 		if ($b_safety_swith) return ;
 
-		//check to see if any tables are missing
+		//make it update
 		$b_force_create = false;
 
 		$installed_ver = floatval( get_option( "_".strtolower( PLUGIN_NAME) ."_db_version" ));
@@ -85,27 +106,6 @@ class Activator {
 
 
 
-###########################################################################################################################################
-/*
- *              gokabam_api_history
- *
- *
- */
-###########################################################################################################################################
-
-
-			//history
-			$sql = "CREATE TABLE `gokabam_api_history` (
-              id int NOT NULL AUTO_INCREMENT,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              reference_name varchar(255) default null,	
-              stored_json mediumtext,
-              PRIMARY KEY  (id),
-              KEY created_at_key (created_at)
-              ) $charset_collate;";
-
-			dbDelta( $sql );
 
 ###########################################################################################################################################
 /*
@@ -119,6 +119,7 @@ class Activator {
 			$sql = "CREATE TABLE `gokabam_api_page_loads` (
               id int NOT NULL AUTO_INCREMENT,
               user_id int default null,
+              version_id int default null comment 'this is filled in with the most current version id',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               start_micro_time double default null comment 'php micro time',
               stop_micro_time double default null comment 'can be filled in afterwards',
@@ -147,6 +148,8 @@ class Activator {
 			}
 
 
+
+
 ###########################################################################################################################################
 /*
  *              gokabam_api_change_log
@@ -162,9 +165,8 @@ class Activator {
 					page_load_id int default null,
 					is_tags tinyint default null comment 'togged if dependent tags changed',
 					is_words tinyint default null comment 'togged if dependent words changed',
-					is_element_objects tinyint default null comment 'togged if dependent objects changed',
+					is_journals tinyint default null comment 'togged if dependent journals changed',
 					is_elements tinyint default null comment 'togged if dependent elements changed',
-					is_group_members tinyint default null comment 'togged if dependent members changed',
 					is_groups tinyint default null comment 'togged if dependent groups changed',
 					is_examples tinyint default null comment 'togged if dependent examples changed',
 					is_families tinyint default null comment 'togged if dependent changed',
@@ -243,6 +245,7 @@ class Activator {
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
               target_object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -255,6 +258,7 @@ class Activator {
               PRIMARY KEY  (id),
               UNIQUE KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY iso_639_1_language_code_key (iso_639_1_language_code),
               KEY word_code_enum_key (word_code_enum),
@@ -279,6 +283,11 @@ class Activator {
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_words_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_words ADD CONSTRAINT fk_words_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 ###########################################################################################################################################
 /*
  *              gokabam_api_versions
@@ -291,6 +300,7 @@ class Activator {
 			$sql = "CREATE TABLE `gokabam_api_versions` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -301,8 +311,10 @@ class Activator {
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this ',
               PRIMARY KEY  (id),
               UNIQUE KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               UNIQUE KEY version_key (version)
               ) $charset_collate;";
@@ -318,6 +330,19 @@ class Activator {
 			if (!$mydb->foreignKeyExists('fk_versions_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_versions ADD CONSTRAINT fk_versions_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_versions_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_versions ADD CONSTRAINT fk_versions_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+
+
+			//from the page load table earlier, need the versions table defined first
+			if (!$mydb->foreignKeyExists('fk_page_load_has_version_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_page_loads ADD CONSTRAINT fk_page_load_has_version_id
+										FOREIGN KEY (version_id) REFERENCES gokabam_api_versions(id);' );
 			}
 
 
@@ -338,21 +363,23 @@ class Activator {
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
               target_object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
-              version_id int not null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
+              md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this element',
               entry mediumtext DEFAULT NULL comment 'this is not meant to be multilingual so stores here',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
-              KEY created_at_key (created_at),
-              KEY version_id_key (version_id)
+              KEY created_at_key (created_at)
               ) $charset_collate;";
 
 			dbDelta( $sql );
@@ -378,10 +405,12 @@ class Activator {
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_journals_has_version_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_journals ADD CONSTRAINT fk_journals_has_version_id 
-										FOREIGN KEY (version_id) REFERENCES gokabam_api_versions(id);' );
+			if (!$mydb->foreignKeyExists('fk_journals_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_journals ADD CONSTRAINT fk_journals_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
+
+
 
 
 
@@ -423,16 +452,22 @@ if is parent, can never be a child
 and if child, can never be a parent
 Note: if need nesting of equivalent things over and under then make a duplicate
 
+ group_id, parent_element_id ,radio_group, is_optional and rank
  */
 ###########################################################################################################################################
 			$sql = "CREATE TABLE `gokabam_api_data_elements` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              group_id int default NULL comment 'this is used when the element is a top level element',
+              parent_element_id int default NULL comment 'this is used when the element is not a top level element, but a child of another element',
+              initial_page_load_id int default null,
               last_page_load_id int default null,
-              is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
+              is_deleted tinyint DEFAULT 0 not null,
               is_nullable tinyint DEFAULT 0 not null comment 'any type can use this',
+              is_optional tinyint DEFAULT 0 not null comment 'if this element can be skipped in the array type or object',	
+              rank int default 0 NOT NULL comment 'how this is ordered in the viewing',
               data_min int default null comment 'if integer or number means min value, if array means min length, if string means min size',
               data_max int default null comment 'if integer or number means min value, if array means min length, if string means min size',
               data_multiple float default null comment 'only if numeric data, the data should only be multiples of this', 
@@ -441,18 +476,24 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               format_enum varchar(10) not null comment 'date|date-time|password|byte|binary|email|uri|float|double|int32|int8|int64|use_pattern',
               pattern varchar(255) default null comment 'if this is used, then the string representation has to fit this',
               data_type_name varchar(255) not null comment 'single word type',
+              radio_group varchar(255) default null comment 'anything in the name group can only have one thing picked',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
-              md5_checksum_element_objects varchar(255) default null comment 'checksum for all objects in this element',
+              md5_checksum_elements varchar(255) default null comment 'checksum for all child elements in this element',
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this element',
               default_value text default null comment 'a single default value is optional',
               enum_values mediumtext default null comment 'if this is filled out, then element is a string enumeration',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY group_id_key (group_id),
+              KEY parent_element_id_key (parent_element_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY base_type_enum_key (base_type_enum),
-              KEY format_enum_key (format_enum)	
+              KEY format_enum_key (format_enum),
+              KEY rank_key (rank)	
               ) $charset_collate;";
 
 			dbDelta( $sql );
@@ -468,71 +509,24 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
-
-
-
-
-###########################################################################################################################################
-/*
-*              gokabam_api_data_element_objects
-*
-
-*/
-###########################################################################################################################################
-
-			$sql = "CREATE TABLE `gokabam_api_data_element_objects` (
-              id int NOT NULL AUTO_INCREMENT,
-              object_id int not null,
-              target_data_element_id int NOT NULL,
-              description_data_element_id  int NOT NULL,
-              last_page_load_id int default null,
-              rank int default 0 NOT NULL comment 'how this is ordered in the viewing',
-              is_optional tinyint DEFAULT 0 not null comment 'if this element can be skipped in the array type or object',	
-              is_deleted tinyint DEFAULT 0 not null,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              radio_group varchar(255) default null comment 'anything in the name group can only have one thing picked',
-              md5_checksum varchar(255) default null,
-              md5_checksum_tags varchar(255) default null,
-              md5_checksum_words varchar(255) default null,
-              PRIMARY KEY  (id),
-              KEY object_id_key (object_id),
-              KEY last_page_load_id_key (last_page_load_id),
-              KEY is_deleted_key (is_deleted),
-              KEY target_data_element_id_key (target_data_element_id),
-              KEY description_data_element_id_key (description_data_element_id),
-              KEY is_optional_key (is_optional),
-              KEY rank_key (rank)
-              ) $charset_collate;";
-
-			dbDelta( $sql );
-
-
-
-
-			if (!$mydb->foreignKeyExists('fk_data_element_objects_has_object_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_element_objects ADD CONSTRAINT fk_data_element_objects_has_object_id
- 										FOREIGN KEY (object_id) REFERENCES gokabam_api_objects(id);' );
+			if (!$mydb->foreignKeyExists('fk_data_elements_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_data_element_objects_has_page_load_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_element_objects ADD CONSTRAINT fk_data_element_objects_has_page_load_id 
-										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			if (!$mydb->foreignKeyExists('fk_data_elements_has_data_group_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_data_group_id 
+										FOREIGN KEY (group_id) REFERENCES gokabam_api_data_groups(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_data_element_objects_has_target_data_element_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_element_objects ADD CONSTRAINT fk_data_element_objects_has_target_data_element_id 
-										FOREIGN KEY (target_data_element_id) REFERENCES gokabam_api_data_elements(id);' );
-			}
-
-			if (!$mydb->foreignKeyExists('fk_data_element_objects_has_description_data_element_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_element_objects ADD CONSTRAINT fk_data_element_objects_has_description_data_element_id 
-										FOREIGN KEY (description_data_element_id) REFERENCES gokabam_api_data_elements(id);' );
+			if (!$mydb->foreignKeyExists('fk_data_elements_has_parent_element_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_parent_element_id 
+										FOREIGN KEY (parent_element_id) REFERENCES gokabam_api_data_elements(id);' );
 			}
 
 
 
-			//triggers are below the data groups
+
 
 
 
@@ -548,6 +542,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_data_groups` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -555,12 +550,13 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               group_type_enum varchar(20) default null comment 'database_table,regular',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
-              md5_checksum_group_members varchar(255) default null ,
               md5_checksum_elements varchar(255) default null comment 'checksum of the element it contains',
               md5_checksum_examples varchar(255) default null ,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY group_type_enum_key (group_type_enum)
@@ -578,63 +574,14 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
-
-
-
-###########################################################################################################################################
-/*
-*              gokabam_api_data_group_members
-*
-*
-*/
-###########################################################################################################################################
-
-
-			$sql = "CREATE TABLE `gokabam_api_data_group_members` (
-              id int NOT NULL AUTO_INCREMENT,
-              object_id int not null,
-              last_page_load_id int default null,
-              is_deleted tinyint DEFAULT 0 not null,
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              group_id int not null,
-              data_element_id int not null,
-              rank int not null default 0,
-              md5_checksum varchar(255) default null,
-              md5_checksum_tags varchar(255) default null,
-              md5_checksum_words varchar(255) default null,
-              PRIMARY KEY  (id),
-              KEY object_id_key (object_id),
-              KEY last_page_load_id_key (last_page_load_id),
-              KEY is_deleted_key (is_deleted),	
-              KEY group_id_key (group_id),
-              KEY data_element_id_key (data_element_id),
-              KEY rank_key (rank)
-              ) $charset_collate;";
-
-			dbDelta( $sql );
-
-
-			if (!$mydb->foreignKeyExists('fk_data_group_members_has_object_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_members ADD CONSTRAINT fk_data_group_members_has_object_id
- 										FOREIGN KEY (object_id) REFERENCES gokabam_api_objects(id);' );
-			}
-
-			if (!$mydb->foreignKeyExists('fk_data_group_members_has_page_load_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_members ADD CONSTRAINT fk_data_group_members_has_page_load_id 
-										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
-			}
-
-			if (!$mydb->foreignKeyExists('fk_data_group_members_has_group_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_members ADD CONSTRAINT fk_data_group_members_has_group_id 
-										FOREIGN KEY (group_id) REFERENCES gokabam_api_data_groups(id);' );
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
-			if (!$mydb->foreignKeyExists('fk_data_group_members_has_in_element_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_members ADD CONSTRAINT fk_data_group_members_has_in_element_id 
-										FOREIGN KEY (data_element_id) REFERENCES gokabam_api_data_elements(id);' );
-			}
+
+
 
 
 
@@ -650,6 +597,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_data_group_examples` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -659,8 +607,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY group_id_key (group_id)
@@ -677,6 +627,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_data_group_examples_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_examples ADD CONSTRAINT fk_data_group_examples_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_group_examples_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_examples ADD CONSTRAINT fk_data_group_examples_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_data_group_examples_has_group_id')) {
@@ -700,6 +655,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_api_versions` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -710,8 +666,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum_families varchar(255) default null,
               md5_checksum_headers varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               UNIQUE KEY api_version_key (api_version)
               ) $charset_collate;";
@@ -729,6 +687,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_api_versions_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_api_versions ADD CONSTRAINT fk_api_versions_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 
 ###########################################################################################################################################
 /*
@@ -744,6 +707,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               id int NOT NULL AUTO_INCREMENT,
               api_version_id int not null,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -754,9 +718,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum_apis varchar(255) default null,
               md5_checksum_headers varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY api_version_key (api_version_id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
 			  KEY hard_code_family_name_key (hard_code_family_name)	
@@ -773,6 +739,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_family_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_family ADD CONSTRAINT fk_api_family_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_family_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_family ADD CONSTRAINT fk_api_family_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -795,6 +766,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_apis` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               api_family_id int not null,
               is_deleted tinyint DEFAULT 0 not null,
@@ -808,8 +780,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum_outputs varchar(255) default null,
               md5_checksum_headers varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY api_family_id_key (api_family_id),
@@ -826,6 +800,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_apis_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_apis ADD CONSTRAINT fk_apis_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_apis_has_intial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_apis ADD CONSTRAINT fk_apis_has_intial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -849,13 +828,14 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_inputs` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               api_id int not null comment '',
               in_data_group_id int default null comment 'the data maps to what is defined in this',
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              is_required tinyint DEFAULT 0 not null comment 'not supported right now, all inputs are required',
+              is_required tinyint DEFAULT 0 not null comment 'if this data is required, or is it optional ?',
               origin_enum varchar(255) not null comment 'url,query,body,header',
               source_name varchar(255) default null comment 'if header then name of header, if query name of key, if url then pattern in url, if body and not null then top level json key', 
               source_body varchar(255) default null comment 'not supported right now, everything is assumed json',
@@ -863,8 +843,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
               KEY in_data_group_id_key (in_data_group_id),
@@ -885,6 +867,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_inputs_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_inputs ADD CONSTRAINT fk_api_inputs_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_inputs_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_inputs ADD CONSTRAINT fk_api_inputs_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_inputs_has_api_id')) {
@@ -910,6 +897,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_outputs` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -922,8 +910,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum_groups varchar(255) default null,
               md5_checksum_headers varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
               KEY out_data_group_id_key (out_data_group_id),
@@ -942,6 +932,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_outputs_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_outputs ADD CONSTRAINT fk_api_outputs_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_outputs_has_init_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_outputs ADD CONSTRAINT fk_api_outputs_has_init_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_outputs_has_api_id')) {
@@ -967,6 +962,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_output_headers` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -978,13 +974,14 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               out_data_group_id int default null comment 'for non static headers',
               header_name varchar(255) not null comment 'the name of the header',
               header_value text not null comment 'the contents/value of the header can have regex groups with names that match the out data group',
-              header_value_regex text default null comment 'not supported, the value has the placeholders',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
               KEY out_data_group_id_key (out_data_group_id),
@@ -1005,6 +1002,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_output_headers ADD CONSTRAINT fk_api_output_headers_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_output_headers ADD CONSTRAINT fk_api_output_headers_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_api_id')) {
@@ -1047,6 +1049,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			$sql = "CREATE TABLE `gokabam_api_use_cases` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1059,8 +1062,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               md5_checksum_apis varchar(255) default null comment 'changes of api it belongs to',
               md5_checksum_families varchar(255) default null comment 'changes of family it belongs to',
               md5_checksum_words varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_version_id_key (belongs_to_api_version_id),
               KEY api_id_key (belongs_to_api_id),
@@ -1078,6 +1083,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_use_case_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_cases ADD CONSTRAINT fk_api_use_case_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_cases ADD CONSTRAINT fk_api_use_case_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_has_api_id')) {
@@ -1224,6 +1234,7 @@ table structure for all types
 			$sql = "CREATE TABLE `gokabam_api_use_case_parts` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               use_case_id int not null comment 'use case that this belongs to',
               in_data_group_id int default null comment 'used by any type',
@@ -1240,8 +1251,10 @@ table structure for all types
               md5_checksum_words varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_use_case_connection varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY user_case_id_key (use_case_id) ,	
               KEY in_data_group_id_key (in_data_group_id), 
@@ -1262,6 +1275,11 @@ table structure for all types
 			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_api_use_case_part_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_api_use_case_part_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_api_id')) {
@@ -1296,6 +1314,7 @@ table structure for all types
 			$sql = "CREATE TABLE `gokabam_api_use_case_part_connections` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               parent_use_case_part_id int not null comment 'use case part which is the parent',
               child_use_case_part_id int not null comment 'use case part which is the child, both of these must be in the same use case',
@@ -1306,8 +1325,10 @@ table structure for all types
               md5_checksum varchar(255) default null,
               md5_checksum_words varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY parent_use_case_part_id_key (parent_use_case_part_id) ,	
               KEY child_use_case_part_id_key (child_use_case_part_id), 
@@ -1327,6 +1348,16 @@ table structure for all types
 										FOREIGN KEY (child_use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk_api_use_case_parts_connection_has_page_load_id 
+										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk_api_use_case_parts_connection_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 
 ###########################################################################################################################################
 /*
@@ -1340,6 +1371,7 @@ table structure for all types
 			$sql = "CREATE TABLE `gokabam_api_use_case_parts_sql` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               use_case_part_id int not null comment 'use case that this belongs to',
               sql_part_enum varchar(10) not null comment 'select,from,joins,where,limit,offset,ordering',
@@ -1353,8 +1385,10 @@ table structure for all types
               md5_checksum_tags varchar(255) default null,
               md5_checksum_words varchar(255) default null comment 'this includes the operation description',
               md5_checksum_elements varchar(255) default null,
+              md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY use_case_part_id_key (use_case_part_id) ,
               KEY sql_part_enum_key (sql_part_enum) ,	
@@ -1376,6 +1410,11 @@ table structure for all types
 			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_sql_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts_sql ADD CONSTRAINT fk_api_use_case_parts_sql_has_page_load_id 
 										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_sql_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts_sql ADD CONSTRAINT fk_api_use_case_parts_sql_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_sql_has_use_case_part_id')) {
@@ -1486,6 +1525,7 @@ data_group_examples
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
               target_object_id int NOT NULL comment 'tags this object',
+              initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null comment 'because deleted tags still around must allow for duplicates',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1496,6 +1536,7 @@ data_group_examples
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
+              KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY tag_label_key (tag_label)
               ) $charset_collate;";
@@ -1512,6 +1553,16 @@ data_group_examples
 			if (!$mydb->foreignKeyExists('fk_tags_has_object_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_tags ADD CONSTRAINT fk_tags_has_object_id 
 										FOREIGN KEY (object_id) REFERENCES gokabam_api_objects(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_tags_has_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_tags ADD CONSTRAINT fk_tags_has_page_load_id 
+										FOREIGN KEY (last_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_tags_has_initial_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_tags ADD CONSTRAINT fk_tags_has_initial_page_load_id 
+										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 

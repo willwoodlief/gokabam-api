@@ -1,0 +1,406 @@
+<?php
+namespace gokabam_api;
+
+
+require_once( PLUGIN_PATH . '/lib/Input.php' );
+require_once( PLUGIN_PATH .'/lib/ErrorLogger.php' );
+require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
+
+
+class ParseHeader {
+
+	protected static  $keys_to_check = ['kid','parent','text','delete','value'];
+	protected static  $reference_table = 'gokabam_api_output_headers';
+
+	/**
+	 * @param ParserManager $manager
+	 * @param mixed $input
+	 * @param GKA_Kid|null $parent
+	 * @return GKA_Header[]
+	 * @throws ApiParseException
+	 * @throws JsonException
+	 * @throws SQLException
+	 */
+	static function parse($manager, $input, $parent) {
+
+
+		if (!is_array($input)) {
+			return [];
+		}
+
+		/**
+		 * @var GKA_Header[] $ret
+		 */
+		$ret = [];
+
+		foreach ($input as $node) {
+			$beer = self::convert($manager,$node,$parent);
+			$beer = self::manage($manager,$beer);
+			//if this were a type which had children, then do each child array found in node by passing it to the
+			// correct parser , along with node, and putting the returns on the member in beer
+
+			$manager->add_to_finalize_roots($beer);
+			//add it to the things going out, the callee may not be finished with
+			// it, but this is going to be processed after they are done
+
+
+			//node may have other things to process
+			$sub_parser_manager = new ParserManager(
+				$manager->kid_talk,
+				$manager->mydb,
+				null,
+				$manager->last_load_id,
+				$node,
+				$beer->kid,
+				$manager
+			);
+			//when this returns all the sub processing is done, and the children are created
+			foreach ($sub_parser_manager->processed_array as $key => $top_node) {
+				//if beer has that property, and its  empty, then move it over
+				if (property_exists($beer, $key)) {
+					if ( is_array($beer->$key) && empty($beer->$key) && is_array($top_node) && (!empty($top_node)) ) {
+						$beer->$key = $top_node;
+					}
+				}
+			}
+
+
+			//todo what to do when this is just a kid of a group to use, and not a definition?
+
+			//todo (in other code) allow elements to be copied by just a kid
+
+			//check to make sure $beer has only one data_groups
+			if (sizeof($beer->data_groups) !== 1) {
+				$real_size = sizeof($beer->data_groups);
+				throw new ApiParseException("A header must have exactly one data group set. {$beer->kid->kid} has $real_size");
+			}
+
+
+			
+			//update the header to set the data group id
+			$manager->mydb->execSQL("UPDATE gokabam_api_output_headers SET out_data_group_id = ? WHERE id = ?",
+				['ii',$beer->data_groups[0]->kid->primary_id],
+				MYDB::ROWS_AFFECTED,
+				'@sey@ParseHeader::parse->update(out_data_group_id)'
+				);
+			
+
+
+			$ret[] = $beer;
+		}
+
+
+		return $ret;
+
+	}
+
+	/**
+	 * @param ParserManager $manager
+	 * @param array $node
+	 * @param GKA_Kid|null $parent
+	 * @return GKA_Header
+	 * @throws ApiParseException
+	 * @throws JsonException
+	 * @throws SQLException
+	 */
+	protected static function convert($manager, $node,$parent) {
+
+		$classname = get_called_class();
+		$db_thing = new GKA_Header();
+		foreach (self::$keys_to_check as $what) {
+			if (!array_key_exists($what,$node)) {
+				$problem = JsonHelper::toString($node);
+				throw new ApiParseException("missing key in input: $classname cannot find $what in $problem");
+			}
+
+			if (is_string($node[$what])) {
+				$node[$what] = trim($node[$what]);
+			}
+
+			if( is_string($node[$what]) && !is_numeric($node[$what]) && empty($node[$what])) {$node[$what]=null;}
+
+			$db_thing->$what = $node[$what];
+		}
+		if (is_null($db_thing->delete)) {$db_thing->delete = 0;}
+
+		if (empty($db_thing->parent)  && !$parent ) {
+			throw new ApiParseException("Parent needs to be filled in for " . $db_thing->kid);
+		}
+		//copy over pass through
+		if (array_key_exists('pass_through',$node)) {
+			$db_thing->pass_through = $node['pass_through'];
+		}
+
+		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
+
+		if (empty($db_thing->parent)) {
+			$db_thing->parent = $parent;
+		}
+
+		if ( $db_thing->parent &&
+		     is_object($db_thing->parent) &&
+		     ( strcmp(get_class($db_thing->parent),"gokabam_api\GKA_Kid") === 0 )
+		){
+			// do not set parent to anything else
+		} else {
+			$db_thing->parent = $manager->kid_talk->convert_parent_string_kid( $db_thing->parent, $db_thing->kid, self::$reference_table );
+		}
+
+		switch ($db_thing->parent->table) {
+			case 'gokabam_api_api_versions' :
+			case 'gokabam_api_family' :
+			case 'gokabam_api_apis' :
+			case 'gokabam_api_outputs' : {
+				break;
+			}
+			default:{
+				throw new ApiParseException("parent of a header must be an api version|family|api|output");
+			}
+		}
+
+		return $db_thing;
+
+	}
+
+	/**
+	 * creates this if the kid is empty, or updates it if not empty
+	 * @param ParserManager $manager
+	 * @param GKA_Header $db_thing
+	 *
+	 * @return GKA_Header
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	protected static function manage($manager, $db_thing) {
+
+		$last_page_load_id = $manager->last_load_id;
+		if (empty($db_thing->kid)) {
+			//check delete flag to see if something messed up
+			if ($db_thing->delete) {
+				throw new ApiParseException("Cannot put a delete flag on a new object, the kid was empty");
+			}
+			switch ($db_thing->parent->table) {
+				case 'gokabam_api_api_versions': {
+
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_output_headers(
+						api_version_id,
+						last_page_load_id,
+						initial_page_load_id,
+						header_name,
+						header_value
+						) 
+						VALUES(?,?,?,?,?)",
+						[
+							'iiiss',
+							$db_thing->parent->primary_id,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseHeader::manage->insert(apiversion)'
+					);
+					break;
+				}
+				case 'gokabam_api_family': {
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_output_headers(
+						api_family_id,
+						last_page_load_id,
+						initial_page_load_id,
+						header_name,
+						header_value
+						) 
+						VALUES(?,?,?,?,?)",
+						[
+							'iiiss',
+							$db_thing->parent->primary_id,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseHeader::manage->insert(api_family_id)'
+					);
+					break;
+				}
+				case 'gokabam_api_apis': {
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_output_headers(
+						api_id,
+						last_page_load_id,
+						initial_page_load_id,
+						header_name,
+						header_value
+						) 
+						VALUES(?,?,?,?,?)",
+						[
+							'iiiss',
+							$db_thing->parent->primary_id,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseHeader::manage->insert(api_id)'
+					);
+					break;
+				}
+				case 'gokabam_api_outputs': {
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_output_headers(
+						api_output_id,
+						last_page_load_id,
+						initial_page_load_id,
+						header_name,
+						header_value
+						) 
+						VALUES(?,?,?,?,?)",
+						[
+							'iiiss',
+							$db_thing->parent->primary_id,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseHeader::manage->insert(api_output_id)'
+					);
+					break;
+				}
+				default: {
+					$code = KidTalk::get_code_for_table($db_thing->parent->table);
+					throw new ApiParseException("parent for a header needs to be apiversion,family,api,output only [$code] was given");
+				}
+			}
+			
+
+			$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid(
+					$db_thing->kid,self::$reference_table,$new_id,null);
+
+		} else {
+			//update this
+			$id = $db_thing->kid->primary_id;
+
+			if (empty($id)) {
+				throw new ApiParseException("Internal code did not generate an id for update");
+			}
+			switch ($db_thing->parent->table) {
+				case 'gokabam_api_api_versions': {
+
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_output_headers SET 
+								api_version_id = ?,
+								is_deleted = ?,
+								last_page_load_id = ? ,
+								header_name = ?,
+								header_value = ?
+							   WHERE id = ? ",
+						[
+							'iissi',
+							$db_thing->parent->primary_id,
+							$db_thing->delete,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseHeader::manage->update(apiversion)'
+					);
+					
+					
+					break;
+				}
+				case 'gokabam_api_family': {
+
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_output_headers SET 
+								api_family_id = ?,
+								is_deleted = ?,
+								last_page_load_id = ? ,
+								header_name = ?,
+								header_value = ?
+							   WHERE id = ? ",
+						[
+							'iissi',
+							$db_thing->parent->primary_id,
+							$db_thing->delete,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseHeader::manage->update(api_family_id)'
+					);
+					
+					
+					break;
+				}
+				case 'gokabam_api_apis': {
+
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_output_headers SET 
+								api_id = ?,
+								is_deleted = ?,
+								last_page_load_id = ? ,
+								header_name = ?,
+								header_value = ? 
+							   WHERE id = ? ",
+						[
+							'iissi',
+							$db_thing->parent->primary_id,
+							$db_thing->delete,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseHeader::manage->update(api_id)'
+					);
+					
+					break;
+				}
+				case 'gokabam_api_outputs': {
+
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_output_headers SET 
+								api_output_id = ?,
+								is_deleted = ?,
+								last_page_load_id = ? ,
+								header_name = ?,
+								header_value = ? 
+							   WHERE id = ? ",
+						[
+							'iissi',
+							$db_thing->parent->primary_id,
+							$db_thing->delete,
+							$last_page_load_id,
+							$db_thing->name,
+							$db_thing->value,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseHeader::manage->update(api_output_id)'
+					);
+					
+					break;
+				}
+				default: {
+					$code = KidTalk::get_code_for_table($db_thing->parent->table);
+					throw new ApiParseException("parent for a header needs to be apiversion,family,api,output only [$code] was given");
+				}
+			}
+			
+		}
+		$db_thing->status = true; //right now we do not do much with status
+		return $db_thing;
+	}
+}

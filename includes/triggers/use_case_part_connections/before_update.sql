@@ -33,7 +33,8 @@ CREATE TRIGGER trigger_before_update_gokabam_api_use_case_part_connections
             coalesce(NEW.parent_use_case_part_id,' '),
             coalesce(NEW.child_use_case_part_id,' '),
             coalesce(NEW.rank,' '),
-            coalesce(NEW.is_deleted,' ')
+            coalesce(NEW.is_deleted,' '),
+            coalesce(NEW.md5_checksum_journals,' ')
         )
     );
   END

@@ -27,7 +27,46 @@
       "status": true,
       "delete": "0",
       "parent": "",
-      "pass_through": "i love it"
+      "pass_through": "i love it",
+      "words" : [
+            {
+              "language": "en",
+              "type": "blurb",
+              "text": "Talks about the version",
+              "kid": null,
+              "status": true,
+              "delete": "0",
+              "parent": null,
+              "pass_through": "blubie talks"
+          },
+            {
+              "language": "01",
+              "type": "data",
+              "text": "random data",
+              "kid": null,
+              "status": true,
+              "delete": "0",
+              "parent": null,
+              "pass_through": "blubie talks"
+          }
+      ],
+      "journals": [{
+        "text": "a journal entry about commit xxx222 ",
+        "kid": null,
+        "status": true,
+        "delete": "0",
+        "parent": null,
+        "pass_through": "journal blues",
+        "tags" :[{
+          "text": "cows",
+          "value": "a rairy take",
+          "kid": null,
+          "status": true,
+          "delete": "0",
+          "parent": null,
+          "pass_through": "a tag of a child"
+        }]
+      }]
     }
   ],
   "journals": [],

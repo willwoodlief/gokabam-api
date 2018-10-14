@@ -18,6 +18,13 @@ CREATE TRIGGER trigger_after_update_gokabam_api_inputs
       SET @has_words_changed := 0;
     END IF;
 
+    IF (NEW.md5_checksum_journals <> OLD.md5_checksum_journals) OR (NEW.md5_checksum_journals IS NULL AND OLD.md5_checksum_journals IS NOT NULL) OR (NEW.md5_checksum_journals IS NOT NULL AND OLD.md5_checksum_journals IS  NULL)
+    THEN
+      SET @has_journals_changed := 1;
+    ELSE
+      SET @has_journals_changed := 0;
+    END IF;
+
     IF (NEW.md5_checksum_groups <> OLD.md5_checksum_groups) OR (NEW.md5_checksum_groups IS NULL AND OLD.md5_checksum_groups IS NOT NULL) OR (NEW.md5_checksum_groups IS NOT NULL AND OLD.md5_checksum_groups IS  NULL)
     THEN
       SET @has_groups_changed := 1;
@@ -26,11 +33,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_inputs
     END IF;
 
     if NEW.is_deleted = 0 THEN
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_groups_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups,is_journals)
+      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_groups_changed,@has_journals_changed);
     ELSE
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_groups_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_groups,is_journals)
+      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_groups_changed,@has_journals_changed);
     END IF;
 
 

@@ -53,6 +53,24 @@ class KidTalk {
 	];
 
 	/**
+	 * @const string HASH_ALPHABET
+	 */
+	const HASH_ALPHABET = 'abcdefghijkmnpqrstwxyzABCDEFGHJKLMNPRSTWXYZ123456789';
+
+
+	/**
+	 * @const string HASH_SALT
+	 */
+	const HASH_SALT = 'gokabam';
+
+	/**
+	 * @const integer HASH_LENGTH
+	 */
+	const HASH_LENGTH = 6;
+
+
+
+	/**
 	 * @var Hashids|null $hashids
 	 */
 	protected $hashids = null;
@@ -67,7 +85,29 @@ class KidTalk {
 		$this->mydb = $mydb;
 		//not a security tool, does not matter if salt is public
 		// we hash the ids because its cool
-		$this->hashids = new Hashids($salt = 'gokabam', 6,  'abcdefghijkmnpqrstwxyzABCDEFGHJKLMNPRSTWXYZ123456789');
+		$this->hashids = new Hashids(
+			self::HASH_SALT,
+			self::HASH_LENGTH,
+			self::HASH_ALPHABET
+		);
+	}
+
+	/**
+	 * @param string $table
+	 *
+	 * @return string
+	 * @throws ApiParseException
+	 */
+	public static function get_code_for_table($table) {
+		$table = trim($table);
+		if ($table) {
+			if (!array_key_exists($table,self::$table_to_key_map)) {
+				throw  new ApiParseException("Unexpected table of [$table]");
+			}
+			return self::$table_to_key_map[$table];
+		} else {
+			throw  new ApiParseException("empty table name when trying to get code for table");
+		}
 	}
 
 	/**
@@ -266,15 +306,16 @@ class KidTalk {
 	/**
 	 *
 	 * This will do a one way conversion with the only checking is the code in the input string
+	 * This can be used for regular string to kid conversion also
 	 * @param string|null $string_kid
-	 * @param GKA_Kid $child
-	 * @param string $child_table_type
+	 * @param GKA_Kid|null $child - for error messages only
+	 * @param string|null $child_table_type - for error messages only
 	 *
 	 * @return GKA_Kid
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
-	public function convert_parent_string_kid($string_kid,$child,$child_table_type) {
+	public function convert_parent_string_kid($string_kid,$child = null,$child_table_type=null) {
 
 		$child_table_prefix = '';
 		if ($child_table_type) {

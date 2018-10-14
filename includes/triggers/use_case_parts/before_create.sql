@@ -42,7 +42,8 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts
             coalesce(NEW.md5_checksum_groups,' '),
             coalesce(NEW.md5_checksum_apis,' '),
             coalesce(NEW.md5_checksum_sql_parts),
-            coalesce(NEW.md5_checksum_use_case_connection,' ')
+            coalesce(NEW.md5_checksum_use_case_connection,' '),
+            coalesce(NEW.md5_checksum_journals,' ')
         )
     );
   END

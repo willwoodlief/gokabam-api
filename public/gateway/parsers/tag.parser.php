@@ -15,15 +15,14 @@ class ParseTag {
 	/**
 	 * @param ParserManager $manager
 	 * @param mixed $input
-	 * @param null $parent
+	 * @param GKA_Kid|null $parent
 	 * @return GKA_TAG[]
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
 	 */
-	static function parse($manager, $input, $parent = null) {
+	static function parse($manager, $input, $parent) {
 
-		ErrorLogger::unused_params($parent);
 
 		if (!is_array($input)) {
 			return [];
@@ -35,14 +34,36 @@ class ParseTag {
 		$ret = [];
 
 		foreach ($input as $node) {
-			$beer = self::convert($manager,$node);
+			$beer = self::convert($manager,$node,$parent);
 			$beer = self::manage($manager,$beer);
 			//if this were a type which had children, then do each child array found in node by passing it to the
 			// correct parser , along with node, and putting the returns on the member in beer
 
-			$manager->processed_roots[] = $beer;
+			$manager->add_to_finalize_roots($beer);
 			//add it to the things going out, the callee may not be finished with
 			// it, but this is going to be processed after they are done
+
+
+			//node may have other things to process
+			$sub_parser_manager = new ParserManager(
+				$manager->kid_talk,
+				$manager->mydb,
+				null,
+				$manager->last_load_id,
+				$node,
+				$beer->kid,
+				$manager
+			);
+			//when this returns all the sub processing is done, and the children are created
+			foreach ($sub_parser_manager->processed_array as $key => $top_node) {
+				//if beer has that property, and its  empty, then move it over
+				if (property_exists($beer, $key)) {
+					if ( is_array($beer->$key) && empty($beer->$key) && is_array($top_node) && (!empty($top_node)) ) {
+						$beer->$key = $top_node;
+					}
+				}
+			}
+
 			$ret[] = $beer;
 		}
 
@@ -54,13 +75,13 @@ class ParseTag {
 	/**
 	 * @param ParserManager $manager
 	 * @param array $node
-	 *
+	 * @param GKA_Kid|null $parent
 	 * @return GKA_TAG
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
 	 */
-	protected static function convert($manager, $node) {
+	protected static function convert($manager, $node,$parent) {
 
 		$classname = get_called_class();
 		$db_thing = new GKA_TAG();
@@ -80,7 +101,7 @@ class ParseTag {
 		}
 		if (is_null($db_thing->delete)) {$db_thing->delete = 0;}
 
-		if (empty($db_thing->parent)) {
+		if (empty($db_thing->parent)  && !$parent ) {
 			throw new ApiParseException("Parent needs to be filled in for " . $db_thing->kid);
 		}
 		//copy over pass through
@@ -88,10 +109,20 @@ class ParseTag {
 			$db_thing->pass_through = $node['pass_through'];
 		}
 
-		$db_thing->kid = $manager->kid->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
+		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
 
-		$db_thing->parent = $manager->kid->convert_parent_string_kid($db_thing->parent,$db_thing->kid,self::$reference_table);
+		if (empty($db_thing->parent)) {
+			$db_thing->parent = $parent;
+		}
 
+		if ( $db_thing->parent &&
+		     is_object($db_thing->parent) &&
+		     ( strcmp(get_class($db_thing->parent),"gokabam_api\GKA_Kid") === 0 )
+		){
+			// do not set parent to anything else
+		} else {
+			$db_thing->parent = $manager->kid_talk->convert_parent_string_kid( $db_thing->parent, $db_thing->kid, self::$reference_table );
+		}
 
 		return $db_thing;
 
@@ -116,13 +147,27 @@ class ParseTag {
 			}
 			//create this
 			$new_id = $manager->mydb->execSQL(
-				"INSERT INTO gokabam_api_tags(tag_label,tag_value,target_object_id,last_page_load_id) VALUES(?,?,?,?)",
-					['ssii',$db_thing->text,$db_thing->value,$db_thing->parent->object_id,$last_page_load_id],
+				"INSERT INTO gokabam_api_tags(
+						tag_label,
+						tag_value,
+						target_object_id,
+						last_page_load_id,
+						initial_page_load_id
+						) 
+						VALUES(?,?,?,?,?)",
+					[
+						'ssiii',
+						$db_thing->text,
+						$db_thing->value,
+						$db_thing->parent->object_id,
+						$last_page_load_id,
+						$last_page_load_id
+					],
 					MYDB::LAST_ID,
 					'@sey@ParseTag::manage->insert'
 				);
 
-			$db_thing->kid = $manager->kid->generate_or_refresh_primary_kid(
+			$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid(
 					$db_thing->kid,self::$reference_table,$new_id,null);
 
 		} else {

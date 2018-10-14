@@ -2,305 +2,370 @@
 
 namespace gokabam_api;
 
+/**
+ * Not meant for human or client consumption, an intermediate step for the server
+ * Class GKA_Kid
+ * @package gokabam_api
+ */
+class GKA_Kid {
+
+	/**
+	 * @var string $kid
+	 * this always has a type, followed by an underscore then a code
+	 * @example  version_r5Yu7
+	 */
+	public $kid = '';
+
+	/**
+	 * @var int $object_id
+	 */
+
+	public $object_id = 0;
+	/**
+	 * @var string $table
+	 */
+	public $table = '';
+
+	/**
+	 * @var integer $primary_id
+	 */
+	public $primary_id = 0;
+
+	/**
+	 * @var string $hint
+	 * this is only non empty if there is a non alpha numeric symbol after the kid code
+	 * that symbol, followed by anything else, is stored as a hint while this is being processed
+	 * this is a cool feature, but not used at all
+	 */
+	public $hint = '';
+}
+
+class GKA_Root
+{
+	/**
+	 * @var GKA_Kid|string|null $kid <p>
+	 *  if not set when sent, it means this is something to be created new
+	 *
+	 *  if this is set by client a string in the format prefix_code which is verified
+	 *  by the app to be the object id that exists for this type
+	 *     there is an alternative version of the string, which if set, will pass through custom data
+	 *      prefix_code_then_non_alphanumeric_and_any_characters
+	 *      basically any non alpha numeric character after the code will be ignored and passed back through
+	 *
+	 *  During processing, the app converts this to a GKA_Kid, but its converted back to just the string code
+	 *      before its sent back to the client
+	 * </p>
+	 */
+	public $kid = '';
+
+	/**
+	 * @var string|bool $status <p>
+	 *  This is either going to be
+	 *      false (meaning it died before being processed)
+	 *      true (everything is ok)
+	 *      a message (there was an issue, its put here. A message here is always not good news)
+	 * </p>
+	 */
+	public $status = false;
+	/**
+	 * @var bool $delete
+	 */
+	public $delete = false;
+
+	/**
+	 * @var GKA_Kid|string|null $parent - kid format
+	 *
+	 *  if this is set by client its a string in the format prefix_code which is verified
+	 *  by the app to be the object id that exists for this type
+	 *     there is an alternative version of the string, which if set, will pass through custom data
+	 *      prefix_code_then_non_alphanumeric_and_any_characters
+	 *      basically any non alpha numeric character after the code will be ignored and passed back through
+	 *
+	 *  During processing, the app converts this to a GKA_Kid, but its converted back to just the string code
+	 *      before its sent back to the client
+	 */
+	public $parent = '';
+
+	/**
+	 * @var string|null $pass_through - kid format
+	 * the data is not inspected or altered, it is reflected back to the sender
+	 */
+	public $pass_through = '';
+
+
+	/**
+	 * @var GKA_Word[] $words
+	 * words and tags cannot have words
+	 */
+	public $words = [];
+
+
+	/**
+	 * @var GKA_Journal[] $journals
+	 * journals cannot have journals
+	 */
+	public $journals = [];
+
+	/**
+	 * @var GKA_Tag[] $tags
+	 * tags and words cannot  tags
+	 */
+	public $tags = [];
+
+
+}
+
+
+
+/**
+* Class GKA_Word
+* @package gokabam_api
+* parent is anything but cannot be another word or tag
+*/
+class GKA_Word extends GKA_Root
+{
+
+	/**
+	 * @var string $type name,title,blurb,description,overview,data
+	 */
+	public $type = '';
+
+	/**
+	 * @var string $language
+	 * 2 letter language code, but if data this is not processed as text to read
+	 * so data can be any character|number|symbol combo
+	 */
+	public $language = '';
+
+	/**
+	 * @var string $text
+	 * cannot be empty
+	 */
+	public $text = '';
+}
+
+
+
+/**
+* Class GKA_Version
+* @package gokabam_api
+* if parent set is an error
+*/
+class GKA_Version extends GKA_Root
+{
+
+
+	/**
+	 * @var string $git_tag
+	 */
+	public $git_tag = false;
+
+	/**
+	 * @var string $git_commit_id
+	 */
+	public $git_commit_id = false;
+
+
+	/**
+	 * This is the internal name for the version, it can be annotated for title and description
+	 * using words, it can also be tags, and notes attached to it
+	 * but this is just the constant name
+	 * @var string $text
+	 */
+	public $text = '';
+}
+
+
+
+/**
+* Class GKA_Journal
+* @package gokabam_api
+* parent: [kid] is anything, not null, cannot be another journal,tag or word
+*/
+class GKA_Journal extends GKA_Root
+{
+
+	/**
+	 * @var string $text
+	 */
+	public $text = '';
+}
+
+
+/**
+ * Class GKA_Tag
+ * @package gokabam_api
+ * parent: [kid] is anything, not null, cannot be another tag or word
+ *
+ */
+	class GKA_Tag extends GKA_Root
+	{
+
 		/**
-		 * Not meant for human or client consumption, an intermediate step for the server
-		 * Class GKA_Kid
-		 * @package gokabam_api
+		 * @var string $text, the key of the tag, what is seen
 		 */
-		class GKA_Kid {
+		public $text = '';
 
-			/**
-			 * @var string $kid
-			 */
-			public $kid = '';
-
-			/**
-			 * @var int $object_id
-			 */
-
-			public $object_id = 0;
-			/**
-			 * @var string $table
-			 */
-			public $table = '';
-
-			/**
-			 * @var integer $primary_id
-			 */
-			public $primary_id = 0;
-
-			/**
-			 * @var string $hint
-			 */
-			public $hint = '';
-		}
-
-		class GKA_Root
-		{
-			/**
-			 * @var GKA_Kid|string|null $kid <p>
-			 *  if not set when sent, it means this is something to be created new
-			 *
-			 *  if this is set by client a string in the format prefix_code which is verified
-			 *  by the app to be the object id that exists for this type
-			 *     there is an alternative version of the string, which if set, will pass through custom data
-			 *      prefix_code_then_non_alphanumeric_and_any_characters
-			 *      basically any non alpha numeric character after the code will be ignored and passed back through
-			 *
-			 *  During processing, the app converts this to a GKA_Kid, but its converted back to just the string code
-			 *      before its sent back to the client
-			 * </p>
-			 */
-			public $kid = '';
-
-			/**
-			 * @var string|bool $status <p>
-			 *  This is either going to be
-			 *      false (meaning it died before being processed)
-			 *      true (everything is ok)
-			 *      a message (there was an issue, its put here. A message here is always not good news)
-			 * </p>
-			 */
-			public $status = false;
-			/**
-			 * @var bool $delete
-			 */
-			public $delete = false;
-
-			/**
-			 * @var GKA_Kid|string|null $parent - kid format
-			 *
-			 *  if this is set by client its a string in the format prefix_code which is verified
-			 *  by the app to be the object id that exists for this type
-			 *     there is an alternative version of the string, which if set, will pass through custom data
-			 *      prefix_code_then_non_alphanumeric_and_any_characters
-			 *      basically any non alpha numeric character after the code will be ignored and passed back through
-			 *
-			 *  During processing, the app converts this to a GKA_Kid, but its converted back to just the string code
-			 *      before its sent back to the client
-			 */
-			public $parent = '';
-
-			/**
-			 * @var string|null $pass_through - kid format
-			 */
-			public $pass_through = '';
-		}
-/*
-word
-			parent: [kid] is anything,not null, cannot be another word or tag
-			type:   name,title,blurb,description,overview,data
-			language: 2 letter language code, but if data this is not processed as text to read
-			text: non empty string
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also */
-
-			class GKA_Word extends GKA_Root
-			{
-
-				/**
-				 * @var string $type name,title,blurb,description,overview,data
-				 */
-				public $type = '';
-
-				/**
-				 * @var string $language 2 letter language code, but if data this is not processed as text to read
-				 */
-				public $language = '';
-
-				/**
-				 * @var string $text
-				 */
-				public $text = '';
-			}
-
-/*version
-			parent: null
-			text: non empty string, this is the internal name of the version
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also */
-
-			class GKA_Version extends GKA_Root
-			{
+		/**
+		 * @var string $value the hidden meaning or hint behind the tag
+		 */
+		public $value = '';
+	}
 
 
-				/**
-				 * @var string $git_tag
-				 */
-				public $git_tag = false;
 
-				/**
-				 * @var string $git_commit_id
-				 */
-				public $git_commit_id = false;
-
-
-				/**
-				 * This is the internal name for the version, it can be annotated for title and description
-				 * using words, it can also be tags, and notes attached to it
-				 * but this is just the constant name
-				 * @var string $text
-				 */
-				public $text = '';
-			}
-
-/*journal
-			parent: [kid] is anything, not null, cannot be another journal,tag or word
-			text: non empty string
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also */
-
-			class GKA_Journal extends GKA_Root
-			{
-
-				/**
-				 * @var string $text
-				 */
-				public $text = '';
-			}
-/* tag
-			parent: [kid] is anything, not null, cannot be another tag or word
-			text: non empty string
-			value: null or non empty string
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also */
-			class GKA_Tag extends GKA_Root
-			{
-
-				/**
-				 * @var string $text, the key of the tag, what is seen
-				 */
-				public $text = '';
-
-				/**
-				 * @var string $value the hidden meaning or hint behind the tag
-				 */
-				public $value = '';
-			}
-
-/* data_element
-	kid:  this is supplied after the server creates it
-	status: (put here on return ) also kid will be filled out if this is an insert
-	note: these are not used to hold an actual value, just define type and what kind of values they could hold
-	type: string|integer|number|boolean|object|array
-	text: the element name
-	is_nullable: if this can be not filled in , optional
-	rank: order of display, can be null
-	properties: based on the type, listed below
-		string:
-			pattern: null or string
-			enum_values: null or array of allowed values
-			format: null or date|date-time|password|byte|binary|email|uri|use_pattern
-			length: the maximum length
-		integer
-			min: null or minimum amount
-			max: null or maximum amount
-			multiple: must be multiples of this number
-			format:  int32|int8|int64 default int32
-		number:
-			min: null or minimum amount
-			max: null or maximum amount
-			precision: significant digits
-			format:float|double, default double
-		boolean:
-			no options
-		object:
-			array of data elements, defined here as a data element
-				additional properties for all object members
-					radio_group: if given a non null value, only one thing in this group can be used at the same time
-
-		array:
-			min: the minimum number of elements
-			max: the maximum number of elements
-			array of data element types, defined here as a data element
-				additional properties for all data elements here:
-
-					radio_group: if given a non null value, only one thing in this group can be used in the array */
+/**
+ * Class GKA_Element
+ * @package gokabam_api
+ * @see GKA_Everything
+ * @see GKA_DataGroup
+ */
+class GKA_Element extends GKA_Root
+{
+	/**
+	 * @var string $text - the element name in the code and call
+	 */
+	public $text = '';
 
 
-		class GKA_Element extends GKA_Root
-		{
+	/**
+	 * @var string $type - string|integer|number|boolean|object|array
+	 */
+	public $type = '';
 
-			/**
-			 * @var string $text - the element name
-			 */
-			public $text = '';
 
-			/**
-			 * @var bool $is_nullable - if this can be not filled in , optional
-			 */
-			public $is_nullable = false;
+	/**
+	 * @var string $format
 
-			/**
-			 * @var string $type - string|integer|number|boolean|object|array
-			 */
-			public $type = '';
+	format integer:
+		'int32',
+		'int8',
+		'int64',
+		'use_pattern'
 
-			/**
-			* @var string|null $enum_values
-			*/
-			public $pattern = '';
+	 format number
+	   'float',
+	   'double',
+		'use_pattern'
 
-			/**
-			 * @var string|null $enum_values
-			 */
-			public $enum_values = '';
+	 format string:
+		'date',
+		'date-time',
+		'password',
+		'byte',
+		'binary',
+		'email',
+		'uri',
+		'use_pattern'
 
-			/**
-			 * @var string $format
-			 */
-			public $format = '';
+	 if set with type array or object will be error
 
-			/**
-			 * @var int $length
-			 */
-			public $length = 0;
+	 */
+	public $format = '';
 
-			/**
-			 * @var int $min
-			 */
-			public $min = 0;
+	/**
+	* @var string|null $pattern
+	 * used if format says use_pattern (for string,integer and number)
+	 * error if this is set to something and the type is not one of those three
+	 * error if set and the format is not use_pattern
+	*/
+	public $pattern = '';
 
-			/**
-			 * @var int $max
-			 */
-			public $max = 0;
 
-			/**
-			 * @var integer $multiple
-			 */
-			public $multiple = 0;
 
-			/**
-			 * @var float|null $precision - only if type is
-			 */
-			public $precision = 0.0;
+	/**
+	 * @var bool $is_nullable - default false
+	 */
+	public $is_nullable = false;
 
-			/**
-			 * @var int|null $rank -  shows display order
-			 */
-			public $rank = 0;
 
-			/**
-			 * @var string|null $radio_group -  if given a non null value, only one thing in this group can be used in object or array
-			 */
-			public $radio_group = '';
+	/**
+	 * @var bool $is_optional - default false
+	 */
+	public $is_optional = false;
 
-			/**
-			 * @var GKA_Element[]|string[] $data_elements - if type is array or object
-			 */
-			public $data_elements = [];
+	/**
+	 * @var string|null $enum_values
+	 * only with string,integer,number format : error otherwise
+	 */
+	public $enum_values = '';
 
-		}
+
+	/**
+	 * @var string|null $default_value
+	 * if not set , the default is always null
+	 * will throw error if set for array or object
+	 */
+	public $default_value = '';
+
+
+	/**
+	 * @var int $min
+	 * error if set to non zero for object or boolean
+	 * type string is min character length
+	 * type integer and number the min value
+	 * type array is the min number of elements
+	 * default 0
+	 */
+	public $min = 0;
+
+	/**
+	 * @var int $max
+	 * error if set to non zero for object or boolean
+	 * default 0
+	 * type string is max character length
+	 * type integer and number the max value
+	 * type array is the max number of elements
+	 */
+	public $max = 0;
+
+	/**
+	 * @var float $multiple
+	 * error if set for anything other than integer|number
+	 * is the pattern of allowed valued
+	 */
+	public $multiple = 0.0;
+
+	/**
+	 * @var float|null $precision - only if type is
+	 * error if set for anything other than number
+	 */
+	public $precision = 0.0;
+
+	/**
+	 * @var int|null $rank -  shows display order
+	 * if not set then display is random
+	 */
+	public $rank = 0;
+
+	/**
+	 * @var string|null $radio_group -
+	 * if given a non null value, only one thing that share the same text in the radio group can be used at that level
+	 *  works with top level elements or types array and object
+
+	 */
+	public $radio_group = '';
+
+	/**
+	 * @var GKA_Element[]|string[] $elements
+	 * zero or more child elements
+	 * if this has a kid set, then that kid element is copied
+	 * error if set for anything but array or object
+	 */
+	public $elements = [];
+
+}
+
 /*
  * data_examples
  *      holds example for a data group, can be tagged and annotated
  */
 
+		/**
+		 * Class GKA_DataExample
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_DataExample extends GKA_Root
 		{
 
@@ -311,36 +376,40 @@ word
 
 		}
 
-/*
-	data_group
-			parent: null, database, put in definitions below, or [kid] of: input,output,header
-				note: null parent means will be used as reference and actually copied when part of a definition of something else
-			examples: null or array of json values that must match the members in a group
-			* if the examples do not match the members, or new members do not match the examples, an error is thrown
-			members: null or array of data_elements (defined here)
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also
-		 */
 
-		class GKA_DataGroup extends GKA_Root
-		{
 
-			/**
-			 * @var GKA_DataExample[]|string[] $examples, array of zero or more full json examples of this data type
-			 */
-			public $examples = [];
+/**
+ * Class GKA_DataGroup
+ * @package gokabam_api
+ * @see GKA_Everything
+ * @see GKA_Input
+ * @see GKA_Output
+ * @see GKA_Header
 
-			/**
-			 * @var GKA_Element[]|string[] $members array of zero or more members, pass in kid to copy if not already a member
-			 */
-			public $members = [];
+ */
+class GKA_DataGroup extends GKA_Root
+{
 
-			/**
-			 * @var string $json_mockup, system will generate json to show what this looks like, but the values will be empty, just keys and structure
-			 */
-			public $json_mockup = '';
-		}
+	/**
+	 * @var GKA_DataExample[]|string[] $examples
+	 * array of zero or more full json examples of this data type
+	 */
+	public $examples = [];
+
+	/**
+	 * @var GKA_Element[]|string[] $elements
+	 * array of zero or more members
+	 * if object pass in kid to copy if not already a member
+	 * string is reference
+	 */
+	public $elements = [];
+
+	/**
+	 * @var string $type, must be empty or database_table|regular
+	 * if empty will default to regular
+	 */
+	public $type = '';
+}
 
 /* header
 			parent: api,family,version,output (its part of the definitions above)
@@ -349,6 +418,11 @@ word
 			data_group: null or elements must match the regex group names of the value
 			kid: null or this is an update and not an insert, if update only non null values changed */
 
+		/**
+		 * Class GKA_Header
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_Header extends GKA_Root
 		{
 
@@ -362,10 +436,15 @@ word
 			 */
 			public $value = '';
 
+
+
 			/**
-			 * @var GKA_DataGroup|string|null $data_group -  null or defined here or kid,elements must match the regex group names of the value
+			 * @var GKA_DataGroup[]|string[] $data_groups
+			 * defined here or kid
+			 * elements must match the regex group names of the value
+			 * zero or 1 element
 			 */
-			public $data_group = null;
+			public $data_groups = [];
 		}
 
 /*
@@ -377,6 +456,11 @@ api_version
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
 
+		/**
+		 * Class GKA_API_Version
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_API_Version extends GKA_Root
 		{
 
@@ -390,9 +474,14 @@ api_version
 			 */
 			public $headers = [];
 
+			/**
+			 * @var GKA_Family[] $families array of zero or more families
+			 */
+			public $families = [];
+
 
 			/**
-			 * @var GKA_Use_Case[]|string[] $use_cases
+			 * @var GKA_Use_Case[] $use_cases
 			 */
 			public $use_cases = [];
 		}
@@ -405,7 +494,12 @@ api_version
 			kid: null or this is an update and not an insert, if update only non null values changed
 			status: (put here on return ) also kid will be filled out if this is an insert
 			delete: null or missing or true. If true, then kid must be entered also */
-		
+
+		/**
+		 * Class GKA_Family
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_Family extends GKA_Root
 		{
 
@@ -418,6 +512,12 @@ api_version
 			 * @var GKA_Header[]|string[] $headers array of zero or more headers
 			 */
 			public $headers = [];
+
+
+			/**
+			 * @var GKA_API[] $apis array of zero or more api
+			 */
+			public $apis = [];
 
 
 
@@ -439,6 +539,11 @@ api_version
 			data_group: can be any, unless url or header is selected, then must match them (defined here or by kid)
 			kid: null or this is an update and not an insert, if update only non null values changed */
 
+		/**
+		 * Class GKA_Input
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_Input extends GKA_Root
 		{
 
@@ -453,9 +558,12 @@ api_version
 			public $properties = '';
 		
 			/**
-			 * @var GKA_DataGroup|string|null $data_group -  null or defined here or kid,elements must match the regex group names of the value
+			 * @var GKA_DataGroup[]|string $data_groups -
+			 *  defined here or kid
+			 *  elements must match the regex group names of the value
+			 *  zero or one elements only
 			 */
-			public $data_group = null;
+			public $data_groups = [];
 		}
 		
 /* output
@@ -465,6 +573,11 @@ api_version
 			headers: null or array of headers (defined here)
 			kid: null or this is an update and not an insert, if update only non null values changed */
 
+		/**
+		 * Class GKA_Output
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_Output extends GKA_Root
 		{
 
@@ -474,9 +587,11 @@ api_version
 			public $http_code = 0;
 
 			/**
-			 * @var GKA_DataGroup|string|null $data_group-  null or defined here or kid
+			 * @var GKA_DataGroup[]|string[] $data_groups
+			 *   defined here or kid
+			 *   zero or 1 groups
 			 */
-			public $data_group = null;
+			public $data_groups = null;
 			
 			/**
 			 * @var GKA_Header[]|string[] $headers array of zero or more headers
@@ -493,6 +608,13 @@ sql_part:
 			outside_element: reference id, from any input group in this use case
 			text: describes what the part does, and adds details mentioning operations and constants
  */
+
+		/**
+		 * Class GKA_SQL_Part
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 * @see GKA_Use_Part
+		 */
 		class GKA_SQL_Part extends GKA_Root
 		{
 
@@ -508,11 +630,13 @@ sql_part:
 
 			/**
 			 * @var string|null $reference_element - KID format
+			 * only kid and not definition here
 			 */
 			public $reference_element = '';
 
 			/**
 			 * @var string|null $outside_element - KID format
+			 * only kid and not definition here
 			 */
 			public $outside_element = '';
 
@@ -528,16 +652,22 @@ sql_part:
 				child_use_case_part_id
 				rank
 		*/
+
+		/**
+		 * Class GKA_Use_Part_Connection
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 class GKA_Use_Part_Connection extends GKA_Root
 {
 
 	/**
-	 * @var string $parent_part - kid format OR use ref id for new things that have no kid yet
+	 * @var GKA_Use_Part|string $parent_part - kid format OR use ref id for new things that have no kid yet
 	 */
 	public $parent_part = '';
 
 	/**
-	 * @var string $child_part - kid format OR use ref id for new things that have no kid yet
+	 * @var GKA_Use_Part|string $child_part - kid format OR use ref id for new things that have no kid yet
 	 */
 	public $child_part = '';
 
@@ -559,6 +689,14 @@ class GKA_Use_Part_Connection extends GKA_Root
 				children: array of ref_ids
 				sql_parts:
 
+		 */
+
+		/**
+		 * Class GKA_Use_Part
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 * @see GKA_Use_Part_Connection
+		 * @see GKA_Use_Case
 		 */
 		class GKA_Use_Part extends GKA_Root
 		{
@@ -587,14 +725,22 @@ class GKA_Use_Part_Connection extends GKA_Root
 
 
 			/**
-			 * @var GKA_SQL_Part[]|string[]  $sql_parts 0 or more sql parts, only if this is child of a use case for an api
+			 * @var GKA_SQL_Part[]|string[]  $sql_parts
+			 * 0 or more sql parts
+			 * only if this is child of a use case for an api
 			 */
-			public $sql_parts = '';
+			public $sql_parts = [];
 
 			/**
 			 * @var string|null -  describes what the part does, and adds details mentioning operations and constants
 			 */
 			public $text = null;
+
+
+			/**
+			 * @var GKA_Use_Part_Connection[]|string[] - 0 or more connections between the parts
+			 */
+			public $connections = [];
 		}
 
 
@@ -612,11 +758,18 @@ use_case
 			status: (put here on return ) also kid will be filled out if this is an insert
 
  */
+
+		/**
+		 * Class GKA_Use_Case
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 		class GKA_Use_Case extends GKA_Root
 		{
 
 			/**
-			 * @var GKA_Use_Part[]|string[] $use_parts -  zero or more use case parts
+			 * @var GKA_Use_Part[]|string[] $use_parts -
+			 * zero or more use case parts
 			 */
 			public $use_parts = [];
 
@@ -673,6 +826,12 @@ use_case
 /*
  * Some server data
  * */
+
+		/**
+		 * Class GKA_ServerData
+		 * @package gokabam_api
+		 * @see GKA_Everything
+		 */
 class GKA_ServerData {
 	/**
 	 * @var string $server_time - human readable time
@@ -781,6 +940,70 @@ class GKA_Everything
 	 * @var GKA_API_Version[] $api_versions
 	 */
 	public $api_versions = [];
+
+	/**
+	 * @var GKA_Family[]|string[] $families array of zero or more families
+	 */
+	public $families = [];
+
+
+	/**
+	 * @var GKA_Header[]|string[] $headers array of zero or more headers
+	 */
+	public $headers = [];
+
+
+
+	/**
+	 * @var GKA_API[]|string[] $apis array of zero or more api
+	 */
+	public $apis = [];
+
+
+	/**
+	 * @var GKA_Input[]|string[] $inputs array of zero or more inputs
+	 */
+	public $inputs = [];
+
+	/**
+	 * @var GKA_Output[]|string[] $outputs array of zero or more outputs
+	 */
+	public $outputs = [];
+
+
+	/**
+	 * @var GKA_Use_Case[]|string[] $use_cases
+	 */
+	public $use_cases = [];
+
+
+	/**
+	 * @var GKA_Use_Part[]|string[] $use_parts
+	 */
+	public $use_parts = [];
+
+	/**
+	 * @var GKA_SQL_Part[]|string[]  $sql_parts
+	 */
+	public $sql_parts = [];
+
+
+	/**
+	 * @var GKA_DataGroup[]|string[] $data_groups
+	 */
+	public $data_groups = null;
+
+
+	/**
+	 * @var GKA_DataExample[]|string[] $examples
+	 */
+	public $examples = [];
+
+
+	/**
+	 * @var GKA_Element[]|string[] $elements
+	 */
+	public $elements = [];
 
 	/**
 	 * @var mixed[] $library  if kids are used instead of classes in the class arrays, then this is a hash of them here

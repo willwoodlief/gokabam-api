@@ -42,6 +42,13 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
       SET @has_words_changed := 0;
     END IF;
 
+    IF (NEW.md5_checksum_journals <> OLD.md5_checksum_journals) OR (NEW.md5_checksum_journals IS NULL AND OLD.md5_checksum_journals IS NOT NULL) OR (NEW.md5_checksum_journals IS NOT NULL AND OLD.md5_checksum_journals IS  NULL)
+    THEN
+      SET @has_journals_changed := 1;
+    ELSE
+      SET @has_journals_changed := 0;
+    END IF;
+
     IF (NEW.md5_checksum_elements <> OLD.md5_checksum_elements) OR (NEW.md5_checksum_elements IS NULL AND OLD.md5_checksum_elements IS NOT NULL) OR (NEW.md5_checksum_elements IS NOT NULL AND OLD.md5_checksum_elements IS  NULL)
     THEN
       SET @has_elements_changed := 1;
@@ -50,12 +57,6 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
     END IF;
 
 
-    IF (NEW.md5_checksum_group_members <> OLD.md5_checksum_group_members) OR (NEW.md5_checksum_group_members IS NULL AND OLD.md5_checksum_group_members IS NOT NULL) OR (NEW.md5_checksum_group_members IS NOT NULL AND OLD.md5_checksum_group_members IS  NULL)
-    THEN
-      SET @has_members_changed := 1;
-    ELSE
-      SET @has_members_changed := 0;
-    END IF;
 
     IF (NEW.md5_checksum_examples <> OLD.md5_checksum_examples) OR (NEW.md5_checksum_examples IS NULL AND OLD.md5_checksum_examples IS NOT NULL) OR (NEW.md5_checksum_examples IS NOT NULL AND OLD.md5_checksum_examples IS  NULL)
     THEN
@@ -65,11 +66,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
     END IF;
 
     if NEW.is_deleted = 0 THEN
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_elements,is_group_members,is_examples)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_members_changed,@has_examples_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_elements,is_examples,is_journals)
+      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_examples_changed,@has_journals_changed);
     ELSE
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_elements,is_group_members,is_examples)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_members_changed,@has_examples_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_elements,is_examples,is_journals)
+      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_elements_changed,@has_examples_changed,@has_journals_changed);
     END IF;
 
 

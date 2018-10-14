@@ -14,7 +14,8 @@ CREATE TRIGGER trigger_before_create_gokabam_api_versions
             coalesce(NEW.git_commit_id,' '),
             coalesce(NEW.git_tag,' '),
             coalesce(NEW.md5_checksum_tags,' '),
-            coalesce(NEW.is_deleted,' ')
+            coalesce(NEW.is_deleted,' '),
+            coalesce(NEW.md5_checksum_journals,' ')
         )
     );
   END

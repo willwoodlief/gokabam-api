@@ -7,16 +7,16 @@ require_once( PLUGIN_PATH .'/lib/ErrorLogger.php' );
 require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 
-class ParseVersion {
+class ParseFamily {
 
-	protected static  $keys_to_check = ['kid','text','delete','git_tag','git_commit_id'];
-	protected static  $reference_table = 'gokabam_api_versions';
+	protected static  $keys_to_check = ['kid','parent','text','delete'];
+	protected static  $reference_table = 'gokabam_api_family';
 
 	/**
 	 * @param ParserManager $manager
 	 * @param mixed $input
 	 * @param GKA_Kid|null $parent
-	 * @return GKA_Version[]
+	 * @return GKA_Family[]
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
@@ -24,18 +24,21 @@ class ParseVersion {
 	static function parse($manager, $input, $parent) {
 
 
+
 		if (!is_array($input)) {
 			return [];
 		}
 
 		/**
-		 * @var GKA_Version[] $ret
+		 * @var GKA_Family[] $ret
 		 */
 		$ret = [];
 
 		foreach ($input as $node) {
 			$beer = self::convert($manager,$node,$parent);
 			$beer = self::manage($manager,$beer);
+			//if this were a type which had children, then do each child array found in node by passing it to the
+			// correct parser , along with node, and putting the returns on the member in beer
 
 			$manager->add_to_finalize_roots($beer);
 			//add it to the things going out, the callee may not be finished with
@@ -56,12 +59,11 @@ class ParseVersion {
 			foreach ($sub_parser_manager->processed_array as $key => $top_node) {
 				//if beer has that property, and its  empty, then move it over
 				if (property_exists($beer, $key)) {
-					if ( is_array($beer->$key) && empty($beer->$key) && is_array($top_node) && (!empty($top_node))) {
+					if ( is_array($beer->$key) && empty($beer->$key) && is_array($top_node) && (!empty($top_node)) ) {
 						$beer->$key = $top_node;
 					}
 				}
 			}
-
 
 			$ret[] = $beer;
 		}
@@ -75,34 +77,34 @@ class ParseVersion {
 	 * @param ParserManager $manager
 	 * @param array $node
 	 * @param GKA_Kid|null $parent
-	 * @return GKA_Version
+	 * @return GKA_Family
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
 	 */
 	protected static function convert($manager, $node,$parent) {
 
-		 //version is always top level
-		if ( !empty($parent) ) {
-			throw new ApiParseException("Version never has a parent, and is always top level");
-		}
-
-		if (array_key_exists('parent',$node)) {
-			if ( !empty($node['parent']) ) {
-				throw new ApiParseException("Version never has a parent, and is always top level");
-			}
-		}
 		$classname = get_called_class();
-		$db_thing = new GKA_Version();
+		$db_thing = new GKA_Family();
 		foreach (self::$keys_to_check as $what) {
 			if (!array_key_exists($what,$node)) {
 				$problem = JsonHelper::toString($node);
 				throw new ApiParseException("missing key in input: $classname cannot find $what in $problem");
 			}
-			if( is_string($what) && !is_numeric($what) && empty($what)) {$what=null;}
+
+			if (is_string($node[$what])) {
+				$node[$what] = trim($node[$what]);
+			}
+
+			if( is_string($node[$what]) && !is_numeric($node[$what]) && empty($node[$what])) {$node[$what]=null;}
+
 			$db_thing->$what = $node[$what];
 		}
 		if (is_null($db_thing->delete)) {$db_thing->delete = 0;}
+
+		if (empty($db_thing->parent)  && !$parent) {
+			throw new ApiParseException("Parent needs to be filled in for " . $db_thing->kid);
+		}
 		//copy over pass through
 		if (array_key_exists('pass_through',$node)) {
 			$db_thing->pass_through = $node['pass_through'];
@@ -110,6 +112,27 @@ class ParseVersion {
 
 		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
 
+		if (empty($db_thing->parent)) {
+			$db_thing->parent = $parent;
+		}
+
+		if ( $db_thing->parent &&
+		     is_object($db_thing->parent) &&
+		     ( strcmp(get_class($db_thing->parent),'GKA_Kid') === 0 )
+		){
+			// do not set parent to anything else
+		} else {
+			$db_thing->parent = $manager->kid_talk->convert_parent_string_kid( $db_thing->parent, $db_thing->kid, self::$reference_table );
+		}
+
+		switch ($db_thing->parent->table) {
+			case 'gokabam_api_api_versions' : {
+				break;
+			}
+			default:{
+					throw new ApiParseException("parent must be an api version");
+				}
+		}
 
 		return $db_thing;
 
@@ -118,44 +141,45 @@ class ParseVersion {
 	/**
 	 * creates this if the kid is empty, or updates it if not empty
 	 * @param ParserManager $manager
-	 * @param GKA_Version $db_thing
-	 * @return GKA_Version
+	 * @param GKA_Family $db_thing
+	 *
+	 * @return GKA_Family
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
 	protected static function manage($manager, $db_thing) {
 
-
 		$last_page_load_id = $manager->last_load_id;
+
+
+
 		if (empty($db_thing->kid)) {
 			//check delete flag to see if something messed up
 			if ($db_thing->delete) {
 				throw new ApiParseException("Cannot put a delete flag on a new object, the kid was empty");
 			}
+
 			//create this
 			$new_id = $manager->mydb->execSQL(
-				"INSERT INTO gokabam_api_versions(
-						version,
-						git_commit_id,
-						git_tag,
+				"INSERT INTO gokabam_api_family(
+						api_version_id,
+						hard_code_family_name,
 						last_page_load_id,
 						initial_page_load_id
-						) 
-						VALUES(?,?,?,?,?)",
-					[
-						'sssii',
-						$db_thing->text,
-						$db_thing->git_commit_id,
-						$db_thing->git_tag,
-						$last_page_load_id,
-						$last_page_load_id
-					],
-					MYDB::LAST_ID,
-					'@sey@ParseVersion::manage->insert'
-				);
+						) VALUES(?,?,?,?)",
+				[
+					'siii',
+					$db_thing->parent->primary_id,
+					$db_thing->parent->object_id,
+					$last_page_load_id,
+					$last_page_load_id
+				],
+				MYDB::LAST_ID,
+				'@sey@ParseFamily::manage->insert'
+			);
 
 			$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-					$db_thing->kid,self::$reference_table,$new_id,null);
+				$db_thing->kid,self::$reference_table,$new_id,null);
 
 		} else {
 			//update this
@@ -165,11 +189,24 @@ class ParseVersion {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
 			$manager->mydb->execSQL(
-				"UPDATE gokabam_api_versions SET version = ?,git_commit_id = ?,git_tag=?,is_deleted = ?, last_page_load_id = ? WHERE id = ? ",
-					['sssiii',$db_thing->text,$db_thing->git_commit_id,$db_thing->git_tag,$db_thing->delete,$last_page_load_id,$id],
-					MYDB::ROWS_AFFECTED,
-				'@sey@ParseVersion::manage->update'
-				);
+				"UPDATE gokabam_api_family 
+					  SET 
+					  hard_code_family_name = ?,
+					  api_version_id =?,
+					  is_deleted = ?,
+					  last_page_load_id = ?
+					   WHERE id = ? ",
+				[
+					'siiii',
+					$db_thing->text,
+					$db_thing->parent->object_id,
+					$db_thing->delete,
+					$last_page_load_id,
+					$id
+				],
+				MYDB::ROWS_AFFECTED,
+				'@sey@ParseFamily::manage->update'
+			);
 		}
 		$db_thing->status = true; //right now we do not do much with status
 		return $db_thing;
