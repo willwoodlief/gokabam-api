@@ -15,9 +15,12 @@ require_once    PLUGIN_PATH.'public/gateway/parsers/header.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/group.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/example.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/api.parser.php';
-
-
-
+require_once    PLUGIN_PATH.'public/gateway/parsers/input.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/output.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/sql-part.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/connection-part.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/part.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/case.parser.php';
 /**
  * @param KidTalk $kid_talk
  * @param MYDB $mydb
@@ -84,17 +87,34 @@ class ParserManager {
 	public $recon = null;
 
 	protected static $map = [
-		'versions'      =>	"gokabam_api\\ParseVersion",
-		'tags'          =>  "gokabam_api\\ParseTag",
-		'words'         =>  "gokabam_api\\ParseWord",
-		'journals'      =>  "gokabam_api\\ParseJournal",
-		'api_versions'  =>  "gokabam_api\\ParseApiVersion",
-		'families'      =>  "gokabam_api\\ParseFamily",
-		'headers'      =>   "gokabam_api\\ParseHeader",
-		'elements'      =>  "gokabam_api\\ParseElement",
-		'data_groups'   =>  "gokabam_api\\ParseGroup",
-		'examples'       =>  "gokabam_api\\ParseExample",
-		'apis'          =>   "gokabam_api\\ParseApi"
+		'versions'        =>  "gokabam_api\\ParseVersion",
+		'api_versions'    =>  "gokabam_api\\ParseApiVersion",
+		'families'        =>  "gokabam_api\\ParseFamily",
+		'apis'            =>  "gokabam_api\\ParseApi",
+		'use_cases'       =>  "gokabam_api\\ParseCase",
+
+		'tags'            =>  "gokabam_api\\ParseTag",
+		'words'           =>  "gokabam_api\\ParseWord",
+		'journals'        =>  "gokabam_api\\ParseJournal",
+
+
+		'headers'         =>  "gokabam_api\\ParseHeader",
+		'elements'        =>  "gokabam_api\\ParseElement",
+		'data_groups'     =>  "gokabam_api\\ParseGroup",
+		'inputs'          =>  "gokabam_api\\ParseInput",
+		'outputs'         =>  "gokabam_api\\ParseOutput",
+
+		'in_data_groups'     =>  "gokabam_api\\ParseGroup",
+		'out_data_groups'     =>  "gokabam_api\\ParseGroup",
+		'examples'        =>  "gokabam_api\\ParseExample",
+
+
+		'sql_parts'       =>  "gokabam_api\\ParseSqlPart",
+		'connections'       =>  "gokabam_api\\ParseSqlPart",
+		'use_parts'       =>  "gokabam_api\\ParsePart",
+
+
+
 	];
 
 	/**
@@ -171,6 +191,84 @@ class ParserManager {
 			if ($root->parent) {
 				$root->parent = $root->parent->kid; //change the object back to a string
 			}
+		}
+	}
+
+	/**
+	 * @param object $obj
+	 * processes the kids in the object
+	 * replaces the kid class with the code
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	protected function process_kids_in_object($obj) {
+		$objects_to_help = [];
+
+		//finalize all kids, just in case
+
+		foreach ($obj as $key => $value) {
+
+			if (is_object($value)) {
+				if ( strcmp(get_class($value),"gokabam_api\GKA_Kid") === 0 ) {
+					$objects_to_help[] = $value;
+				} else {
+					if (property_exists($value,'kid')) {
+						if ( strcmp(get_class($value->kid),"gokabam_api\GKA_Kid") === 0 ) {
+							$objects_to_help[] = $value->kid;
+						}
+					}
+				}
+			}
+			if (is_array($value)) {
+				foreach ($value as $array_key => $array_value) {
+					if ( strcmp(get_class($array_value),"gokabam_api\GKA_Kid") === 0 ) {
+						$objects_to_help[] = $array_value;
+					} else {
+						if (property_exists($array_value,'kid')) {
+							if ( strcmp(get_class($array_value->kid),"gokabam_api\GKA_Kid") === 0 ) {
+								$objects_to_help[] = $array_value->kid;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		foreach ($objects_to_help as $pkid) {
+			$this->kid_talk->fill_kids_in($pkid);
+		}
+
+		//substitute it in
+		foreach ($obj as $key => $value) {
+
+			if (is_object($value)) {
+				if ( strcmp(get_class($value),"gokabam_api\GKA_Kid") === 0 ) {
+					$obj->$key = $value->kid;
+				} else {
+					if (property_exists($value,'kid')) {
+						if ( strcmp(get_class($value->kid),"gokabam_api\GKA_Kid") === 0 ) {
+							$obj->kid = $value->kid->kid;
+						}
+					}
+				}
+			}
+			if (is_array($value)) {
+				foreach ($value as $array_key => $array_value) {
+					if ( strcmp(get_class($array_value),"gokabam_api\GKA_Kid") === 0 ) {
+						$obj->$value[$array_key] = $array_value->kid;
+					} else {
+						if (property_exists($array_value,'kid')) {
+							if ( strcmp(get_class($array_value->kid),"gokabam_api\GKA_Kid") === 0 ) {
+								$obj->$value[$array_key]->kid = $array_value->kid->kid;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		foreach ($objects_to_help as $pkid) {
+			$this->kid_talk->fill_kids_in($pkid);
 		}
 	}
 

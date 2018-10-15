@@ -5,10 +5,12 @@
     $versions = [];
     try {
 
-	    /** @noinspection SqlResolve */
+
 	    $versions = $wpdb->get_results(
 		    " 
-                select id,version,commit_id,tag,created_at_ts,version_notes,version_name
+                select id,version,git_commit_id,git_tag,
+                UNIX_TIMESTAMP(created_at) as created_at_ts,
+                version as version_name
                 from gokabam_api_versions 
                 order by created_at_ts asc;
                 " );
@@ -59,7 +61,7 @@
             <td><span><?= $row->version ?></span></td>
             <td><span><?= $row->version_name ?></span></td>
             <td><span class="a-timestamp-full-date-time" data-ts="<?= $row->created_at_ts ?>"></span></td>
-            <td><span><?= $row->version_notes ?></span></td>
+            <td><span></span></td>
         </tr>
     <?php } ?>
     </tbody>

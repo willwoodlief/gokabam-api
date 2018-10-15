@@ -15,15 +15,8 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
  */
 class Activator {
 
-	/**
-	 * Short Description. (use period)
-	 *
-	 * Long Description.
-	 *
-	 * @since    1.0.0
-	 */
 
-	const DB_VERSION = 0.188;
+	const DB_VERSION = 0.190;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -56,7 +49,10 @@ class Activator {
 	          more info in gokabam_api_versions
 				* added git_repo, post_id, website_url
 
-
+		.189  inputs removed source name and source body, and now use regex string. Reflecting what is used in the code
+		.190  use case connections have a parent use case now, and the triggers it makes sure all stay in the same use case
+				database groups now enforced, cannot be belonging to inputs, outputs,headers or use cases
+												and db elements cannot be nested
 	*/
 
 
@@ -845,8 +841,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               is_required tinyint DEFAULT 0 not null comment 'if this data is required, or is it optional ?',
               origin_enum varchar(255) not null comment 'url,query,body,header',
-              source_name varchar(255) default null comment 'if header then name of header, if query name of key, if url then pattern in url, if body and not null then top level json key', 
-              source_body varchar(255) default null comment 'not supported right now, everything is assumed json',
+              regex_string text default null comment 'if header or  url then pattern groups must match the top level elements of the input group',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
@@ -860,8 +855,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY in_data_group_id_key (in_data_group_id),
               KEY is_deleted_key (is_deleted),
               KEY is_required_key (is_required),
-              KEY origin_enum_key (origin_enum),
-              KEY source_name_key (source_name)
+              KEY origin_enum_key (origin_enum)
               ) $charset_collate;";
 
 			dbDelta( $sql );
@@ -1322,6 +1316,7 @@ table structure for all types
 			$sql = "CREATE TABLE `gokabam_api_use_case_part_connections` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
+              use_case_id int not null comment 'connections are owed by the use case',
               initial_page_load_id int default null,
               last_page_load_id int default null,
               parent_use_case_part_id int not null comment 'use case part which is the parent',
@@ -1336,6 +1331,7 @@ table structure for all types
               md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this',
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
+              KEY use_case_id_key (use_case_id),
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY parent_use_case_part_id_key (parent_use_case_part_id) ,	
@@ -1354,6 +1350,11 @@ table structure for all types
 			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_child_part_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk_api_use_case_parts_connection_has_child_part_id 
 										FOREIGN KEY (child_use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_use_case_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk_api_use_case_parts_connection_has_use_case_id 
+										FOREIGN KEY (use_case_id) REFERENCES gokabam_api_use_cases(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_connection_has_page_load_id')) {

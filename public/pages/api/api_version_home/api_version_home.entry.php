@@ -87,7 +87,7 @@ SQL;
 				'@sey@ApiVersion::create-api-journal-entry'
 			);
 
-			//todo add in the tag api-family to the note and the container
+
 
 			//create the api version
 			$sql = <<<SQL

@@ -65,10 +65,6 @@ class ParseHeader {
 			}
 
 
-			//todo what to do when this is just a kid of a group to use, and not a definition?
-
-			//todo (in other code) allow elements to be copied by just a kid
-
 			//check to make sure $beer has only one data_groups
 			if (sizeof($beer->data_groups) !== 1) {
 				$real_size = sizeof($beer->data_groups);
@@ -76,6 +72,9 @@ class ParseHeader {
 			}
 
 
+			if (sizeof($beer->data_groups) > 1) {
+				throw new ApiParseException("Header Can only have 0 or 1 data group");
+			}
 			
 			//update the header to set the data group id
 			$manager->mydb->execSQL("UPDATE gokabam_api_output_headers SET out_data_group_id = ? WHERE id = ?",
@@ -108,7 +107,7 @@ class ParseHeader {
 		$classname = get_called_class();
 		$db_thing = null;
 		if (is_array($node)) {
-			$db_thing = new GKA_Journal();
+			$db_thing = new GKA_Header();
 		} else {
 			if (is_string($node)) {
 				/**

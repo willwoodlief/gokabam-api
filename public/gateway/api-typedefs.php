@@ -577,262 +577,248 @@ class GKA_Family extends GKA_Root
 
 }
 		
-/* input
-			parent: api (its part of the api definition above)
-			origin: url,query,body,header
-			properties, based on origin:
-				url:
-					pattern: regex with the names of the regex groups matching elements in data group, if not match then error
-				query:
-					(no properties), the data_group defines the keys expected
-				body:
-					(no properties), the data_group defines the body expected
-				header:
-					name: the name of the header
-					value: text or regex with regex groups matching the data group, or error
-			data_group: can be any, unless url or header is selected, then must match them (defined here or by kid)
-			kid: null or this is an update and not an insert, if update only non null values changed */
-
-		/**
-		 * Class GKA_Input
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_Input extends GKA_Root
-		{
-
-			/**
-			 * @var string $origin - url,query,body,header
-			 */
-			public $origin = '';
-		
-			/**
-			 * @var string|null $properties - based on origin 
-			 */
-			public $properties = '';
-		
-			/**
-			 * @var GKA_DataGroup[]|string $data_groups -
-			 *  defined here or kid
-			 *  elements must match the regex group names of the value
-			 *  zero or one elements only
-			 */
-			public $data_groups = [];
-		}
-		
-/* output
-			parent: api (its part of the api definition above)
-			http_code: a number
-			data_group: can be any (defined here or by kid)
-			headers: null or array of headers (defined here)
-			kid: null or this is an update and not an insert, if update only non null values changed */
-
-		/**
-		 * Class GKA_Output
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_Output extends GKA_Root
-		{
-
-			/**
-			 * @var int $http_code - response code
-			 */
-			public $http_code = 0;
-
-			/**
-			 * @var GKA_DataGroup[]|string[] $data_groups
-			 *   defined here or kid
-			 *   zero or 1 groups
-			 */
-			public $data_groups = null;
-			
-			/**
-			 * @var GKA_Header[]|string[] $headers array of zero or more headers
-			 */
-			public $headers = [];
-		}
 
 
-/*
-sql_part:
-			sql_part_enum: select,from,joins,where,limit,offset,ordering
-			table_element: kid of element from any db table group
-			reference_element: kid of element from any db table group
-			outside_element: reference id, from any input group in this use case
-			text: describes what the part does, and adds details mentioning operations and constants
+/**
+ * Class GKA_Input
+ * @package gokabam_api
+ * @see GKA_Everything
  */
-
-		/**
-		 * Class GKA_SQL_Part
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 * @see GKA_Use_Part
-		 */
-		class GKA_SQL_Part extends GKA_Root
-		{
-
-			/**
-			 * @var string $sql_part_enum - select,from,joins,where,limit,offset,ordering
-			 */
-			public $sql_part_enum = '';
-
-			/**
-			 * @var string $table_element - KID format
-			 */
-			public $table_element = '';
-
-			/**
-			 * @var string|null $reference_element - KID format
-			 * only kid and not definition here
-			 */
-			public $reference_element = '';
-
-			/**
-			 * @var string|null $outside_element - KID format
-			 * only kid and not definition here
-			 */
-			public $outside_element = '';
-
-			/**
-			 * @var string|null -  describes what the part does, and adds details mentioning operations and constants
-			 */
-			public $text = null;
-		}
-
-/*
-		use_case_part_connection
-				parent_use_case_part_id
-				child_use_case_part_id
-				rank
-		*/
-
-		/**
-		 * Class GKA_Use_Part_Connection
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-class GKA_Use_Part_Connection extends GKA_Root
+class GKA_Input extends GKA_Root
 {
 
 	/**
-	 * @var GKA_Use_Part|string $parent_part - kid format OR use ref id for new things that have no kid yet
+	 * @var string $origin - url,query,body,header
 	 */
-	public $parent_part = '';
+	public $origin = '';
 
 	/**
-	 * @var GKA_Use_Part|string $child_part - kid format OR use ref id for new things that have no kid yet
+	 * @var string|null $properties - based on origin
+	properties, based on origin:
+
+		url:  the properties is a regex that matches with at least part of the url
+	        with the names of the regex groups matching elements in data group
+
+	    query: (no properties), the data_group defines the keys expected (the query is the key values after the ?)
+
+	    body: (no properties), the data_group defines the body expected
+
+		header: is a regex matching part of the header with  names of the regex groups mapping to the properties
+	               of the data group.
 	 */
-	public $child_part = '';
+	public $properties = '';
+
+
 
 	/**
-	 * @var int|null $rank - optional ranking
+	 * @var GKA_DataGroup[]|string $data_groups -
+	 *  defined here or kid
+	 *  elements must match the regex group names of the value
+	 *  zero or one elements only
 	 */
-	public $rank = '';
+	public $data_groups = [];
+}
+		
+
+/**
+ * Class GKA_Output
+ * @package gokabam_api
+ * @see GKA_Everything
+ */
+class GKA_Output extends GKA_Root
+{
+
+	/**
+	 * @var int $http_code - response code
+	 */
+	public $http_code = 0;
+
+	/**
+	 * @var GKA_DataGroup[]|string[] $data_groups
+	 *   defined here or kid
+	 *   zero or 1 groups
+	 */
+	public $data_groups = null;
+
+	/**
+	 * @var GKA_Header[]|string[] $headers array of zero or more headers
+	 */
+	public $headers = [];
+}
+
+
+
+
+/**
+ * Class GKA_SQL_Part
+ * @package gokabam_api
+ * @see GKA_Everything
+ * @see GKA_Use_Part
+ *
+ * the selects are an extra data group output elements
+ * the inputs for each section is up to two database groups, and any input element
+ */
+class GKA_SQL_Part extends GKA_Root
+{
+
+	/**
+	 * @var string $text
+	 * describes what the part does,
+	 * and adds details mentioning operations and constants
+	 */
+	public $text = '';
+
+
+	/**
+	 * @var string $sql_part_enum - select,from,joins,where,limit,offset,ordering
+	 */
+	public $sql_part_enum = '';
+
+	/**
+	 * @var string|GKA_Kid|null $table_element - KID format
+	 * must be from any data group that is of database type
+	 */
+	public $db_element_kid = '';
+
+	/**
+	 * @var string|GKA_Kid|null $reference_table_element_kid - KID format
+	 * must be from any data group that is of database type
+	 */
+	public $reference_db_element_kid = '';
+
+	/**
+	 * @var string|GKA_Kid|null $outside_element_kid - KID format
+	 * must be from a data group which is part of the input of this use case part
+	 */
+	public $outside_element_kid = '';
+
+
+	/**
+	 * @var integer $rank
+	 * organizes the statements for display
+	 */
+	public $rank = 0;
+
 
 }
 
 
 
-/*
-
-	use_case_part
-				in_data_group:
-				out_data_group:
-				ref_id: any number supplied
-				children: array of ref_ids
-				sql_parts:
-
-		 */
-
-		/**
-		 * Class GKA_Use_Part
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 * @see GKA_Use_Part_Connection
-		 * @see GKA_Use_Case
-		 */
-		class GKA_Use_Part extends GKA_Root
-		{
-
-
-			/**
-			 * @var GKA_DataGroup|string|null $in_data_group -  null or  defined here or any KID inside parent
-			 */
-			public $in_data_group = null;
-
-
-			/**
-			 * @var GKA_API|null $in_api -  if the input is an api
-			 */
-			public $in_api = null;
-
-			/**
-			 * @var GKA_DataGroup|string|null $out_data_group -  null or  defined here or any KID inside parent
-			 */
-			public $out_data_group = null;
-
-			/**
-			 * @var integer $ref_id - any number supplied to tag this, needs to be unique for the use case
-			 */
-			public $ref_id = '';
-
-
-			/**
-			 * @var GKA_SQL_Part[]|string[]  $sql_parts
-			 * 0 or more sql parts
-			 * only if this is child of a use case for an api
-			 */
-			public $sql_parts = [];
-
-			/**
-			 * @var string|null -  describes what the part does, and adds details mentioning operations and constants
-			 */
-			public $text = null;
-
-
-			/**
-			 * @var GKA_Use_Part_Connection[]|string[] - 0 or more connections between the parts
-			 */
-			public $connections = [];
-		}
-
-
-/*
-
-use_case
-			parent: version kid
-			parts: array of parts defined here
-				in_data_group: null or defined here or kid of any inside parent
-				out_data_group: null or defined here or kid of any inside parent
-				in_api_id: only if in_data_group is not defined
-				ref_id: any number supplied
-				children: array of ref_ids
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-
+/**
+ * Class GKA_Use_Part_Connection
+ * @package gokabam_api
+ * @see GKA_Everything
  */
+class GKA_Use_Part_Connection extends GKA_Root
+{
 
-		/**
-		 * Class GKA_Use_Case
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_Use_Case extends GKA_Root
-		{
+	/**
+	 * @var string|GKA_Kid|null $parent_part_kid
+	 *  a reference to the start of the connection
+	 *  this part must be in the same use case as the destination
+	 */
+	public $source_part_kid = '';
 
-			/**
-			 * @var GKA_Use_Part[]|string[] $use_parts -
-			 * zero or more use case parts
-			 */
-			public $use_parts = [];
+	/**
+	 * @var string|GKA_Kid|null $parent_part_kid
+	 *  a reference to the start of the connection
+	 *  this part must be in the same use case as the source
+	 */
+	public $destination_part_kid = '';
 
-			/**
-			 * @var GKA_Use_Part_Connection[] - 0 or more connections between the parts
-			 */
-			public $connections = [];
+	/**
+	 * @var int|null $rank
+	 *   - optional ranking for display purposes
+	 */
+	public $rank = 0;
 
-		}
+}
+
+
+
+/**
+ * Class GKA_Use_Part
+ * @package gokabam_api
+ * @see GKA_Everything
+ * @see GKA_Use_Part_Connection
+ * @see GKA_Use_Case
+ */
+class GKA_Use_Part extends GKA_Root
+{
+
+
+	/**
+	 * @var integer $ref_id -
+	 * any number supplied to tag this, needs to be unique for the use case
+	 */
+	public $ref_id = 0;
+
+	/**
+	 * @var string|GKA_Kid|null $in_api -
+	 * if the input is an api
+	 *  this is a reference only
+	 */
+	public $in_api_kid = '';
+
+
+	/**
+	 * @var GKA_DataGroup[]|string[] $in_data_groups
+	 * 0 or 1 for the in data group
+	 */
+	public $in_data_groups = [];
+
+
+	/**
+	 * @var GKA_DataGroup[]|string[] $out_data_group
+	 * 0 or 1 for the out data group
+	 */
+	public $out_data_groups = [];
+
+
+
+	/**
+	 * @var GKA_SQL_Part[]|string[]  $sql_parts
+	 * 0 or more sql parts
+	 * only if this is child of a use case for an api
+	 */
+	public $sql_parts = [];
+
+
+	/**
+	 * @var string[]|GKA_Kid[] $source_connections
+	 * 0 or more connections between the parts, this shows the parts
+	 * which originate from here
+	 * This is read only, set by the server
+	 */
+	public $source_connections = [];
+}
+
+
+
+
+/**
+ * Class GKA_Use_Case
+ * @package gokabam_api
+ * @see GKA_Everything
+ */
+class GKA_Use_Case extends GKA_Root
+{
+
+	/**
+	 * @var GKA_Use_Part[]|string[] $use_parts -
+	 * zero or more use case parts
+	 */
+	public $use_parts = [];
+
+
+	/**
+	 * @var GKA_Use_Part_Connection[]
+	 * zero or more connections between the parts
+	 */
+	public $connections = [];
+
+
+}
 
 
 /**
@@ -877,17 +863,11 @@ class GKA_API extends GKA_Root
 
 
 
-
-
-/*
- * Some server data
- * */
-
-		/**
-		 * Class GKA_ServerData
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
+/**
+ * Class GKA_ServerData
+ * @package gokabam_api
+ * @see GKA_Everything
+ */
 class GKA_ServerData {
 	/**
 	 * @var string $server_time - human readable time
@@ -905,28 +885,6 @@ class GKA_ServerData {
 	public $server_timestamp = 0;
 }
 		 
-
-/*
- action: update|save|report|get
-	update: will create or update based on what is here
-	save: will take the information here, and save it under the name
-	get: will retrieve a named save, it will put the time it was saved under the begin timestamp
-	report: will list the changes, insertions and deletions for between the two timestamps
-begin_timestamp: null or timestamp
-end_timestamp: null or timestamp
-save_name: null or name
-message: an overview of the entire operation
-is_valid:
-exception_info:
-words: array 0 or more
-
-versions:
-
-journals:
-tags:
-api_versions
-*/
-
 
 
 /**

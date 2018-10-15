@@ -44,22 +44,16 @@ CREATE TRIGGER trigger_after_update_gokabam_api_inputs
     SET @edit_log_id := (select last_insert_id());
 
 
-    IF (NEW.source_name <> OLD.source_name) OR (NEW.source_name IS NULL AND OLD.source_name IS NOT NULL) OR (NEW.source_name IS NOT NULL AND OLD.source_name IS  NULL)
-    THEN
-      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'source_name',OLD.source_name);
-    END IF;
-
     IF (NEW.origin_enum <> OLD.origin_enum) OR (NEW.origin_enum IS NULL AND OLD.origin_enum IS NOT NULL) OR (NEW.origin_enum IS NOT NULL AND OLD.origin_enum IS  NULL)
     THEN
       INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
       VALUES (@edit_log_id,'origin_enum',OLD.origin_enum);
     END IF;
 
-    IF (NEW.source_body <> OLD.source_body) OR (NEW.source_body IS NULL AND OLD.source_body IS NOT NULL) OR (NEW.source_body IS NOT NULL AND OLD.source_body IS  NULL)
+    IF (NEW.regex_string <> OLD.regex_string) OR (NEW.regex_string IS NULL AND OLD.regex_string IS NOT NULL) OR (NEW.regex_string IS NOT NULL AND OLD.regex_string IS  NULL)
     THEN
       INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'source_body',OLD.source_body);
+      VALUES (@edit_log_id,'regex_string',OLD.regex_string);
     END IF;
 
     IF (NEW.in_data_group_id <> OLD.in_data_group_id) OR (NEW.in_data_group_id IS NULL AND OLD.in_data_group_id IS NOT NULL) OR (NEW.in_data_group_id IS NOT NULL AND OLD.in_data_group_id IS  NULL)

@@ -408,7 +408,7 @@ class KidTalk {
 	 *      OR
 	 *    a primary key and table
 	 * @return void
-	 * will throw exception if not one of those cases
+	 * will silently not process if not one of those cases
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
@@ -448,7 +448,7 @@ class KidTalk {
 			$kid->object_id = $check[0]->id;
 			$kid->kid = $this->generate_code($kid->object_id,$kid->table);
 		} else {
-			throw new ApiParseException("not enough information to fill in the kid");
+			return;
 		}
 
 

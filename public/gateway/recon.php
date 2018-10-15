@@ -254,6 +254,98 @@ class Recon {
 					}
 
 				}
+			case 'gokabam_api_use_cases':
+				{
+					$res = $this->mydb->execSQL(
+						"SELECT 
+								id,
+								is_deleted,
+								belongs_to_api_version_id,
+								belongs_to_api_id
+	                             FROM gokabam_api_use_cases WHERE id = ?",
+						['i',$id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::parse->get_raw_data({$kid->table})"
+					);
+					if (!empty($res)) {
+						return $res[0];
+					} else {
+						throw new ApiParseException("Cannot find a record in {$kid->table}/{$kid->primary_id} for {$kid->kid}");
+					}
+
+				}
+			case 'gokabam_api_use_case_parts':
+				{
+					$res = $this->mydb->execSQL(
+						"SELECT 
+								id,
+								is_deleted,
+								use_case_id,
+								in_api_id,
+								rank
+	                             FROM gokabam_api_use_case_parts WHERE id = ?",
+						['i',$id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::parse->get_raw_data({$kid->table})"
+					);
+					if (!empty($res)) {
+						return $res[0];
+					} else {
+						throw new ApiParseException("Cannot find a record in {$kid->table}/{$kid->primary_id} for {$kid->kid}");
+					}
+
+				}
+			case 'gokabam_api_use_case_part_connections':
+			{
+				$res = $this->mydb->execSQL(
+					"SELECT 
+							id,
+							is_deleted,
+							use_case_id,
+							last_page_load_id,
+							initial_page_load_id,
+							parent_use_case_part_id,
+							child_use_case_part_id,
+							rank 
+		                             FROM gokabam_api_use_case_part_connections WHERE id = ?",
+					['i',$id],
+					MYDB::RESULT_SET,
+					"@sey@Recon::parse->get_raw_data({$kid->table})"
+				);
+				if (!empty($res)) {
+					return $res[0];
+				} else {
+					throw new ApiParseException("Cannot find a record in {$kid->table}/{$kid->primary_id} for {$kid->kid}");
+				}
+
+			}
+
+			case 'gokabam_api_use_case_parts_sql':
+				{
+					$res = $this->mydb->execSQL(
+						"SELECT 
+								id,
+								is_deleted,
+								use_case_part_id ,
+								last_page_load_id ,
+								sql_part_enum ,
+								table_element_id ,
+								reference_table_element_id ,
+								outside_element_id ,
+								ranking ,
+								constant_value 
+ 							 FROM gokabam_api_use_case_parts_sql WHERE id = ?",
+						['i',$id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::parse->get_raw_data({$kid->table})"
+					);
+					if (!empty($res)) {
+						return $res[0];
+					} else {
+						throw new ApiParseException("Cannot find a record in {$kid->table}/{$kid->primary_id} for {$kid->kid}");
+					}
+
+				}
 			case 'gokabam_api_output_headers':
 				{
 					$res = $this->mydb->execSQL(
@@ -268,6 +360,48 @@ class Recon {
 						header_value,
 						out_data_group_id	
  							 FROM gokabam_api_output_headers WHERE id = ?",
+						['i',$id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::parse->get_raw_data({$kid->table})"
+					);
+					if (!empty($res)) {
+						return $res[0];
+					} else {
+						throw new ApiParseException("Cannot find a record in {$kid->table}/{$kid->primary_id} for {$kid->kid}");
+					}
+
+				}
+			case 'gokabam_api_outputs':
+				{
+					$res = $this->mydb->execSQL(
+						"SELECT 
+						id,
+						is_deleted,
+						api_id,
+						http_return_code,
+						out_data_group_id	
+ 							 FROM gokabam_api_outputs WHERE id = ?",
+						['i',$id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::parse->get_raw_data({$kid->table})"
+					);
+					if (!empty($res)) {
+						return $res[0];
+					} else {
+						throw new ApiParseException("Cannot find a record in {$kid->table}/{$kid->primary_id} for {$kid->kid}");
+					}
+				}
+			case 'gokabam_api_inputs':
+				{
+					$res = $this->mydb->execSQL(
+						"SELECT 
+						id,
+						is_deleted,
+						api_id,
+						origin_enum,
+						regex_string,
+						in_data_group_id	
+ 							 FROM gokabam_api_inputs WHERE id = ?",
 						['i',$id],
 						MYDB::RESULT_SET,
 						"@sey@Recon::parse->get_raw_data({$kid->table})"
@@ -489,6 +623,206 @@ class Recon {
 					return $obj;
 
 				}
+
+			case 'gokabam_api_use_cases':
+				{
+
+					$obj = new GKA_Use_Case();
+					$obj->kid = $kid;
+					$obj->delete = $data->is_deleted;
+
+					$obj->parent = new GKA_Kid();
+					if ($data->belongs_to_api_version_id) {
+						$obj->parent->primary_id = $data->belongs_to_api_version_id ;
+						$obj->parent->table = 'gokabam_api_api_versions';
+					} elseif ($data->belongs_to_api_id) {
+						$obj->parent->primary_id = $data->belongs_to_api_id ;
+						$obj->parent->table = 'gokabam_api_apis';
+					}
+
+
+
+					//fill in use case parts
+
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_use_case_parts WHERE use_case_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_parts_on_cases(gokabam_api_use_cases)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_use_case_parts';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->use_parts[] = $what->kid;
+						}
+					}
+
+
+					//fill in connections
+
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_use_case_part_connections WHERE use_case_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_connections_on_cases(gokabam_api_use_cases)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_use_case_part_connections';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->connections[] = $what->kid;
+						}
+					}
+
+
+
+
+				}
+
+			case 'gokabam_api_use_case_parts':
+				{
+
+					$obj = new GKA_Use_Part();
+					$obj->kid = $kid;
+					$obj->delete = $data->is_deleted;
+
+					$obj->parent = new GKA_Kid();
+					$obj->parent->primary_id = $data->use_case_id ;
+					$obj->parent->table = 'gokabam_api_use_cases';
+
+					$obj->in_api_kid = new GKA_Kid();
+					$obj->in_api_kid->object_id = $data->in_api_kid ;
+					$obj->in_api_kid->table = 'gokabam_api_apis';
+
+
+					$obj->ref_id = $data->rank ;
+
+
+					//fill in sql connections
+
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_use_case_parts_sql WHERE use_case_part_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_sql_on_parts(gokabam_api_use_case_parts)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_use_case_parts_sql';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->sql_parts[] = $what->kid;
+						}
+					}
+
+					if ($data->out_data_group_id) {
+						$data_group = new GKA_Kid();
+						$data_group->table = 'gokabam_api_data_groups';
+						$data_group->primary_id = $data->out_data_group_id;
+						$this->kid_talk->fill_kids_in($data_group);
+						$obj->out_data_groups = [$data_group->kid];
+					}
+
+					if ($data->in_data_group_id) {
+						$data_group = new GKA_Kid();
+						$data_group->table = 'gokabam_api_data_groups';
+						$data_group->primary_id = $data->in_data_group_id;
+						$this->kid_talk->fill_kids_in($data_group);
+						$obj->in_data_groups = [$data_group->kid];
+					}
+
+					$res = $this->mydb->execSQL("SELECT id,object_id from gokabam_api_use_case_part_connections WHERE parent_use_case_part_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::ROWS_AFFECTED,
+						'@sey@Recon::create_object->get_out_connections_on_parts(gokabam_api_use_case_parts)'
+					);
+					if ($res) {
+						foreach ($res as $row) {
+							$con_id = $row->id;
+							$conKid = new GKA_Kid();
+							$conKid->primary_id = $con_id;
+							$conKid->table = 'gokabam_api_use_case_part_connections';
+							$conKid->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($conKid);
+							$obj->source_connections[] = $conKid;
+						}
+					}
+
+					return $obj;
+
+				}
+			case 'gokabam_api_use_case_part_connections':
+			{
+				$obj = new GKA_Use_Part_Connection();
+				$obj->kid = $kid;
+				$obj->delete = $data->is_deleted;
+
+				$obj->parent = new GKA_Kid();
+				$obj->parent->primary_id = $data->use_case_id ;
+				$obj->parent->table = 'gokabam_api_use_cases';
+
+				$obj->destination_part_kid = new GKA_Kid();
+				$obj->destination_part_kid->object_id = $data->child_use_case_part_id ;
+				$obj->destination_part_kid->table = 'gokabam_api_use_case_parts';
+
+				$obj->source_part_kid = new GKA_Kid();
+				$obj->source_part_kid->object_id = $data->parent_use_case_part_id ;
+				$obj->source_part_kid->table = 'gokabam_api_use_case_parts';
+
+				$obj->rank = $data->ranking ;
+
+				return $obj;
+
+
+			}
+
+			case 'gokabam_api_use_case_parts_sql':
+				{
+					$obj = new GKA_SQL_Part();
+					$obj->kid = $kid;
+					$obj->delete = $data->is_deleted;
+
+					$obj->parent = new GKA_Kid();
+					$obj->parent->primary_id = $data->use_case_part_id ;
+					$obj->parent->table = 'gokabam_api_use_case_parts';
+
+					$obj->db_element_kid = new GKA_Kid();
+					$obj->db_element_kid->object_id = $data->table_element_id ;
+					$obj->db_element_kid->table = 'gokabam_api_data_elements';
+
+					$obj->reference_db_element_kid = new GKA_Kid();
+					$obj->reference_db_element_kid->object_id = $data->reference_table_element_id ;
+					$obj->reference_db_element_kid->table = 'gokabam_api_data_elements';
+
+					$obj->outside_element_kid = new GKA_Kid();
+					$obj->outside_element_kid->object_id = $data->outside_element_id ;
+					$obj->outside_element_kid->table = 'gokabam_api_data_elements';
+
+					$obj->text = $data->constant_value ;
+					$obj->sql_part_enum = $data->sql_part_enum ;
+					$obj->rank = $data->ranking ;
+
+					return $obj;
+
+				}
 			case 'gokabam_api_output_headers':
 				{
 					$obj = new GKA_Header();
@@ -530,6 +864,70 @@ class Recon {
 					return $obj;
 
 
+				}
+			case 'gokabam_api_outputs':
+				{
+					$obj = new GKA_Output();
+					$obj->kid = $kid;
+					$obj->delete = $data->is_deleted;
+					$obj->http_code = $data->http_return_code ;
+					$obj->parent = new GKA_Kid();
+					$obj->parent->table = 'gokabam_api_apis';
+					$obj->parent->primary_id = $data->api_id;
+
+
+					if ($data->out_data_group_id) {
+						$data_group = new GKA_Kid();
+						$data_group->table = 'gokabam_api_data_groups';
+						$data_group->primary_id = $data->in_data_group_id;
+						$this->kid_talk->fill_kids_in($data_group);
+						$obj->data_groups = [$data_group->kid];
+					}
+
+					//fill in headers
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_output_headers WHERE api_output_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_headers_on_outputs(gokabam_api_outputs)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_output_headers';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->headers[] = $what->kid;
+						}
+					}
+
+					return $obj;
+				}
+			case 'gokabam_api_inputs':
+				{
+					$obj = new GKA_Input();
+					$obj->kid = $kid;
+					$obj->delete = $data->is_deleted;
+					$obj->properties = $data->regex_string ;
+					$obj->origin = $data->origin_enum ;
+					$obj->parent = new GKA_Kid();
+					$obj->parent->table = 'gokabam_api_apis';
+					$obj->parent->primary_id = $data->api_id;
+
+
+					if ($data->in_data_group_id) {
+						$data_group = new GKA_Kid();
+						$data_group->table = 'gokabam_api_data_groups';
+						$data_group->primary_id = $data->in_data_group_id;
+						$this->kid_talk->fill_kids_in($data_group);
+						$obj->data_groups = [$data_group->kid];
+					}
+
+					return $obj;
 				}
 			case 'gokabam_api_apis':
 				{
@@ -590,7 +988,7 @@ class Recon {
 					$res = $this->mydb->execSQL(
 						"SELECT 
 							id, object_id
-                         FROM gokabam_api_output_headers WHERE api_family_id = ?",
+                         FROM gokabam_api_output_headers WHERE api_id = ?",
 						['i',$obj->kid->primary_id],
 						MYDB::RESULT_SET,
 						"@sey@Recon::create_object->get_headers_on_apis(gokabam_api_apis)"
@@ -608,7 +1006,26 @@ class Recon {
 					}
 
 
-					//todo use cases
+					//fill in use cases
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_use_cases WHERE belongs_to_api_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_cases_on_apis(gokabam_api_apis)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_use_cases';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->use_cases[] = $what->kid;
+						}
+					}
 
 					return $obj;
 
@@ -872,7 +1289,26 @@ class Recon {
 						}
 					}
 
-					//todo use cases
+					//fill in use cases
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_use_cases WHERE belongs_to_api_version_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_cases_on_api_version(gokabam_api_api_versions)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_use_cases';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->use_cases[] = $what->kid;
+						}
+					}
 
 					return $obj;
 

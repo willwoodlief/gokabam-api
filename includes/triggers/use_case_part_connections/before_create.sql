@@ -37,6 +37,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_part_connections
     #calculate md5
     SET NEW.md5_checksum := SHA1(
         CONCAT(
+            coalesce(NEW.use_case_id,' '),
             coalesce(NEW.parent_use_case_part_id,' '),
             coalesce(NEW.child_use_case_part_id,' '),
             coalesce(NEW.rank,' '),

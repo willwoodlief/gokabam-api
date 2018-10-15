@@ -19,11 +19,18 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_elements
     THEN
       set @original_parent_id := NEW.parent_element_id;
       set @parent_id := -1;
+      set @last_parent_id = -1;
       set @safety := 0;
       #see if the starting parent id eventually is in the child chain
       # keep looping while parent id is not null, and while it does not match the original
       # don't allow over a hundred levels of nesting
       label1: WHILE (   (@parent_id IS NOT NULL) AND (@parent_id <> @original_parent_id) AND (@safety < 101) ) DO
+        IF @parent_id > 0 THEN
+          SET @last_parent_id := @parent_id;
+        else
+          SET @last_parent_id := @original_parent_id;
+        end if;
+
         SET @parent_id := NULL;
         SET @safety := @safety + 1;
         select parent_element_id INTO @parent_id FROM gokabam_api_data_elements WHERE id = @parent_id;
@@ -36,6 +43,32 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_elements
         SET MESSAGE_TEXT = @message;
       end if;
 
+      IF (@parent_id IS NULL) AND (@last_parent_id IS NOT NULL) AND (@safety > 1) THEN
+        #reached top and the elements are stacked at least two deep
+        set @db_table_id := null;
+        select g.id into @db_table_id from gokabam_api_data_elements e
+        inner join gokabam_api_data_groups g ON g.id = e.group_id
+        WHERE e.id = @last_parent_id AND g.group_type_enum = 'database_table' limit 1;
+
+        IF @db_table_id IS NOT NULL THEN
+          SET @message := CONCAT('data groups which are marked as database_table cannot have nested elements: group id of  ',
+                                 @db_table_id ,' is marked as such ');
+          SIGNAL SQLSTATE '45000'
+          SET MESSAGE_TEXT = @message;
+        end if;
+      end if;
+    else
+      set @db_table_id := null;
+      select g.id into @db_table_id from gokabam_api_data_elements e
+                                           inner join gokabam_api_data_groups g ON g.id = e.group_id
+      WHERE e.id = NEW.parent_element_id AND g.group_type_enum = 'database_table' limit 1;
+
+      IF @db_table_id IS NOT NULL THEN
+        SET @message := CONCAT('data groups which are marked as database_table cannot have nested elements: group id of  ',
+                               @db_table_id ,' is marked as such ');
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = @message;
+      end if;
     end if;
 
 
