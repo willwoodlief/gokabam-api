@@ -69,7 +69,12 @@
       }]
     }
   ],
-  "journals": [],
+  "journals": [ {
+    "kid": null,
+    "parent" : "version_YD53eP",
+    "text" : "talk more stuff",
+    "delete" : 0
+  }],
   "tags": [
     {
       "text": "sky now",

@@ -7,21 +7,22 @@ require_once( PLUGIN_PATH .'/lib/ErrorLogger.php' );
 require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 
-class ParseWord {
+class ParseApi {
 
-	protected static  $keys_to_check = ['kid','parent','text','delete','language','type'];
-	protected static  $reference_table = 'gokabam_api_words';
+	protected static  $keys_to_check = ['kid','parent','text','method','delete'];
+	protected static  $reference_table = 'gokabam_api_apis';
 
 	/**
 	 * @param ParserManager $manager
 	 * @param mixed $input
 	 * @param GKA_Kid|null $parent
-	 * @return GKA_Word[]
+	 * @return GKA_API[]
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
 	 */
-	static function parse($manager, $input, $parent = null) {
+	static function parse($manager, $input, $parent) {
+
 
 
 		if (!is_array($input)) {
@@ -29,7 +30,7 @@ class ParseWord {
 		}
 
 		/**
-		 * @var GKA_Word[] $ret
+		 * @var GKA_API[] $ret
 		 */
 		$ret = [];
 
@@ -39,11 +40,9 @@ class ParseWord {
 			//if this were a type which had children, then do each child array found in node by passing it to the
 			// correct parser , along with node, and putting the returns on the member in beer
 
-
-
+			$manager->add_to_finalize_roots($beer);
 			//add it to the things going out, the callee may not be finished with
 			// it, but this is going to be processed after they are done
-			$manager->add_to_finalize_roots($beer);
 
 
 			//node may have other things to process
@@ -56,12 +55,11 @@ class ParseWord {
 				$beer->kid,
 				$manager
 			);
-
 			//when this returns all the sub processing is done, and the children are created
 			foreach ($sub_parser_manager->processed_array as $key => $top_node) {
 				//if beer has that property, and its  empty, then move it over
 				if (property_exists($beer, $key)) {
-					if ( is_array($beer->$key) && empty($beer->$key) && is_array($top_node) && (!empty($top_node))) {
+					if ( is_array($beer->$key) && empty($beer->$key) && is_array($top_node) && (!empty($top_node)) ) {
 						$beer->$key = $top_node;
 					}
 				}
@@ -79,7 +77,7 @@ class ParseWord {
 	 * @param ParserManager $manager
 	 * @param array $node
 	 * @param GKA_Kid|null $parent
-	 * @return GKA_Word
+	 * @return GKA_API
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
@@ -89,11 +87,11 @@ class ParseWord {
 		$classname = get_called_class();
 		$db_thing = null;
 		if (is_array($node)) {
-			$db_thing = new GKA_Journal();
+			$db_thing = new GKA_API();
 		} else {
 			if (is_string($node)) {
 				/**
-				 * @var $db_thing GKA_Word
+				 * @var $db_thing GKA_API
 				 */
 				$db_thing = $manager->recon->spring($node);
 				if (strcmp(self::$reference_table,$db_thing->kid->table) !== 0) {
@@ -111,6 +109,7 @@ class ParseWord {
 		if (empty($db_thing)) {
 			throw new ApiParseException("Invalid Entry: need a valid kid id, or a hash");
 		}
+
 		foreach (self::$keys_to_check as $what) {
 			if (!array_key_exists($what,$node)) {
 				$problem = JsonHelper::toString($node);
@@ -127,25 +126,15 @@ class ParseWord {
 		}
 		if (is_null($db_thing->delete)) {$db_thing->delete = 0;}
 
-		if (empty($db_thing->parent) && !$parent) {
-			throw new ApiParseException("Parent needs to be filled in @$classname for " . $db_thing->kid);
+		if (empty($db_thing->parent)  && !$parent) {
+			throw new ApiParseException("Parent needs to be filled in for " . $db_thing->kid);
 		}
 		//copy over pass through
 		if (array_key_exists('pass_through',$node)) {
 			$db_thing->pass_through = $node['pass_through'];
 		}
 
-		//check language length, if greater than 2 go ahead
-		if ( strlen($db_thing->language) !== 2 ) {
-			throw new ApiParseException("The language code needs to be exactly two characters long,  @$classname for " . $db_thing->kid);
-		}
-
-		if (empty($db_thing->text)) {
-			throw new ApiParseException("Words need to have some kind of content, even if just empty spaces");
-		}
-
 		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
-
 
 		if (empty($db_thing->parent)) {
 			$db_thing->parent = $parent;
@@ -160,7 +149,14 @@ class ParseWord {
 			$db_thing->parent = $manager->kid_talk->convert_parent_string_kid( $db_thing->parent, $db_thing->kid, self::$reference_table );
 		}
 
-
+		switch ($db_thing->parent->table) {
+			case 'gokabam_api_family' : {
+				break;
+			}
+			default:{
+					throw new ApiParseException("api parent must be a family");
+				}
+		}
 
 		return $db_thing;
 
@@ -169,45 +165,47 @@ class ParseWord {
 	/**
 	 * creates this if the kid is empty, or updates it if not empty
 	 * @param ParserManager $manager
-	 * @param GKA_Word $db_thing
-	 * @return GKA_Word
+	 * @param GKA_API $db_thing
+	 *
+	 * @return GKA_API
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
 	protected static function manage($manager, $db_thing) {
 
 		$last_page_load_id = $manager->last_load_id;
+
+
+
 		if (empty($db_thing->kid)) {
 			//check delete flag to see if something messed up
 			if ($db_thing->delete) {
 				throw new ApiParseException("Cannot put a delete flag on a new object, the kid was empty");
 			}
+
 			//create this
 			$new_id = $manager->mydb->execSQL(
-				"INSERT INTO gokabam_api_words(
-						word_code_enum,
-						iso_639_1_language_code,
-						da_words,
-						target_object_id,
+				"INSERT INTO gokabam_api_apis(
+						api_family_id,
+						method_call_enum,
+						api_name,
 						last_page_load_id,
 						initial_page_load_id
-						)
- 					  VALUES(?,?,?,?,?,?)",
-					[
-						'sssiii',
-						$db_thing->type,
-						$db_thing->language,
-						$db_thing->text,
-						$db_thing->parent->object_id,
-						$last_page_load_id,
-						$last_page_load_id
-					],
-					MYDB::LAST_ID,
-					'@sey@ParseWord::manage->insert'
-				);
+						) VALUES(?,?,?,?,?)",
+				[
+					'issii',
+					$db_thing->parent->primary_id,
+					$db_thing->method,
+					$db_thing->text,
+					$last_page_load_id,
+					$last_page_load_id
+				],
+				MYDB::LAST_ID,
+				'@sey@ParseApi::manage->insert'
+			);
 
 			$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-					$db_thing->kid,self::$reference_table,$new_id,null);
+				$db_thing->kid,self::$reference_table,$new_id,null);
 
 		} else {
 			//update this
@@ -217,26 +215,26 @@ class ParseWord {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
 			$manager->mydb->execSQL(
-				"UPDATE gokabam_api_words SET
- 						word_code_enum = ?,
- 						iso_639_1_language_code = ?,
- 						da_words = ?,
- 						target_object_id=?,
- 						is_deleted = ?,
- 						last_page_load_id = ?
- 						 WHERE id = ? ",
-					['sssiiii',
-						$db_thing->type,
-						$db_thing->language,
-						$db_thing->text,
-						$db_thing->parent->object_id,
-						$db_thing->delete,
-						$last_page_load_id,
-						$id
-					],
-					MYDB::ROWS_AFFECTED,
-				'@sey@ParseWord::manage->update'
-				);
+				"UPDATE gokabam_api_apis 
+					  SET 
+					  api_name = ?,
+					  method_call_enum = ?,
+					  api_family_id =?,
+					  is_deleted = ?,
+					  last_page_load_id = ?
+					   WHERE id = ? ",
+				[
+					'ssiiii',
+					$db_thing->text,
+					$db_thing->method,
+					$db_thing->parent->primary_id,
+					$db_thing->delete,
+					$last_page_load_id,
+					$id
+				],
+				MYDB::ROWS_AFFECTED,
+				'@sey@ParseApi::manage->update'
+			);
 		}
 		$db_thing->status = true; //right now we do not do much with status
 		return $db_thing;

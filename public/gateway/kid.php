@@ -398,9 +398,80 @@ class KidTalk {
 			throw new ApiParseException("the kid of [$string_kid] does not have valid format of XXX_YYYYY(HHHHH) [example], this is the parent of a " .$child_table_prefix );
 		}
 
+	}
+
+	/**
+	 * @param GKA_Kid $kid
+	 * will fill in missing parts
+	 *    the kid needs to have at least:
+	 *   an object id
+	 *      OR
+	 *    a primary key and table
+	 * @return void
+	 * will throw exception if not one of those cases
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	public function fill_kids_in($kid) {
+		if (empty($kid)) {
+			throw new ApiParseException("kid is empty");
+		}
+
+		if ($kid->kid && $kid->table && $kid->primary_id && $kid->object_id) {
+			return ; //all down
+		}
+		elseif ($kid->object_id && $kid->table && $kid->primary_id) {
+			$kid->kid = $this->generate_code($kid->object_id,$kid->table);
+		}
+		elseif ($kid->object_id) {
+			$check = $this->mydb->execSQL(
+				"select da_table_name,primary_key,id  from gokabam_api_objects o  where o.id = ? ",
+				[ 'i', $kid->object_id ],
+				MYDB::RESULT_SET,
+				"@sey@KidTalk::fill_kids_in/find_by_object" );
+			if ( empty( $check ) ) {
+				throw new ApiParseException( "the kid having object id of {$kid->object_id} is not verified" );
+			}
+			$kid->table = $check[0]->da_table_name;
+			$kid->primary_id  = $check[0]->primary_key;
+			$kid->kid = $this->generate_code($kid->object_id,$kid->table);
+
+		} elseif ($kid->primary_id && $kid->table) {
+			$check = $this->mydb->execSQL(
+				"select da_table_name,primary_key,id  from gokabam_api_objects o  where da_table_name = ? and primary_key = ? ",
+				[ 'ss', $kid->table, $kid->primary_id],
+				MYDB::RESULT_SET,
+				"@sey@KidTalk::fill_kids_in/find_by_table_and_id" );
+			if ( empty( $check ) ) {
+				throw new ApiParseException( "the kid having table of {$kid->table} and PK of {$kid->primary_id} is not verified" );
+			}
+			$kid->object_id = $check[0]->id;
+			$kid->kid = $this->generate_code($kid->object_id,$kid->table);
+		} else {
+			throw new ApiParseException("not enough information to fill in the kid");
+		}
 
 
+	}
 
+	/**
+	 * NO DB just makes the string
+	 *
+	 * @param $object_id integer
+	 * @param $table_name string
+	 * @return string
+	 * @throws ApiParseException
+	 */
+	public function generate_code($object_id,$table_name) {
+		if (!array_key_exists($table_name,self::$table_to_key_map)) {
+			throw  new ApiParseException("Unexpected table of [$table_name]");
+		}
+		$encode_prefix = self::$table_to_key_map[$table_name];
+		$encoding = $this->hashids->encode($object_id);
+		if (empty($encoding)) {
+			throw new ApiParseException("Could not encode {$table_name} -> {$object_id}");
+		}
+		return $encode_prefix . '_'. $encoding ;
 	}
 
 

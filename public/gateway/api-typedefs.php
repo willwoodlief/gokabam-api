@@ -1,5 +1,5 @@
 <?php
-
+//todo place to access db is currently in top level groups is this ok?
 namespace gokabam_api;
 
 /**
@@ -38,6 +38,44 @@ class GKA_Kid {
 	 * this is a cool feature, but not used at all
 	 */
 	public $hint = '';
+}
+
+/**
+ * Class GKA_Touch
+ * @package gokabam_api
+ * this is the page load table
+ */
+class GKA_Touch
+{
+
+	/**
+	 * @var GKA_Kid|string|null $kid
+	   @see GKA_Root
+	 */
+
+	public $kid = '';
+	/**
+	 * @var string $version
+	 * read only set by server to client
+	 * the kid of the  version
+	 */
+	public $version = '';
+
+	/**
+	 * @var int $ts
+	 * read only set by the app when returning information
+	 * unix timestamp
+	 */
+	public $ts = 0;
+
+
+	/**
+	 * @var int $user_id
+	 * the  user that did the changes
+	 * wordpress user id
+	 * read only set by the app when returning information
+	 */
+	public $user_id = 0;
 }
 
 class GKA_Root
@@ -113,6 +151,22 @@ class GKA_Root
 	public $tags = [];
 
 
+	/**
+	 * @var string|GKA_Touch|null $initial_touch
+	 * when this was first created
+	 */
+	public $initial_touch = '';
+
+	/**
+	 * @var string|GKA_Touch|null $recent_touch
+	 * read only set by server to client
+	 * the kid of the most recent version this object is tied to
+	 */
+	public $recent_touch = '';
+
+
+
+
 }
 
 
@@ -154,6 +208,25 @@ class GKA_Word extends GKA_Root
 class GKA_Version extends GKA_Root
 {
 
+	/**
+	 * @var string $website_url
+	 * if there is an associated website url about this
+	 */
+	public $website_url = '';
+
+
+	/**
+	 * @var int $post_id
+	 * if a blog post is made about this on this wordpress
+	 */
+	public $post_id = 0;
+
+	/**
+	 * @var string $git_repo_url
+	 * any associated git repo online
+	 */
+	public $git_repo_url = '';
+
 
 	/**
 	 * @var string $git_tag
@@ -173,6 +246,8 @@ class GKA_Version extends GKA_Root
 	 * @var string $text
 	 */
 	public $text = '';
+
+
 }
 
 
@@ -356,25 +431,22 @@ class GKA_Element extends GKA_Root
 
 }
 
-/*
- * data_examples
- *      holds example for a data group, can be tagged and annotated
+
+
+/**
+ * Class GKA_DataExample
+ * @package gokabam_api
+ * @see GKA_Everything
  */
+class GKA_DataExample extends GKA_Root
+{
 
-		/**
-		 * Class GKA_DataExample
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_DataExample extends GKA_Root
-		{
+	/**
+	 * @var string $text, json  of the example
+	 */
+	public $text = '';
 
-			/**
-			 * @var string $example, json  of the example
-			 */
-			public $example = '';
-
-		}
+}
 
 
 
@@ -411,117 +483,99 @@ class GKA_DataGroup extends GKA_Root
 	public $type = '';
 }
 
-/* header
-			parent: api,family,version,output (its part of the definitions above)
-			name: string header name
-			value: the contents/value of the header can have regex groups with names that match the out data group
-			data_group: null or elements must match the regex group names of the value
-			kid: null or this is an update and not an insert, if update only non null values changed */
-
-		/**
-		 * Class GKA_Header
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_Header extends GKA_Root
-		{
-
-			/**
-			 * @var string $name - string header name
-			 */
-			public $name = '';
-
-			/**
-			 * @var string $value - the contents/value of the header can have regex groups with names that match the out data group
-			 */
-			public $value = '';
 
 
+/**
+ * Class GKA_Header
+ * @package gokabam_api
+ * @see GKA_Everything
+ */
+class GKA_Header extends GKA_Root
+{
 
-			/**
-			 * @var GKA_DataGroup[]|string[] $data_groups
-			 * defined here or kid
-			 * elements must match the regex group names of the value
-			 * zero or 1 element
-			 */
-			public $data_groups = [];
-		}
+	/**
+	 * @var string $name - string header name
+	 */
+	public $name = '';
 
-/*
-api_version
-			parent: null
-			text: non empty string, this is the internal name of the version
-			headers: null or an array of headers (defined here ) (see definition under api)
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also */
+	/**
+	 * @var string $value -
+	 * the contents/value of the header can have regex groups with names that match the out data group
+	 */
+	public $value = '';
 
-		/**
-		 * Class GKA_API_Version
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_API_Version extends GKA_Root
-		{
 
-			/**
-			 * @var string $text - this is the internal name of the version
-			 */
-			public $text = '';
+	/**
+	 * @var GKA_DataGroup[]|string[] $data_groups
+	 * defined here or kid
+	 * elements must match the regex group names of the value
+	 * zero or 1 element
+	 */
+	public $data_groups = [];
+}
+
+
+
+/**
+ * Class GKA_API_Version
+ * @package gokabam_api
+ * @see GKA_Everything
+ */
+class GKA_API_Version extends GKA_Root
+{
+
+	/**
+	 * @var string $text - this is the internal name of the version
+	 */
+	public $text = '';
+
+	/**
+	 * @var GKA_Header[]|string[] $headers array of zero or more headers
+	 */
+	public $headers = [];
+
+	/**
+	 * @var GKA_Family[] $families array of zero or more families
+	 */
+	public $families = [];
+
+
+	/**
+	 * @var GKA_Use_Case[] $use_cases
+	 * 0 or more
+	 */
+	public $use_cases = [];
+}
 		
-			/**
-			 * @var GKA_Header[]|string[] $headers array of zero or more headers
-			 */
-			public $headers = [];
-
-			/**
-			 * @var GKA_Family[] $families array of zero or more families
-			 */
-			public $families = [];
 
 
-			/**
-			 * @var GKA_Use_Case[] $use_cases
-			 */
-			public $use_cases = [];
-		}
-		
-/*
-		 api_family
-			parent: api_version
-			text: non empty string, this is the internal name of the family
-			headers: null or an array of headers (defined here ) (see definition under api)
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also */
+/**
+ * Class GKA_Family
+ * @package gokabam_api
+ * @see GKA_Everything
+ */
+class GKA_Family extends GKA_Root
+{
 
-		/**
-		 * Class GKA_Family
-		 * @package gokabam_api
-		 * @see GKA_Everything
-		 */
-		class GKA_Family extends GKA_Root
-		{
+	/**
+	 * @var string $text, this is the internal name of the family
+	 */
+	public $text = '';
 
-			/**
-			 * @var string $text, this is the internal name of the family
-			 */
-			public $text = '';
-		
-			/**
-			 * @var GKA_Header[]|string[] $headers array of zero or more headers
-			 */
-			public $headers = [];
+	/**
+	 * @var GKA_Header[]|string[] $headers array of zero or more headers
+	 */
+	public $headers = [];
 
 
-			/**
-			 * @var GKA_API[] $apis array of zero or more api
-			 */
-			public $apis = [];
+	/**
+	 * @var GKA_API[] $apis array of zero or more api
+	 */
+	public $apis = [];
 
 
 
-		}
+}
 		
 /* input
 			parent: api (its part of the api definition above)
@@ -780,44 +834,46 @@ use_case
 
 		}
 
-/*
-		 api
-			parent: api_family
-			text: non empty string, this is the way to call the api (the function name)
-			kid: null or this is an update and not an insert, if update only non null values changed
-			status: (put here on return ) also kid will be filled out if this is an insert
-			delete: null or missing or true. If true, then kid must be entered also
-			inputs
-			outputs
-			headers
-		 */
 
-		class GKA_API extends GKA_Root
-		{
-			/**
-			 * @var string $text - this is the name of the api call
-			 */
-			public $text = '';
+/**
+ * Class GKA_API
+ * @package gokabam_api
+ *  - the http calls that make up the api
+ *  they have different inputs, outputs, headers and use cases
+ */
+class GKA_API extends GKA_Root
+{
+	/**
+	 * @var string $text - this is the name of the api call
+	 */
+	public $text = '';
 
-			/**
-			 * @var GKA_Input[]|string[] $inputs array of zero or more inputs
-			 */
-			public $inputs = [];
+	/**
+	 * @var string $method
+	 * must be only get|put|post|delete|options|head|patch|trace
+	 * default is 'get'
+	 */
+	public $method = '';
 
-			/**
-			 * @var GKA_Output[]|string[] $outputs array of zero or more outputs
-			 */
-			public $outputs = [];
-			/**
-			 * @var GKA_Header[]|string[] $headers array of zero or more headers
-			 */
-			public $headers = [];
+	/**
+	 * @var GKA_Input[]|string[] $inputs array of zero or more inputs
+	 */
+	public $inputs = [];
 
-			/**
-			 * @var GKA_Use_Case[]|string[] $use_cases
-			 */
-			public $use_cases = [];
-		}
+	/**
+	 * @var GKA_Output[]|string[] $outputs array of zero or more outputs
+	 */
+	public $outputs = [];
+	/**
+	 * @var GKA_Header[]|string[] $headers array of zero or more headers
+	 */
+	public $headers = [];
+
+	/**
+	 * @var GKA_Use_Case[]|string[] $use_cases
+	 */
+	public $use_cases = [];
+}
 
 
 

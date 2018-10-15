@@ -118,6 +118,7 @@ class ApiGateway {
 	 * @throws SQLException
 	 */
 	protected function update_everything($init_everything){
+		global $GokabamGoodies;
 		$the_json = Input::get( 'gokabam_api_data', Input::THROW_IF_EMPTY );
 		if (!is_array($the_json)) {
 			$the_json = JsonHelper::fromString($the_json,true,true);
@@ -128,8 +129,9 @@ class ApiGateway {
 		$everything = new GKA_Everything();
 		$everything->api_action = $init_everything->api_action;
 		$everything->pass_through_data = $init_everything->pass_through_data;
+		$page_load_id = $GokabamGoodies->get_page_load_id();
 
-		$this->parser_manager    = new ParserManager($this->kid_talk,$this->mydb,$everything,$this->page_load_id,$the_json);
+		$this->parser_manager    = new ParserManager($this->kid_talk,$this->mydb,$everything,$page_load_id,$the_json);
 		return $everything;
 
 	}
@@ -143,7 +145,7 @@ class ApiGateway {
 	 * @return GKA_Everything
 	 */
 	public function all() {
-
+		global $GokabamGoodies;
 		try {
 			$this->mydb->beginTransaction();
 			/**
@@ -191,6 +193,7 @@ class ApiGateway {
 
 		} catch (\Exception $e) {
 			$this->mydb->rollback();
+			$GokabamGoodies->set_page_load_id(null);
 			if (isset($everything)) {
 				$pass_through = $everything->pass_through_data;
 			}
@@ -472,7 +475,7 @@ api_use_case
 	 */
 	protected function start_userspace($reason = null) {
 		global $GokabamGoodies;
-		if ($this->page_load_id) {
+		if ($GokabamGoodies->get_page_load_id()) {
 			return false;
 		}
 		$start =  microtime(true);
@@ -515,7 +518,7 @@ api_use_case
 			],
 			MYDB::LAST_ID
 		);
-		$this->page_load_id = $page_load_id;
+
 		if (isset($GokabamGoodies) && !empty($GokabamGoodies)) {
 			$GokabamGoodies->set_page_load_id($page_load_id);
 		}
@@ -528,13 +531,15 @@ api_use_case
 	 * @throws SQLException
 	 */
 	protected function end_userspace($error_id=null) {
-		if (!$this->page_load_id) {
+		global $GokabamGoodies;
+		if (!$GokabamGoodies->get_page_load_id()) {
 			return;
 		}
+		$page_load_id = $GokabamGoodies->get_page_load_id();
 		$end =  microtime(true);
 		$this->mydb->execSQL("UPDATE gokabam_api_page_loads SET stop_micro_time = ?,error_log_id=? WHERE id = ?",
-			['sii',$end,$error_id,$this->page_load_id],
+			['sii',$end,$error_id,$page_load_id],
 			MYDB::ROWS_AFFECTED);
-		$this->page_load_id = null;
+
 	}
 }

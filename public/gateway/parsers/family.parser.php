@@ -168,9 +168,9 @@ class ParseFamily {
 						initial_page_load_id
 						) VALUES(?,?,?,?)",
 				[
-					'siii',
+					'isii',
 					$db_thing->parent->primary_id,
-					$db_thing->parent->object_id,
+					$db_thing->text,
 					$last_page_load_id,
 					$last_page_load_id
 				],
@@ -199,7 +199,7 @@ class ParseFamily {
 				[
 					'siiii',
 					$db_thing->text,
-					$db_thing->parent->object_id,
+					$db_thing->parent->primary_id,
 					$db_thing->delete,
 					$last_page_load_id,
 					$id

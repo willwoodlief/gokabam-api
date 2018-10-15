@@ -9,7 +9,9 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 class ParseVersion {
 
-	protected static  $keys_to_check = ['kid','text','delete','git_tag','git_commit_id'];
+	protected static  $keys_to_check = ['kid','text','delete','git_repo_url','git_tag',
+		'git_commit_id','website_url','post_id'];
+
 	protected static  $reference_table = 'gokabam_api_versions';
 
 	/**
@@ -136,17 +138,23 @@ class ParseVersion {
 			$new_id = $manager->mydb->execSQL(
 				"INSERT INTO gokabam_api_versions(
 						version,
+						post_id,
 						git_commit_id,
 						git_tag,
+						git_repo_url,
+						website_url,
 						last_page_load_id,
 						initial_page_load_id
 						) 
-						VALUES(?,?,?,?,?)",
+						VALUES(?,?,?,?,?,?,?,?)",
 					[
-						'sssii',
+						'sissssii',
 						$db_thing->text,
+						$db_thing->post_id,
 						$db_thing->git_commit_id,
 						$db_thing->git_tag,
+						$db_thing->git_repo_url,
+						$db_thing->website_url,
 						$last_page_load_id,
 						$last_page_load_id
 					],
@@ -165,8 +173,27 @@ class ParseVersion {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
 			$manager->mydb->execSQL(
-				"UPDATE gokabam_api_versions SET version = ?,git_commit_id = ?,git_tag=?,is_deleted = ?, last_page_load_id = ? WHERE id = ? ",
-					['sssiii',$db_thing->text,$db_thing->git_commit_id,$db_thing->git_tag,$db_thing->delete,$last_page_load_id,$id],
+				"UPDATE gokabam_api_versions SET 
+						version = ?,
+						git_commit_id = ?,
+						git_tag=?,
+						git_repo_url = ?,
+						website_url = ?,
+						post_id = ?,
+						is_deleted = ?,
+						last_page_load_id = ?
+						 WHERE id = ? ",
+					[
+						'sssssiiii',
+						$db_thing->text,
+						$db_thing->git_commit_id,
+						$db_thing->git_tag,
+						$db_thing->git_repo_url,
+						$db_thing->website_url,
+						$db_thing->post_id,
+						$db_thing->delete,
+						$last_page_load_id,
+						$id],
 					MYDB::ROWS_AFFECTED,
 				'@sey@ParseVersion::manage->update'
 				);

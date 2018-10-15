@@ -36,6 +36,8 @@ class ParseJournal {
 
 		foreach ($input as $node) {
 			$beer = self::convert($manager,$node,$parent);
+			if (empty($beer)) {continue;} //if convert decided nothing to do
+
 			$beer = self::manage($manager,$beer);
 			//if this were a type which had children, then do each child array found in node by passing it to the
 			// correct parser , along with node, and putting the returns on the member in beer
@@ -85,7 +87,32 @@ class ParseJournal {
 	protected static function convert($manager, $node,$parent) {
 
 		$classname = get_called_class();
-		$db_thing = new GKA_Journal();
+
+		$db_thing = null;
+		if (is_array($node)) {
+			$db_thing = new GKA_Journal();
+		} else {
+			if (is_string($node)) {
+				/**
+				 * @var $db_thing GKA_Journal
+				 */
+				$db_thing = $manager->recon->spring($node);
+				if (strcmp(self::$reference_table,$db_thing->kid->table) !== 0) {
+					throw new ApiParseException("wrong class, expected ".self::$reference_table ." This is a " . get_class($db_thing) );
+				}
+				if ($db_thing->parent && $db_thing->parent->object_id && ($parent->object_id == $db_thing->parent->object_id)) {
+					return null;
+				}
+				$db_thing->parent = $parent; //overwrite earlier parent
+				$db_thing->kid = null ; //make it so a copy is made, and not an update of the original
+				return $db_thing;
+			}
+		}
+
+		if (empty($db_thing)) {
+			throw new ApiParseException("Invalid Entry: need a valid kid id, or a hash");
+		}
+
 		foreach (self::$keys_to_check as $what) {
 			if (!array_key_exists($what,$node)) {
 				$problem = JsonHelper::toString($node);

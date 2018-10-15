@@ -4,6 +4,7 @@ namespace gokabam_api;
 
 
 require_once PLUGIN_PATH . 'public/gateway/api-typedefs.php';
+require_once    PLUGIN_PATH.'public/gateway/recon.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/version.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/tag.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/word.parser.php';
@@ -11,6 +12,9 @@ require_once    PLUGIN_PATH.'public/gateway/parsers/journal.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/family.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/api-version.parser.php';
 require_once    PLUGIN_PATH.'public/gateway/parsers/header.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/group.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/example.parser.php';
+require_once    PLUGIN_PATH.'public/gateway/parsers/api.parser.php';
 
 
 
@@ -73,6 +77,12 @@ class ParserManager {
 	 */
 	public $parser_master = null;
 
+
+	/**
+	 * @var Recon|null $recon
+	 */
+	public $recon = null;
+
 	protected static $map = [
 		'versions'      =>	"gokabam_api\\ParseVersion",
 		'tags'          =>  "gokabam_api\\ParseTag",
@@ -81,7 +91,10 @@ class ParserManager {
 		'api_versions'  =>  "gokabam_api\\ParseApiVersion",
 		'families'      =>  "gokabam_api\\ParseFamily",
 		'headers'      =>   "gokabam_api\\ParseHeader",
-		'elements'      =>  "gokabam_api\\ParseElement"
+		'elements'      =>  "gokabam_api\\ParseElement",
+		'data_groups'   =>  "gokabam_api\\ParseGroup",
+		'examples'       =>  "gokabam_api\\ParseExample",
+		'apis'          =>   "gokabam_api\\ParseApi"
 	];
 
 	/**
@@ -104,6 +117,7 @@ class ParserManager {
 		$this->everything         = $everything;
 		$this->kid_talk           = $kid_talk;
 		$this->mydb               = $mydb;
+		$this->recon              = new Recon($mydb);
 		$this->parent_kid         = $parent_kid;
 		$this->processed_roots    = [];
 		$this->processed_array    = [];

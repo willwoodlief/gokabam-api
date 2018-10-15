@@ -23,7 +23,7 @@ class Activator {
 	 * @since    1.0.0
 	 */
 
-	const DB_VERSION = 0.186;
+	const DB_VERSION = 0.188;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -51,6 +51,10 @@ class Activator {
 	           * add original_page_load_id to all regular tables, add version_id to page_load table , remove version_id from journals
 	                This adds a double fk into the version and page load tables, but on different fields
 			   * took out unused value header_value_regex from headers
+
+	* .187
+	          more info in gokabam_api_versions
+				* added git_repo, post_id, website_url
 
 
 	*/
@@ -305,18 +309,22 @@ class Activator {
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
+              post_id int default null comment 'if a blog post is made about this',
               version varchar(255) not null ,
-              git_commit_id varchar(255) DEFAULT NULL ,
-              git_tag varchar(255) DEFAULT NULL,
+              git_repo_url varchar(255) default null comment 'any associated git repo online',
+              git_commit_id varchar(255) DEFAULT NULL comment 'any associted git commit',
+              git_tag varchar(255) DEFAULT NULL comment 'any associated git tag',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_words varchar(255) default null,
               md5_checksum_journals varchar(255) default null comment 'checksum for all journals attached to this ',
+              website_url text default null comment 'if there is an associated website url about this',
               PRIMARY KEY  (id),
               UNIQUE KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
-              UNIQUE KEY version_key (version)
+              UNIQUE KEY version_key (version),
+              KEY post_id_key (post_id)
               ) $charset_collate;";
 
 			dbDelta( $sql );
@@ -772,7 +780,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              method_call_enum varchar(255) not null comment 'get,put,post,delete,options,head,patch,trace',
+              method_call_enum varchar(255) not null default 'get' comment 'get,put,post,delete,options,head,patch,trace',
               api_name varchar(255) default null comment 'the code name, not the decription name',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
