@@ -4,6 +4,12 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts
   BEGIN
 
 
+    if NEW.is_deleted <> 0 then
+      SET @message := CONCAT('Delete must be 0 for new objects. It was: ', NEW.is_deleted);
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = @message;
+    end if;
+
     if (NEW.in_data_group_id IS NOT NULL) AND (NEW.in_api_id IS NOT NULL)
     THEN
       SIGNAL SQLSTATE '45000'
@@ -64,7 +70,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts
             coalesce(NEW.in_api_id,' '),
             coalesce(NEW.out_data_group_id,' '),
             coalesce(NEW.rank,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_groups,' '),

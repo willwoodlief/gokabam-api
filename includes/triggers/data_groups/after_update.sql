@@ -245,6 +245,15 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
     END LOOP;
     CLOSE input_cur;
 
+    IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
+      -- update delete status of dependents
 
+      UPDATE gokabam_api_data_elements s SET s.is_deleted = NEW.is_deleted WHERE s.group_id = NEW.id;
+      UPDATE gokabam_api_data_group_examples s SET s.is_deleted = NEW.is_deleted WHERE s.group_id = NEW.id;
+
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+    END IF;
 
   END

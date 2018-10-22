@@ -51,7 +51,7 @@ SQL;
 			}
 
 			$this->kid_talk = new KidTalk( $this->mydb );
-			$this->filler_manager = new FillerManager($this);
+
 		} catch (\Exception $e) {
 			ErrorLogger::saveException($e);
 		}
@@ -64,6 +64,7 @@ SQL;
 
 	public function get_kid_talk() { return $this->kid_talk;}
 
+	public function set_filler_manager($filler) { $this->filler_manager = $filler;}
 	public function get_filler_manager() { return $this->filler_manager;}
 	public function get_page_load_id() { return $this->page_load_id; }
 	public function set_page_load_id($page_load_id) { $this->page_load_id = $page_load_id;}

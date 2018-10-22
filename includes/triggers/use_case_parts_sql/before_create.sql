@@ -3,6 +3,12 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts_sql
   FOR EACH ROW
   BEGIN
 
+    if NEW.is_deleted <> 0 then
+      SET @message := CONCAT('Delete must be 0 for new objects. It was: ', NEW.is_deleted);
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = @message;
+    end if;
+
     if NEW.sql_part_enum not in (
       'select','from','joins','where','limit','offset','ordering'
     ) then
@@ -25,7 +31,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_use_case_parts_sql
             coalesce(NEW.outside_element_id,' '),
             coalesce(NEW.ranking,' '),
             coalesce(NEW.constant_value,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_elements,' '),

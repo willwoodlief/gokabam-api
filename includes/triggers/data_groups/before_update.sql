@@ -31,7 +31,7 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_groups
         CONCAT(
             coalesce(NEW.md5_checksum_elements,' '),
             coalesce(NEW.md5_checksum_examples,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.group_type_enum,' '),
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),

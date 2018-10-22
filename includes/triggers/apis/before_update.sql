@@ -18,7 +18,7 @@ CREATE TRIGGER trigger_before_update_gokabam_api_apis
             coalesce(NEW.md5_checksum_headers,' '),
             coalesce(NEW.md5_checksum_inputs,' '),
             coalesce(NEW.md5_checksum_outputs,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_journals,' ')

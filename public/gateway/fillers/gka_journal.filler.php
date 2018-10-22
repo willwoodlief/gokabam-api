@@ -1,27 +1,30 @@
 <?php
 namespace gokabam_api;
 
-class Fill_GKA_DataExample {
+class Fill_GKA_Journal {
 
 	/**
-	 * @param GKA_DataExample $root
+	 * @param GKA_Journal $root
 	 * @param FillerManager $filler_manager
 	 * @param MYDB $mydb
-	 * @return GKA_DataExample
+	 * @param integer $first_ts
+	 * @param integer $last_ts
+	 * @return GKA_Journal
 	 * @throws SQLException
 	 * @throws FillException
 	 */
-	public static function fill($root,$filler_manager, $mydb) {
+	public static function fill($root,$filler_manager, $mydb, $first_ts, $last_ts) {
+
 
 		$res = $mydb->execSQL("
 			SELECT 
 				a.id,
 				a.object_id,
+				a.target_object_id,
 				a.is_deleted,
 				
-				a.group_id,
-				a.json_example,
-			  	
+				a.entry,
+				
 				a.md5_checksum,
 				a.initial_page_load_id,
 				a.last_page_load_id,
@@ -31,18 +34,17 @@ class Fill_GKA_DataExample {
 				p_last.user_id as last_user,
 				UNIX_TIMESTAMP(p_first.created_at) as initial_ts,
 				UNIX_TIMESTAMP(p_last.created_at) as last_ts
-			FROM gokabam_api_data_group_examples a 
+			FROM gokabam_api_journals a 
 			LEFT JOIN gokabam_api_page_loads p_first ON p_first.id = a.initial_page_load_id
 			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = a.last_page_load_id
-			WHERE a.id = ? AND a.is_deleted = 0",
-			['i',$root->kid->primary_id],
+			WHERE a.id = ? AND a.is_deleted = 0 AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['iii',$root->kid->primary_id,$first_ts,$last_ts],
 			MYDB::RESULT_SET,
-			"@sey@primary.gka_dataexample.filler.php"
+			"@sey@primary.gka_journal.filler.php"
 		);
 
 		if (empty($res)) {
-			$class = get_class($root);
-			throw new FillException("Did not find an object for $class, primary id of {$root->kid->primary_id}");
+			return null;
 		}
 
 		$data = $res[0];
@@ -52,11 +54,10 @@ class Fill_GKA_DataExample {
 		///////// Finished with standard root fill ///////////////////
 
 		$parent = new GKA_Kid();
-		$parent->primary_id = $data->group_id;
-		$parent->table = 'gokabam_api_data_groups';
+		$parent->object_id = $data->target_object_id;
 		$root->parent = $parent;
+		$root->text = $data->tag_label;
 
-		$root->text = $data->json_example;
 
 
 		return $root;

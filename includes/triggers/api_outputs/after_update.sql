@@ -93,4 +93,20 @@ CREATE TRIGGER trigger_after_update_gokabam_api_outputs
 
     UPDATE gokabam_api_apis SET md5_checksum_outputs = @crc
     WHERE id = NEW.api_id;
+
+
+    IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
+      -- update delete status of dependents
+      UPDATE gokabam_api_data_groups s
+      INNER JOIN gokabam_api_outputs i on s.id = i.out_data_group_id
+      SET s.is_deleted = NEW.is_deleted WHERE i.id = NEW.id;
+
+
+      UPDATE gokabam_api_output_headers s SET s.is_deleted = NEW.is_deleted WHERE s.api_output_id = NEW.id;
+
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+    END IF;
+
   END

@@ -1,5 +1,5 @@
 <?php
-//todo place to access db is currently in top level groups is this ok?
+
 namespace gokabam_api;
 
 /**
@@ -177,7 +177,12 @@ class GKA_Root
 	 */
 	public function fill() {
 		global $GokabamGoodies;
-		return $GokabamGoodies->get_filler_manager()->fill($this);
+		if ($GokabamGoodies && ($filler_manager = $GokabamGoodies->get_filler_manager()) ) {
+			return $filler_manager->fill($this);
+		} else {
+			throw new FillException("Filler manager not set up in gokabam goodies");
+		}
+
 	}
 }
 
@@ -921,10 +926,6 @@ class GKA_Everything
 	 */
 	public $end_timestamp = 0;
 
-	/**
-	 * @var string|null $save_name - if action is save then need a save name, if get will need it also
-	 */
-	public $save_name = '';
 
 	/**
 	 * @var string $message - talks about the overall operation. Will be success or an error message
@@ -1071,6 +1072,12 @@ class GKA_Everything
 	 * @var GKA_ServerData|null $server
 	 */
 	public $server = null;
+
+	/**
+	 * objects that were deleted in the time range provided, if not time range, then not filled in
+	 * @var GKA_Kid[]|string[]
+	 */
+	public $deleted_kids = [];
 }
 
 

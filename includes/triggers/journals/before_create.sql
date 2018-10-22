@@ -4,6 +4,12 @@ CREATE TRIGGER trigger_before_create_gokabam_api_journals
   BEGIN
     DECLARE maybe_journal_or_tag_object INT DEFAULT NULL;
 
+    if NEW.is_deleted <> 0 then
+      SET @message := CONCAT('Delete must be 0 for new objects. It was: ', NEW.is_deleted);
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = @message;
+    end if;
+
     # test to see if the target is a tag or journal
     SELECT id into maybe_journal_or_tag_object
     from gokabam_api_objects
@@ -24,8 +30,8 @@ CREATE TRIGGER trigger_before_create_gokabam_api_journals
         CONCAT(
             coalesce(NEW.target_object_id,' '),
             coalesce(NEW.md5_checksum_tags,' '),
-            coalesce(NEW.entry,' '),
-            coalesce(NEW.is_deleted,' ')
+            coalesce(NEW.entry,' ')
+
         )
     );
   END

@@ -27,8 +27,8 @@ CREATE TRIGGER trigger_before_update_gokabam_api_journals
         CONCAT(
             coalesce(NEW.target_object_id,' '),
             coalesce(NEW.md5_checksum_tags,' '),
-            coalesce(NEW.entry,' '),
-            coalesce(NEW.is_deleted,' ')
+            coalesce(NEW.entry,' ')
+
         )
     );
   END

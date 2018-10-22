@@ -124,7 +124,7 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_elements
             coalesce(NEW.data_type_name,' '),
             coalesce(NEW.default_value,' '),
             coalesce(NEW.enum_values,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_elements,' '),
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),

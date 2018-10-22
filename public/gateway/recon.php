@@ -6,9 +6,7 @@ require_once    PLUGIN_PATH.'public/gateway/api-typedefs.php';
 require_once    PLUGIN_PATH.'public/gateway/kid.php';
 require_once    PLUGIN_PATH.'vendor/autoload.php';
 
-//todo (after all recon and parsers are made) when an object has is_deleted updated, have each after update trigger mark all dependents with the same flag
-//todo (do next) need to fill initial and most version, on return
-	//todo (related to next) add in create and update ts to all version objects going out
+
 
 
 class Recon {

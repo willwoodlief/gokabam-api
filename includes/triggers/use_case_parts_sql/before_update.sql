@@ -20,7 +20,7 @@ CREATE TRIGGER trigger_before_update_gokabam_api_use_case_parts_sql
             coalesce(NEW.outside_element_id,' '),
             coalesce(NEW.ranking,' '),
             coalesce(NEW.constant_value,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_elements,' '),

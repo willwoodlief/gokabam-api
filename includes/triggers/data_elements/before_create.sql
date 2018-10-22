@@ -3,6 +3,12 @@ CREATE TRIGGER trigger_before_create_gokabam_api_data_elements
   FOR EACH ROW
   BEGIN
 
+    if NEW.is_deleted <> 0 then
+      SET @message := CONCAT('Delete must be 0 for new objects. It was: ', NEW.is_deleted);
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = @message;
+    end if;
+
     # don't allow group_id and element_id to be set to non null at the same time
     IF NEW.group_id IS NOT NULL AND NEW.parent_element_id IS NOT NULL
       THEN
@@ -129,7 +135,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_data_elements
             coalesce(NEW.data_type_name,' '),
             coalesce(NEW.default_value,' '),
             coalesce(NEW.enum_values,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_elements,' '),
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),

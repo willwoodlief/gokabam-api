@@ -3,6 +3,12 @@ CREATE TRIGGER trigger_before_create_gokabam_api_apis
   FOR EACH ROW
   BEGIN
 
+    if NEW.is_deleted <> 0 then
+      SET @message := CONCAT('Delete must be 0 for new objects. It was: ', NEW.is_deleted);
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = @message;
+    end if;
+
     if NEW.method_call_enum not in (
       'get','put','post','delete','options','head','patch','trace'
     ) then
@@ -22,7 +28,7 @@ CREATE TRIGGER trigger_before_create_gokabam_api_apis
             coalesce(NEW.method_call_enum,' '),
             coalesce(NEW.api_name,' '),
             coalesce(NEW.md5_checksum_headers,' '),
-            coalesce(NEW.is_deleted,' '),
+
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_outputs),

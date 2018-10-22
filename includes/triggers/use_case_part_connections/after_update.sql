@@ -120,5 +120,4 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_part_connections
     WHERE id = NEW.child_use_case_part_id;
 
 
-
   END

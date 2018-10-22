@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.191;
+	const DB_VERSION = 0.192;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -53,7 +53,11 @@ class Activator {
 		.190  use case connections have a parent use case now, and the triggers it makes sure all stay in the same use case
 				database groups now enforced, cannot be belonging to inputs, outputs,headers or use cases
 												and db elements cannot be nested
+
 	   .191 cleared up obsolete table and improper table mentions in object trigger
+
+		.192 Update Triggers change dependent's delete status . checksums no longer include delete status
+				And its not possible to create something already deleted
 	*/
 
 

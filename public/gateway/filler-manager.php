@@ -41,25 +41,42 @@ class FillerManager {
 
 
 	/**
+	 * @var null|integer $start_ts
+	 */
+	protected $start_ts = null;
+
+	/**
+	 * @var null|integer $end_ts
+	 */
+	protected $end_ts = null;
+	/**
 	 * FillerManager constructor.
 	 *
 	 * @param GoKabamGoodies $GokabamGoodies
+	 * @param integer $start_ts
+	 * @param integer $end_ts
 	 */
-	public  function __construct($GokabamGoodies) {
+	public  function __construct($GokabamGoodies,$start_ts,$end_ts) {
 
 		$this->kid_talk = $GokabamGoodies->get_kid_talk();
 		$this->mydb = $GokabamGoodies->get_mydb();
+		$this->start_ts = $start_ts;
+		$this->end_ts = $end_ts;
 		$this->everything = new GKA_Everything();
 	}
 
 	/**
+	 * @param boolean $b_show_deleted default false , if true fills in deleted_kids
 	 * @return GKA_Everything
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 * @throws FillException
 	 */
-	public function get_everything() {
+	public function get_everything($b_show_deleted = false) {
 		$this->finalize_processed_roots();
+		if ($b_show_deleted) {
+			$this->everything->deleted_kids = $this->get_deleted_array();
+		}
 		return $this->everything;
 	}
 
@@ -67,9 +84,100 @@ class FillerManager {
 	 * clears out everything and processed roots
 	 * queries the database for all the top level objects (version, api_version, data groups that are tables
 	 * and calls fill for each id and table name put into a kid
+	 * @throws SQLException
+	 * @throws FillException
+	 * @throws ApiParseException
 	 */
 	public function do_all() {
 
+		$first_ts_param = $this->start_ts;
+		$last_ts_param = $this->end_ts;
+
+		if (is_null($first_ts_param)) {
+			$first_ts_param = 0;
+		}
+
+		if (is_null($last_ts_param)) {
+			$last_ts_param = 999999999999999;
+		}
+
+		$roots = [];
+
+		//get versions
+		$res = $this->mydb->execSQL("
+			SELECT 
+				o.id,o.object_id
+			FROM gokabam_api_versions o
+			INNER JOIN gokabam_api_page_loads p_last ON p_last.id = o.last_page_load_id
+			
+			WHERE o.is_deleted = 0  AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['ii',$first_ts_param,$last_ts_param],
+			MYDB::RESULT_SET,
+			"@sey@versions.do_all.filler-manager.php"
+		);
+
+		if (empty($res))  {$res = [];}
+		foreach($res as $row) {
+			$xxx = new GKA_Kid();
+			$xxx->primary_id = $row->id;
+			$xxx->table = 'gokabam_api_versions';
+			$xxx->object_id = $row->object_id;
+			$this->kid_talk->fill_kids_in($xxx);
+			$roots[] = $xxx;
+		}
+
+
+		//get api versions
+		$res = $this->mydb->execSQL("
+			SELECT 
+				o.id,o.object_id
+			FROM gokabam_api_api_versions o
+			INNER JOIN gokabam_api_page_loads p_last ON p_last.id = o.last_page_load_id
+			
+			WHERE o.is_deleted = 0  AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['ii',$first_ts_param,$last_ts_param],
+			MYDB::RESULT_SET,
+			"@sey@api-versions.do_all.filler-manager.php"
+		);
+
+		if (empty($res))  {$res = [];}
+		foreach($res as $row) {
+			$xxx = new GKA_Kid();
+			$xxx->primary_id = $row->id;
+			$xxx->table = 'gokabam_api_api_versions';
+			$xxx->object_id = $row->object_id;
+			$this->kid_talk->fill_kids_in($xxx);
+			$roots[] = $xxx;
+		}
+
+
+		//get db tables
+		$res = $this->mydb->execSQL("
+			SELECT 
+				o.id,o.object_id
+			FROM gokabam_api_data_groups o
+			INNER JOIN gokabam_api_page_loads p_last ON p_last.id = o.last_page_load_id
+			
+			WHERE o.is_deleted = 0  and o.group_type_enum = 'database_table' AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['ii',$first_ts_param,$last_ts_param],
+			MYDB::RESULT_SET,
+			"@sey@api-versions.do_all.filler-manager.php"
+		);
+
+		if (empty($res))  {$res = [];}
+		foreach($res as $row) {
+			$xxx = new GKA_Kid();
+			$xxx->primary_id = $row->id;
+			$xxx->table = 'gokabam_api_api_versions';
+			$xxx->object_id = $row->object_id;
+			$this->kid_talk->fill_kids_in($xxx);
+			$roots[] = $xxx;
+		}
+
+		//do the fill
+		foreach ($roots as $root) {
+			$this->fill($root);
+		}
 	}
 
 
@@ -188,12 +296,16 @@ class FillerManager {
 	 *   when the fill plugin does its thing, parents are always referenced by kids and not root objects
 	 *
 	 * @param GKA_Root|GKA_Kid|string $root
-	 * @return GKA_Root
+	 * @param boolean $b_child, default false
+	 * @return GKA_Root|null <p>
+	 * if this root is deleted, or not in date range set by constructor, will be null
+	 * else will return one of the derived classes
+	 * </p>
 	 * @throws SQLException
 	 * @throws FillException
 	 * @throws ApiParseException
 	 */
-	public function fill($root) {
+	public function fill($root,$b_child = false) {
 
 		if (empty($root)) {
 			return $root;
@@ -224,15 +336,33 @@ class FillerManager {
 		}
 		$the_class = $what[1];
 		$the_class_lower = strtolower($the_class);
-		$filler_class_file = PLUGIN_PATH. "public/gateway/putters/$the_class_lower.filler.php";
+		$filler_class_file = PLUGIN_PATH. "public/gateway/fillers/$the_class_lower.filler.php";
 		if (!file_exists($filler_class_file)) {
 			throw new \InvalidArgumentException("Cannot find a filler class for $the_class");
 		}
 		require_once $filler_class_file;
 		$filler_class_name= "Fill_".$the_class;
-		$ret = call_user_func_array( $filler_class_name . "::fill", [$root,$this,$this->mydb] );
+		$first_ts_param = $this->start_ts;
+		$last_ts_param = $this->end_ts;
+		if ($b_child) {
+			$first_ts_param = 0;
+			$last_ts_param = 999999999999999;
+		}
+
+		if (is_null($first_ts_param)) {
+			$first_ts_param = 0;
+		}
+
+		if (is_null($last_ts_param)) {
+			$last_ts_param = 999999999999999;
+		}
+
+		$ret = call_user_func_array( $filler_class_name . "::fill", [$root,$this,$this->mydb,$first_ts_param,$last_ts_param] );
 		if ($ret===false) {
 			throw new \InvalidArgumentException("Cannot find a method of [$filler_class_name] [fill], for the filling of $the_class");
+		}
+		if (is_null($ret)) {
+			return null;
 		}
 
 		//add for post processing
@@ -255,7 +385,7 @@ class FillerManager {
 				 is_a($top_node,"gokabam_api\GKA_Root" ) ||
 				 is_a($top_node,"gokabam_api\GKA_Kid" )
 			)  {
-				$this->fill($top_node);
+				$this->fill($top_node,true);
 			}
 
 			if ( is_array($top_node)) {
@@ -264,7 +394,7 @@ class FillerManager {
 						is_a($what,"gokabam_api\GKA_Root" ) ||
 						is_a($what,"gokabam_api\GKA_Kid" )
 					)  {
-						$this->fill($what);
+						$this->fill($what,true);
 					}
 				}
 			}
@@ -701,6 +831,48 @@ class FillerManager {
 
 	}
 
+	/**
+	 * @return array
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	protected function get_deleted_array() {
+		$first_ts_param = $this->start_ts;
+		$last_ts_param = $this->end_ts;
 
+		if (is_null($first_ts_param)) {
+			$first_ts_param = 0;
+		}
+
+		if (is_null($last_ts_param)) {
+			$last_ts_param = 999999999999999;
+		}
+
+		$res = $this->mydb->execSQL("
+			SELECT 
+				o.id as object_id,
+				o.primary_key,
+				o.da_table_name
+			FROM gokabam_api_objects o
+			INNER JOIN gokabam_api_change_log g ON g.target_object_id = o.id 
+			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = g.page_load_id
+			
+			WHERE g.edit_action = 'delete'  AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['iii',$first_ts_param,$last_ts_param],
+			MYDB::RESULT_SET,
+			"@sey@get_deleted_array.filler-manager.php"
+		);
+		$ret = [];
+		if (empty($res))  {return $ret;}
+		foreach($res as $row) {
+			$xxx = new GKA_Kid();
+			$xxx->primary_id = $row->primary_key;
+			$xxx->table = $row->da_table_name;
+			$xxx->object_id = $row->object_id;
+			$this->kid_talk->fill_kids_in($xxx);
+			$ret[] = $xxx;
+		}
+		return $ret;
+	}
 
 }

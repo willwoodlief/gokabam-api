@@ -1,32 +1,30 @@
 <?php
 namespace gokabam_api;
 
-class Fill_GKA_Version {
+class Fill_GKA_Word {
 
 	/**
-	 * @param GKA_Version $root
+	 * @param GKA_Word $root
 	 * @param FillerManager $filler_manager
 	 * @param MYDB $mydb
-	 * @return GKA_Version
+	 * @param integer $first_ts
+	 * @param integer $last_ts
+	 * @return GKA_Word
 	 * @throws SQLException
 	 * @throws FillException
 	 */
-	public static function fill($root,$filler_manager, $mydb) {
+	public static function fill($root,$filler_manager, $mydb, $first_ts, $last_ts) {
 
 
 		$res = $mydb->execSQL("
 			SELECT 
 				a.id,
 				a.object_id,
+				a.target_object_id,
 				a.is_deleted,
-				
-				a.version,
-				a.git_commit_id,
-				a.git_tag,
-				a.website_url,
-				a.post_id,
-				a.git_repo_url,
-				
+				a.iso_639_1_language_code,
+				a.word_code_enum,
+				a.da_words,
 				a.md5_checksum,
 				a.initial_page_load_id,
 				a.last_page_load_id,
@@ -36,18 +34,17 @@ class Fill_GKA_Version {
 				p_last.user_id as last_user,
 				UNIX_TIMESTAMP(p_first.created_at) as initial_ts,
 				UNIX_TIMESTAMP(p_last.created_at) as last_ts
-			FROM gokabam_api_versions a 
+			FROM gokabam_api_words a 
 			LEFT JOIN gokabam_api_page_loads p_first ON p_first.id = a.initial_page_load_id
 			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = a.last_page_load_id
-			WHERE a.id = ? AND a.is_deleted = 0",
-			['i',$root->kid->primary_id],
+			WHERE a.id = ? AND a.is_deleted = 0 AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['iii',$root->kid->primary_id,$first_ts,$last_ts],
 			MYDB::RESULT_SET,
-			"@sey@primary.gka_version.filler.php"
+			"@sey@primary.gka_word.filler.php"
 		);
 
 		if (empty($res)) {
-			$class = get_class($root);
-			throw new FillException("Did not find an object for $class, primary id of {$root->kid->primary_id}");
+			return null;
 		}
 
 		$data = $res[0];
@@ -55,15 +52,13 @@ class Fill_GKA_Version {
 		$filler_manager->root_fill_helper($root,$data);
 
 		///////// Finished with standard root fill ///////////////////
+		$parent = new GKA_Kid();
+		$parent->object_id = $data->target_object_id;
+		$root->parent = $parent;
 
-
-
-		$root->text = $data->version;
-		$root->git_commit_id = $data->git_commit_id;
-		$root->git_tag = $data->git_tag;
-		$root->website_url = $data->website_url;
-		$root->post_id = $data->post_id;
-		$root->git_repo_url = $data->git_repo_url;
+		$root->text = $data->da_words;
+		$root->language = $data->iso_639_1_language_code;
+		$root->type = $data->word_code_enum;
 
 		return $root;
 

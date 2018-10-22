@@ -7,11 +7,13 @@ class Fill_GKA_SQL_Part {
 	 * @param GKA_SQL_Part $root
 	 * @param FillerManager $filler_manager
 	 * @param MYDB $mydb
+	 * @param integer $first_ts
+	 * @param integer $last_ts
 	 * @return GKA_SQL_Part
 	 * @throws SQLException
 	 * @throws FillException
 	 */
-	public static function fill($root,$filler_manager, $mydb) {
+	public static function fill($root,$filler_manager, $mydb, $first_ts, $last_ts) {
 
 		$res = $mydb->execSQL("
 			SELECT 
@@ -39,15 +41,14 @@ class Fill_GKA_SQL_Part {
 			FROM gokabam_api_use_case_parts_sql a 
 			LEFT JOIN gokabam_api_page_loads p_first ON p_first.id = a.initial_page_load_id
 			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = a.last_page_load_id
-			WHERE a.id = ? AND a.is_deleted = 0",
-			['i',$root->kid->primary_id],
+			WHERE a.id = ? AND a.is_deleted = 0 AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
+			['iii',$root->kid->primary_id,$first_ts,$last_ts],
 			MYDB::RESULT_SET,
 			"@sey@primary.gka_sql_part.filler.php"
 		);
 
 		if (empty($res)) {
-			$class = get_class($root);
-			throw new FillException("Did not find an object for $class, primary id of {$root->kid->primary_id}");
+			return null;
 		}
 
 		$data = $res[0];

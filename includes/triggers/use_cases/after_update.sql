@@ -78,6 +78,15 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_cases
       VALUES (@edit_log_id,'is_deleted',OLD.is_deleted);
     END IF;
 
+    IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
+      -- update delete status of dependents
 
+      UPDATE gokabam_api_use_case_part_connections s SET s.is_deleted = NEW.is_deleted WHERE s.use_case_id = NEW.id;
+      UPDATE gokabam_api_use_case_parts s SET s.is_deleted = NEW.is_deleted WHERE s.use_case_id = NEW.id;
+
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+    END IF;
 
   END
