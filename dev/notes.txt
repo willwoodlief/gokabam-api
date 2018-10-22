@@ -64,9 +64,9 @@ api family
 				'gokabam_api_tags',
 				'gokabam_api_journals',
 				'gokabam_api_data_elements',
-				'gokabam_api_data_element_objects',
+
 				'gokabam_api_data_groups',
-				'gokabam_api_data_group_members',
+
 				'gokabam_api_data_group_examples',
 				'gokabam_api_inputs',
 				'gokabam_api_outputs',

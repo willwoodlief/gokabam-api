@@ -24,7 +24,8 @@ class MainVersionPage {
 	}
 
 	static public  function get_template() {
-		return 'single';
+		return 'full-width';
+		//return 'index';
 	}
 
 	/**

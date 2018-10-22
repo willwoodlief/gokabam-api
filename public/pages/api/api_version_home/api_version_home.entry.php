@@ -27,7 +27,7 @@ class ApiVersionHome {
 	}
 
 	static public  function get_template() {
-		return 'single';
+		return 'full-width';
 	}
 
 	/**

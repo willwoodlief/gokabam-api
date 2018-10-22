@@ -2,7 +2,7 @@
 
 namespace gokabam_api;
 require_once 'pages.php';
-require_once  'gokabam.goodies.php';
+require_once    PLUGIN_PATH.'public/gateway/gokabam.goodies.php';
 
 /**
  * @var $GokabamGoodies GoKabamGoodies
@@ -76,6 +76,8 @@ class Plugin_Public
     public function enqueue_styles()
     {
 
+
+
 	    $b_check = strpos($_SERVER['REQUEST_URI'], strtolower( PLUGIN_NAME));
 	    if ($b_check) {
 		    wp_enqueue_style('bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap.min.css', array(), '3.3.7', 'all');
@@ -102,10 +104,12 @@ class Plugin_Public
 		    wp_enqueue_script('moment', PLUGIN_URL . 'node_modules/moment/min/moment-with-locales.min.js', array('jquery'), '2.22.2', false);
 		    wp_enqueue_script('jquery-bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/js/bootstrap.min.js', array('jquery'), '3.3.7', false);
 		    wp_enqueue_script('bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js', array('jquery-bootstrap'), '1.35.4', false);
-		    wp_enqueue_script('gokabam-family', PLUGIN_URL . 'public/js/gokabam.family.js', array('jquery'), '0.0.1', false);
+		   // wp_enqueue_script('gokabam-family', PLUGIN_URL . 'public/js/gokabam.family.js', array('jquery'), '0.0.1', false);
     	}
         wp_enqueue_script($this->plugin_name. 'a', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
-        $title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
+
+
+    	$title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
         wp_localize_script($this->plugin_name. 'a', strtolower( PLUGIN_NAME) . '_frontend_ajax_obj', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'action' => strtolower( PLUGIN_NAME) . '_submit_chart_step',

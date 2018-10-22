@@ -101,6 +101,8 @@ class ParserManager {
 		'headers'         =>  "gokabam_api\\ParseHeader",
 		'elements'        =>  "gokabam_api\\ParseElement",
 		'data_groups'     =>  "gokabam_api\\ParseGroup",
+		'table_groups'     =>  "gokabam_api\\ParseGroup",
+
 		'inputs'          =>  "gokabam_api\\ParseInput",
 		'outputs'         =>  "gokabam_api\\ParseOutput",
 

@@ -1,7 +1,7 @@
 <?php
 
 namespace gokabam_api;
-require_once    PLUGIN_PATH.'public/gokabam.goodies.php';
+require_once    PLUGIN_PATH.'public/gateway/gokabam.goodies.php';
 require_once    PLUGIN_PATH.'public/gateway/api-typedefs.php';
 require_once    PLUGIN_PATH.'public/gateway/parser-manager.php';
 require_once    PLUGIN_PATH.'vendor/autoload.php';
@@ -58,12 +58,13 @@ class ApiGateway {
 	 * @param integer $version_id
 	 */
 	public function __construct( $mydb, $version_id ) {
+		global $GokabamGoodies;
 
 		try {
 			$this->mydb              = $mydb;
 			$this->latest_version_id = $version_id;
 			$this->page_load_id      = null;
-			$this->kid_talk          = new KidTalk( $this->mydb );
+			$this->kid_talk          = $GokabamGoodies->get_kid_talk();
 		} catch (\Exception $e) {
 			$info = ErrorLogger::saveException($e);
 			wp_send_json(['is_valid' => false,'data'=> $info, 'message' => "initialiation error"]);

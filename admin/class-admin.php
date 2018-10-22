@@ -46,9 +46,7 @@ class Admin {
 	 * @throws \Exception
 	 */
 	public function plugins_loaded() {
-		/** @noinspection PhpIncludeInspection */
-		require_once plugin_dir_path( __FILE__ ) . '../includes/class-activator.php';
-		Activator::activate();
+		//nothing right now for plugins loaded
 	}
 
 	/**

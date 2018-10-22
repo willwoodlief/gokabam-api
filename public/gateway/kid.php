@@ -9,10 +9,8 @@ class KidTalk {
 	protected static  $table_to_key_map = [
 		'gokabam_api_api_versions' => 'apiversion',
 		'gokabam_api_apis' => 'api',
-		'gokabam_api_data_element_objects' => 'obj',
 		'gokabam_api_data_elements' => 'element',
 		'gokabam_api_data_group_examples' => 'example',
-		'gokabam_api_data_group_members' => 'member',
 		'gokabam_api_data_groups' => 'group',
 		'gokabam_api_family' => 'family',
 		'gokabam_api_inputs' => 'input',
@@ -32,10 +30,8 @@ class KidTalk {
 	protected static  $key_to_table_map = [
 		'apiversion' => 'gokabam_api_api_versions',
 		'api' => 'gokabam_api_apis',
-		'obj'  => 'gokabam_api_data_element_objects',
 		'element' => 'gokabam_api_data_elements' ,
 		'example'  => 'gokabam_api_data_group_examples' ,
-		'member' => 'gokabam_api_data_group_members',
 		'group'=>  'gokabam_api_data_groups'  ,
 		'family'=>  'gokabam_api_family'  ,
 		'input'=>  'gokabam_api_inputs'  ,
@@ -472,6 +468,23 @@ class KidTalk {
 			throw new ApiParseException("Could not encode {$table_name} -> {$object_id}");
 		}
 		return $encode_prefix . '_'. $encoding ;
+	}
+
+	/**
+	 * @param string $string_kid
+	 *
+	 * @return bool
+	 */
+	public function is_in_kid_string_format($string_kid) {
+		if ( preg_match( /** @lang text */
+			'/^(?P<table>[a-z]*)_(?P<code>[[:alnum:]]*)(?P<hint>[^[:alnum:]][[:alnum:]]*)?$/', $string_kid, $output_array ) ) {
+			$table_key = $output_array['table'];
+			if ( ! array_key_exists( $table_key, self::$key_to_table_map ) ) {
+				return false;
+			}
+			return true;
+		}
+		return false;
 	}
 
 

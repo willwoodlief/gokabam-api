@@ -38,6 +38,8 @@ class GKA_Kid {
 	 * this is a cool feature, but not used at all
 	 */
 	public $hint = '';
+
+
 }
 
 /**
@@ -48,12 +50,6 @@ class GKA_Kid {
 class GKA_Touch
 {
 
-	/**
-	 * @var GKA_Kid|string|null $kid
-	   @see GKA_Root
-	 */
-
-	public $kid = '';
 	/**
 	 * @var string $version
 	 * read only set by server to client
@@ -165,8 +161,24 @@ class GKA_Root
 	public $recent_touch = '';
 
 
+	/**
+	 * the checksum of what the data is now
+	 * @var string|null  $md5_checksum
+	 */
+	public $md5_checksum = '';
 
-
+	/**
+	 * fills in all the dependencies of this object
+	 * and sets up its properties for output later
+	 * @return GKA_Root
+	 * @throws SQLException
+	 * @throws FillException
+	 * @throws ApiParseException
+	 */
+	public function fill() {
+		global $GokabamGoodies;
+		return $GokabamGoodies->get_filler_manager()->fill($this);
+	}
 }
 
 
@@ -273,19 +285,19 @@ class GKA_Journal extends GKA_Root
  * parent: [kid] is anything, not null, cannot be another tag or word
  *
  */
-	class GKA_Tag extends GKA_Root
-	{
+class GKA_Tag extends GKA_Root
+{
 
-		/**
-		 * @var string $text, the key of the tag, what is seen
-		 */
-		public $text = '';
+	/**
+	 * @var string $text, the key of the tag, what is seen
+	 */
+	public $text = '';
 
-		/**
-		 * @var string $value the hidden meaning or hint behind the tag
-		 */
-		public $value = '';
-	}
+	/**
+	 * @var string $value the hidden meaning or hint behind the tag
+	 */
+	public $value = '';
+}
 
 
 
@@ -638,7 +650,7 @@ class GKA_Output extends GKA_Root
 	 *   defined here or kid
 	 *   zero or 1 groups
 	 */
-	public $data_groups = null;
+	public $data_groups = [];
 
 	/**
 	 * @var GKA_Header[]|string[] $headers array of zero or more headers
@@ -762,14 +774,14 @@ class GKA_Use_Part extends GKA_Root
 
 
 	/**
-	 * @var GKA_DataGroup[]|string[] $in_data_groups
+	 * @var GKA_DataGroup[]|GKA_Kid[]|string[] $in_data_groups
 	 * 0 or 1 for the in data group
 	 */
 	public $in_data_groups = [];
 
 
 	/**
-	 * @var GKA_DataGroup[]|string[] $out_data_group
+	 * @var GKA_DataGroup[]GKA_Kid[]|string[] $out_data_group
 	 * 0 or 1 for the out data group
 	 */
 	public $out_data_groups = [];
@@ -996,6 +1008,12 @@ class GKA_Everything
 	 */
 	public $use_parts = [];
 
+
+	/**
+	 * @var GKA_Use_Part_Connection[]|string[] $use_part_connections
+	 */
+	public $use_part_connections = [];
+
 	/**
 	 * @var GKA_SQL_Part[]|string[]  $sql_parts
 	 */
@@ -1003,9 +1021,17 @@ class GKA_Everything
 
 
 	/**
+	 * data groups which are type regular are here
 	 * @var GKA_DataGroup[]|string[] $data_groups
 	 */
-	public $data_groups = null;
+	public $data_groups = [];
+
+
+	/**
+	 * data groups which are type database_table are here, as they are not a dependency
+	 * @var GKA_DataGroup[]|string[] $table_groups
+	 */
+	public $table_groups = [];
 
 
 	/**

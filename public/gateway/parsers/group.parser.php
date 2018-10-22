@@ -141,7 +141,7 @@ class ParseGroup {
 
 		if ( $db_thing->parent &&
 		     is_object($db_thing->parent) &&
-		     ( strcmp(get_class($db_thing->parent),'GKA_Kid') === 0 )
+		     ( strcmp(get_class($db_thing->parent),'gokabam_api\GKA_Kid') === 0 )
 		){
 			// do not set parent to anything else
 		} else {

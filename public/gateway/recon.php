@@ -23,9 +23,10 @@ class Recon {
 	protected $kid_talk = null;
 
 	public function __construct( $mydb ) {
+		global $GokabamGoodies;
 
 		$this->mydb = $mydb;
-		$this->kid_talk = new KidTalk($mydb);
+		$this->kid_talk = $GokabamGoodies->get_kid_talk();
 	}
 
 
