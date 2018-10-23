@@ -52,15 +52,22 @@ class ApiGateway {
 	protected $parser_manager = null;
 
 	/**
+	 * @var GKA_User[]|null the user map to pass to fillers
+	 */
+	protected $user_map = [];
+
+	/**
 	 * ApiGateway constructor.
 	 *
 	 * @param MYDB $mydb
 	 * @param integer $version_id
+	 * @param GKA_User[] |null
 	 */
-	public function __construct( $mydb, $version_id ) {
+	public function __construct( $mydb, $version_id,$user_map ) {
 		global $GokabamGoodies;
 
 		try {
+			$this->user_map = $user_map;
 			$this->mydb              = $mydb;
 			$this->latest_version_id = $version_id;
 			$this->page_load_id      = null;
@@ -181,7 +188,7 @@ class ApiGateway {
 					break;
 				}
 				default: {
-					throw new \InvalidArgumentException("No case for action: [{$everything->action}]");
+					throw new \InvalidArgumentException("No case for action: [{$everything->api_action}]");
 				}
 			}
 
@@ -249,7 +256,8 @@ class ApiGateway {
 
 		if (empty($everything->begin_timestamp)) {$everything->begin_timestamp = null;}
 		if (empty($everything->end_timestamp)) {$everything->end_timestamp = null;}
-		$filler_manager = new FillerManager($GokabamGoodies,$everything->begin_timestamp,$everything->end_timestamp);
+		$filler_manager = new FillerManager($GokabamGoodies,$everything->begin_timestamp,
+															$everything->end_timestamp,$this->user_map);
 		$filler_manager->do_all();
 		$everything = $filler_manager->get_everything();
 		return $everything;
@@ -262,6 +270,8 @@ class ApiGateway {
 		$everything->server->server_time = date('M d Y h:i:s a', time());
 		$everything->server->server_timezone = date_default_timezone_get();
 		$everything->server->server_timestamp = time();
+		$nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
+		$everything->server->ajax_nonce = $nonce;
 	}
 
 

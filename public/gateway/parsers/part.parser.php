@@ -10,7 +10,7 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 class ParsePart {
 
 	protected static  $keys_to_check = ['kid','parent','ref_id','in_api_kid','delete'];
-	protected static  $reference_table = 'gokabam_api_inputs';
+	protected static  $reference_table = 'gokabam_api_use_case_parts';
 
 	/**
 	 * @param ParserManager $manager

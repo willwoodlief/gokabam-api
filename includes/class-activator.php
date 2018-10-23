@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.192;
+	const DB_VERSION = 0.193;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -58,6 +58,8 @@ class Activator {
 
 		.192 Update Triggers change dependent's delete status . checksums no longer include delete status
 				And its not possible to create something already deleted
+
+		.193 sql parts now have auto date stamps
 	*/
 
 
@@ -1387,13 +1389,15 @@ table structure for all types
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              is_deleted tinyint DEFAULT 0 not null,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               use_case_part_id int not null comment 'use case that this belongs to',
               sql_part_enum varchar(10) not null comment 'select,from,joins,where,limit,offset,ordering',
               table_element_id int default null comment 'element from group id that has type marked as db_table (is not part of use case)',
               reference_table_element_id int default null comment 'element from group id that has type marked as db_table (is not part of use case)',
               outside_element_id int default null comment 'element from group id that is an input of the use case part this belongs to',
               ranking int default null comment 'orders these within their subcategories like where, joins',
-              is_deleted tinyint DEFAULT 0 not null,
               constant_value text default null comment 'when a number or value (instead of an element) is needed in the where,limit or offset. If used cannot use reference element', 
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,

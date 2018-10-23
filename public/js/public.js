@@ -149,7 +149,7 @@ coordinator:
                     message = jqXHR.responseText;
                 }
             } else {
-                message = "textStatus";
+                message = textStatus + ' ---> ' + errorThrown;
                 console.info('Ajax failed but did not return json information, check below for details', what);
                 console.error(jqXHR, textStatus, errorThrown);
             }

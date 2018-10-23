@@ -3,7 +3,7 @@
 namespace gokabam_api;
 require_once 'pages.php';
 require_once    PLUGIN_PATH.'public/gateway/gokabam.goodies.php';
-
+require_once PLUGIN_PATH . 'public/gateway/api-gateway.php';
 /**
  * @var $GokabamGoodies GoKabamGoodies
  * <p>
@@ -122,10 +122,11 @@ class Plugin_Public
     }
 
 
+
     public function send_survey_ajax_handler() {
 		global $GokabamGoodies;
 		require_once PLUGIN_PATH . 'lib/Input.php';
-	    require_once PLUGIN_PATH . 'public/gateway/api-gateway.php';
+
 	    check_ajax_referer( strtolower( PLUGIN_NAME) . 'public_nonce' );
 
 	    if (array_key_exists( 'method',$_POST) && $_POST['method'] == 'echo') {
@@ -144,10 +145,16 @@ class Plugin_Public
 			    die();
 		    }
 	    } elseif (array_key_exists( 'method',$_POST) && $_POST['method'] == 'gokabam_api' ) {
-			$gateway = new ApiGateway($GokabamGoodies->get_mydb(),$GokabamGoodies->get_current_version_id());
-			$response = $gateway->all();
-		    wp_send_json(['is_valid' => true, 'data' => $response, 'handler_says' => 'GoKabam API Response']);
-		    die();
+	    	try {
+			    $user_map = $this->create_user_map();
+			    $gateway  = new ApiGateway( $GokabamGoodies->get_mydb(), $GokabamGoodies->get_current_version_id(), $user_map );
+			    $response = $gateway->all();
+			    wp_send_json( [ 'is_valid' => true, 'data' => $response, 'handler_says' => 'GoKabam API Response' ] );
+			    die();
+		    } catch (\Exception $e) {
+			    wp_send_json(['is_valid' => false, 'message' => $e->getMessage(), 'trace'=>$e->getTrace(), 'action' => 'stats' ]);
+			    die();
+		    }
 	    }
 
 	    else {
@@ -157,7 +164,28 @@ class Plugin_Public
 	    }
     }
 
-    //JSON
+
+	/**
+	 * creates a user map
+	 * @return GKA_User[]
+	 * @throws ApiParseException
+	 */
+    protected function create_user_map() {
+    	global $GokabamGoodies;
+
+		$ret = [];
+		$users = get_users();
+		foreach ($users as $user) {
+			$node = new GKA_User();
+			$node->user_email = $user->user_email;
+			$node->user_name = $user->user_nicename;
+			$node->user_id = $GokabamGoodies->get_kid_talk()->generate_string_id('user',$user->ID);
+			$node->ts_since= strtotime($user->user_registered);
+			$ret[$user->ID] = $node;
+		}
+
+		return $ret;
+    }
 
 
     public function shortcut_code()

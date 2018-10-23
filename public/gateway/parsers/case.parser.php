@@ -9,9 +9,9 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 class ParseCase {
 
-	protected static  $keys_to_check = ['kid','delete',];
+	protected static  $keys_to_check = ['parent','kid','delete'];
 
-	protected static  $reference_table = 'gokabam_api_versions';
+	protected static  $reference_table = 'gokabam_api_use_cases';
 
 	/**
 	 * @param ParserManager $manager

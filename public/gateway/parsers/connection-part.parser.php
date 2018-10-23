@@ -11,7 +11,7 @@ class ParseConnectionPart {
 
 	protected static  $keys_to_check = ['kid','parent','delete','source_part_kid','destination_part_kid','rank'];
 
-	protected static  $reference_table = 'gokabam_api_use_case_parts_sql';
+	protected static  $reference_table = 'gokabam_api_use_case_part_connections';
 
 	/**
 	 * @param ParserManager $manager

@@ -49,14 +49,52 @@ class FillerManager {
 	 * @var null|integer $end_ts
 	 */
 	protected $end_ts = null;
+
+	/**
+	 * @var bool $b_open, default true
+	 *    as long as this is true, the manager will fill new things,
+	 *     but once everything is retrieved will not fill anything else
+	 */
+	protected $b_open = true;
+
+	/**
+	 * @var GKA_Kid[] $array_deleted_kids
+	 */
+	protected $array_deleted_kids = [];
+
+
+	/**
+	 * @var GKA_Kid[] $array_straggler_kids
+	 */
+	protected $array_straggler_kids = [];
+
+
+	/**
+	 * @var GKA_Kid[] $array_all_changed_but_not_deleted
+	 */
+	protected $array_all_changed_but_not_deleted = [];
+
+
+	/**
+	 * @var GKA_User[] $user_map
+	 */
+	protected $user_map = [];
+
+
 	/**
 	 * FillerManager constructor.
 	 *
 	 * @param GoKabamGoodies $GokabamGoodies
 	 * @param integer $start_ts
 	 * @param integer $end_ts
+	 * @param array|null $user_map , hash of users, indexed by user id
 	 */
-	public  function __construct($GokabamGoodies,$start_ts,$end_ts) {
+
+	public  function __construct($GokabamGoodies,$start_ts,$end_ts,$user_map) {
+
+		$this->b_open = true;
+		if(empty($user_map)) {$user_map = [];}
+		$this->user_map = $user_map;
 
 		$this->kid_talk = $GokabamGoodies->get_kid_talk();
 		$this->mydb = $GokabamGoodies->get_mydb();
@@ -73,9 +111,23 @@ class FillerManager {
 	 * @throws FillException
 	 */
 	public function get_everything($b_show_deleted = false) {
+		if (!$this->b_open) {
+			return $this->everything;
+		}
+		$this->b_open = false;
+		$this->fill_in_stragglers();
+
 		$this->finalize_processed_roots();
 		if ($b_show_deleted) {
-			$this->everything->deleted_kids = $this->get_deleted_array();
+			if (empty($this->array_deleted_kids)) {
+				$this->array_deleted_kids = $this->get_deleted_array();
+			}
+			$this->everything->deleted_kids = $this->array_deleted_kids;
+		}
+		$this->everything->users = [];
+		foreach ($this->user_map as $user) {
+			$this->everything->users[] = $user->user_id;
+			$this->everything->library[$user->user_id] = $user;
 		}
 		return $this->everything;
 	}
@@ -161,7 +213,7 @@ class FillerManager {
 			WHERE o.is_deleted = 0  and o.group_type_enum = 'database_table' AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
 			['ii',$first_ts_param,$last_ts_param],
 			MYDB::RESULT_SET,
-			"@sey@api-versions.do_all.filler-manager.php"
+			"@sey@db-tables.do_all.filler-manager.php"
 		);
 
 		if (empty($res))  {$res = [];}
@@ -188,8 +240,17 @@ class FillerManager {
 	 * @return mixed
 	 */
 	public function get_user_id($user_id) {
-		return $user_id;
-		//todo make this a pretty id, and fill in user structure below at final processing of everything
+		if (empty($this->user_map)) {
+			return $user_id;
+		}
+
+		if (!array_key_exists($user_id,$this->user_map)) {
+			return null;
+			//users can be deleted from the outside system, let us not break our outputs because of that
+		}
+
+		return $this->user_map[$user_id]->user_id;
+
 	}
 
 	/**
@@ -201,12 +262,35 @@ class FillerManager {
 	 */
 	public function root_fill_helper($root,$data) {
 		$last = new GKA_Touch();
-		$last->version = $data->last_version;
+
+		if ($data->last_version_object_id) {
+			$pos              = new GKA_Kid();
+			$pos->primary_id  = $data->last_version;
+			$pos->table       = 'gokabam_api_versions';
+			$pos->object_id   = $data->last_version_object_id;
+		} else {
+			$pos = null;
+		}
+
+		$last->version = $pos;
+
+
 		$last->user_id = $this->get_user_id($data->last_user);
 		$last->ts = $data->last_ts;
 
 		$first = new GKA_Touch();
-		$first->version = $data->initial_version;
+
+		if ($data->initial_version_object_id) {
+			$pos              = new GKA_Kid();
+			$pos->primary_id  = $data->initial_version;
+			$pos->table       = 'gokabam_api_versions';
+			$pos->object_id   = $data->initial_version_object_id;
+		} else {
+			$pos = null;
+		}
+
+		$first->version = $pos;
+
 		$first->user_id = $this->get_user_id($data->initial_user);
 		$first->ts = $data->last_ts;
 
@@ -307,6 +391,9 @@ class FillerManager {
 	 */
 	public function fill($root,$b_child = false) {
 
+		if (!$this->b_open) {
+			throw new FillException("Get Everything already called, cannot process new fills now with this object");
+		}
 		if (empty($root)) {
 			return $root;
 		}
@@ -341,7 +428,7 @@ class FillerManager {
 			throw new \InvalidArgumentException("Cannot find a filler class for $the_class");
 		}
 		require_once $filler_class_file;
-		$filler_class_name= "Fill_".$the_class;
+		$filler_class_name= "gokabam_api\Fill_".$the_class;
 		$first_ts_param = $this->start_ts;
 		$last_ts_param = $this->end_ts;
 		if ($b_child) {
@@ -381,20 +468,25 @@ class FillerManager {
 				continue;
 			}
 
+			if ($key === 'kid') {
+				continue;
+			}
+
+
 			if (
 				 is_a($top_node,"gokabam_api\GKA_Root" ) ||
 				 is_a($top_node,"gokabam_api\GKA_Kid" )
 			)  {
-				$this->fill($top_node,true);
+				$ret->$key = $this->fill($top_node,true);
 			}
 
 			if ( is_array($top_node)) {
-				foreach ($top_node as $what) {
+				foreach ($top_node as $what_index => $what) {
 					if (
 						is_a($what,"gokabam_api\GKA_Root" ) ||
 						is_a($what,"gokabam_api\GKA_Kid" )
 					)  {
-						$this->fill($what,true);
+						$ret->$key[$what_index] =  $this->fill($what,true);
 					}
 				}
 			}
@@ -506,6 +598,8 @@ class FillerManager {
 	/**
 	 * @param GKA_Root $root
 	 * @throws FillException
+	 * @throws ApiParseException
+	 * @throws SQLException
 	 */
 	protected function add_to_everything($root) {
 		// all nodes come through here, so if top nodes, put in top arrays of elements
@@ -741,7 +835,7 @@ class FillerManager {
 			}
 			case 'GKA_Version': {
 				//version does not have any dependencies other than words tags and journals
-				$this->everything->versions[] = $root->kid;
+				$this->everything->versions[] = $root;
 				break;
 			}
 			default : {
@@ -760,6 +854,25 @@ class FillerManager {
 
 		foreach ($root->journals as $key => $value) {
 			$root->journals[$key] = $value->kid;
+		}
+
+		//flatten the roots initial_touch and recent_touch version
+		if ($root->initial_touch) {
+			if ($root->initial_touch->version  ) {
+				if (strcmp(get_class($root->initial_touch->version),'gokabam_api\GKA_Kid') === 0 ) {
+					$this->kid_talk->fill_kids_in($root->initial_touch->version);
+					$root->initial_touch->version = $root->initial_touch->version->kid;
+				}
+			}
+		}
+
+		if ($root->recent_touch) {
+			if ($root->recent_touch->version  ) {
+				if (strcmp(get_class($root->recent_touch->version),'gokabam_api\GKA_Kid') === 0 ) {
+					$this->kid_talk->fill_kids_in($root->recent_touch->version);
+					$root->recent_touch->version = $root->recent_touch->version->kid;
+				}
+			}
 		}
 
 		//fill in the everything library
@@ -827,7 +940,6 @@ class FillerManager {
 			$this->add_to_everything($root);
 		}
 
-		$this->processed_roots = []; //reset
 
 	}
 
@@ -858,7 +970,7 @@ class FillerManager {
 			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = g.page_load_id
 			
 			WHERE g.edit_action = 'delete'  AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
-			['iii',$first_ts_param,$last_ts_param],
+			['ii',$first_ts_param,$last_ts_param],
 			MYDB::RESULT_SET,
 			"@sey@get_deleted_array.filler-manager.php"
 		);
@@ -873,6 +985,89 @@ class FillerManager {
 			$ret[] = $xxx;
 		}
 		return $ret;
+	}
+
+	/**
+	 * returns array of all kids that have been inserted or created, but not deleted
+	 *  in the time range of this object
+	 * @return GKA_Kid[]
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	protected function get_array_from_updated() {
+		$first_ts_param = $this->start_ts;
+		$last_ts_param = $this->end_ts;
+
+		if (is_null($first_ts_param)) {
+			$first_ts_param = 0;
+		}
+
+		if (is_null($last_ts_param)) {
+			$last_ts_param = 999999999999999;
+		}
+
+		$res = $this->mydb->execSQL("
+			SELECT DISTINCT
+                o.id as object_id,
+                o.primary_key,
+                o.da_table_name
+			FROM gokabam_api_objects o
+			       INNER JOIN gokabam_api_change_log logged_change ON logged_change.target_object_id = o.id
+			
+			       LEFT JOIN (
+			                 SELECT DISTINCT k.target_object_id from gokabam_api_change_log k
+			                 WHERE
+			                     UNIX_TIMESTAMP(k.created_at) between ? and ?
+			                   AND
+			                     (k.edit_action = 'delete')
+			                 ) as logged_deleted ON logged_deleted.target_object_id = o.id
+			WHERE
+			    (logged_change.edit_action = 'insert' OR logged_change.edit_action = 'edit')
+			  AND
+			    UNIX_TIMESTAMP(logged_change.created_at) between ? and ?
+			  AND
+			    logged_deleted.target_object_id IS NULL
+			ORDER BY object_id;
+
+			  	",
+			['iiii',$first_ts_param,$last_ts_param,$first_ts_param,$last_ts_param],
+			MYDB::RESULT_SET,
+			"@sey@all_changed.filler-manager.php"
+		);
+		$ret = [];
+		if (empty($res))  {return $ret;}
+		foreach($res as $row) {
+			$xxx = new GKA_Kid();
+			$xxx->primary_id = $row->primary_key;
+			$xxx->table = $row->da_table_name;
+			$xxx->object_id = $row->object_id;
+			$this->kid_talk->fill_kids_in($xxx);
+			$ret[] = $xxx;
+		}
+		return $ret;
+	}
+
+	/**
+	 * @throws ApiParseException
+	 * @throws FillException
+	 * @throws SQLException
+	 */
+	protected function fill_in_stragglers() {
+		$this->array_all_changed_but_not_deleted = $this->get_array_from_updated();
+		$array_sting_kids_all = [];
+		foreach ($this->array_all_changed_but_not_deleted as $c_kid) {
+			$array_sting_kids_all[] = $c_kid->kid;
+		}
+
+		$array_what_we_have = array_keys($this->map_of_processed_roots);
+
+		//figure out what is in $array_sting_kids_all but not in $array_what_we_have
+		$oops = array_diff($array_sting_kids_all,$array_what_we_have);
+		$this->array_straggler_kids = $oops;
+		foreach ($oops as $string_kid) {
+			$this->fill($string_kid);
+		}
+
 	}
 
 }

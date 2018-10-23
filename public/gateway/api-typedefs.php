@@ -3,6 +3,36 @@
 namespace gokabam_api;
 
 /**
+ * Has some basic user information
+ * Class GKA_User
+ * @package gokabam_api
+ */
+class GKA_User {
+	/**
+	 * A unique string that helps id the user's actions in the rest of the classes here
+	 * the string starts with user_
+	 * @var string $user_id
+	 */
+	public $user_id = '';
+
+	/**.
+	 * @var string $user_name Describes the user, not the login name but the descriptive name
+	 */
+	public $user_name = '';
+
+	/**
+	 * @var string $user_email  how to contact the user
+	 */
+	public $user_email = '';
+
+	/**
+	 * @var integer timestamp since the user started in the system
+	 */
+	public $ts_since = 0;
+}
+
+
+/**
  * Not meant for human or client consumption, an intermediate step for the server
  * Class GKA_Kid
  * @package gokabam_api
@@ -51,7 +81,7 @@ class GKA_Touch
 {
 
 	/**
-	 * @var string $version
+	 * @var GKA_Kid|string $version
 	 * read only set by server to client
 	 * the kid of the  version
 	 */
@@ -900,6 +930,12 @@ class GKA_ServerData {
 	 * @var int $server_timestamp - unix timestamp
 	 */
 	public $server_timestamp = 0;
+
+	/**
+	 * WP nonce
+	 * @var string|null $ajax_nonce
+	 */
+	public $ajax_nonce = '';
 }
 		 
 
@@ -1052,32 +1088,33 @@ class GKA_Everything
 	public $library = [];
 
 	/**
+	 * read only
 	 * @var string $pass_through_data - anything the caller wants to put here is passed back without looking at it
 	 */
 	public $pass_through_data = '';
 
-	/**
-	 * WP Action
-	 * @var string $action
-	 */
-	public $action = '';
 
 	/**
-	 * WP nonce
-	 * @var string|null $_ajax_nonce
-	 */
-	public $_ajax_nonce = '';
-
-	/**
+	 * readonly
 	 * @var GKA_ServerData|null $server
 	 */
 	public $server = null;
 
 	/**
+	 * read only
 	 * objects that were deleted in the time range provided, if not time range, then not filled in
 	 * @var GKA_Kid[]|string[]
 	 */
 	public $deleted_kids = [];
+
+
+	/**
+	 * read only
+	 * a list of the users
+	 * users are also put in the library
+	 * @var GKA_User[] $users
+	 */
+	public $users = [];
 }
 
 

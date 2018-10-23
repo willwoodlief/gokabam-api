@@ -397,6 +397,26 @@ class KidTalk {
 	}
 
 	/**
+	 * generated a string id
+	 * @param string|null $base
+	 * @param integer $id
+	 *
+	 * @return string
+	 * @throws ApiParseException
+	 */
+	public function generate_string_id($base,$id) {
+		$encoding = $this->hashids->encode($id);
+		if (empty($encoding)) {
+			throw new ApiParseException("Could not encode $id");
+		}
+		if ($base) {
+			return $base. "_". $encoding;
+		} else {
+			return $encoding;
+		}
+
+	}
+	/**
 	 * @param GKA_Kid $kid
 	 * will fill in missing parts
 	 *    the kid needs to have at least:

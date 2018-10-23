@@ -66,9 +66,16 @@ jQuery(function($) {
             {gokabam_api_data:hugs},
             function(data) {
                 $('.gk-spinner').hide();
-                $('span.gk-status').text('success').removeClass('gk-status-error');
+
 
                 cycleEditors(data);
+                // noinspection JSUnresolvedVariable
+                gokabam_api_frontend_ajax_obj.nonce = data.server.ajax_nonce;
+                if (data.exception_info) {
+                    $('span.gk-status').text(data.message).addClass('gk-status-error');
+                } else {
+                    $('span.gk-status').text(data.message).removeClass('gk-status-error');
+                }
             },
             function(message) {
                 $('.gk-spinner').hide();
