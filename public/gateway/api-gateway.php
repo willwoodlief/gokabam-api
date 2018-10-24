@@ -230,6 +230,7 @@ class ApiGateway {
 	 * @throws SQLException
 	 */
 	protected function create_error_response(\Exception $e, $pass_through_data,&$exception_info) {
+		$exception_info['trace'] = [];
 		$this->start_userspace("For Error Report");
 		$exception_info = ErrorLogger::saveException($e);
 		$everything = new GKA_Everything();

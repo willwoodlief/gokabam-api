@@ -101,7 +101,7 @@ class GKA_Touch
 	 * wordpress user id
 	 * read only set by the app when returning information
 	 */
-	public $user_id = 0;
+	public $user = 0;
 }
 
 class GKA_Root
@@ -341,6 +341,7 @@ class GKA_Tag extends GKA_Root
  * @package gokabam_api
  * @see GKA_Everything
  * @see GKA_DataGroup
+ * @see GKA_SQL_Part
  */
 class GKA_Element extends GKA_Root
 {
@@ -407,7 +408,7 @@ class GKA_Element extends GKA_Root
 	public $is_optional = false;
 
 	/**
-	 * @var string|null $enum_values
+	 * @var string[]|null $enum_values
 	 * only with string,integer,number format : error otherwise
 	 */
 	public $enum_values = '';
@@ -422,19 +423,19 @@ class GKA_Element extends GKA_Root
 
 
 	/**
-	 * @var int $min
+	 * @var int|null $min
 	 * error if set to non zero for object or boolean
 	 * type string is min character length
 	 * type integer and number the min value
 	 * type array is the min number of elements
-	 * default 0
+	 * default null
 	 */
 	public $min = 0;
 
 	/**
-	 * @var int $max
+	 * @var int|null $max
 	 * error if set to non zero for object or boolean
-	 * default 0
+	 * default null
 	 * type string is max character length
 	 * type integer and number the max value
 	 * type array is the max number of elements
@@ -442,7 +443,7 @@ class GKA_Element extends GKA_Root
 	public $max = 0;
 
 	/**
-	 * @var float $multiple
+	 * @var float|null $multiple
 	 * error if set for anything other than integer|number
 	 * is the pattern of allowed valued
 	 */
@@ -504,6 +505,7 @@ class GKA_DataExample extends GKA_Root
  * @see GKA_Input
  * @see GKA_Output
  * @see GKA_Header
+ * @see GKA_Use_Part
 
  */
 class GKA_DataGroup extends GKA_Root
@@ -536,6 +538,10 @@ class GKA_DataGroup extends GKA_Root
  * Class GKA_Header
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_Output
+ * @see GKA_API
+ * @see GKA_Family
+ * @see GKA_API_Version
  */
 class GKA_Header extends GKA_Root
 {
@@ -567,6 +573,9 @@ class GKA_Header extends GKA_Root
  * Class GKA_API_Version
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_Use_Case
+ * @see GKA_Header
+ * @see GKA_Family
  */
 class GKA_API_Version extends GKA_Root
 {
@@ -600,6 +609,9 @@ class GKA_API_Version extends GKA_Root
  * Class GKA_Family
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_API_Version
+ * @see GKA_API
+ * @see GKA_Header
  */
 class GKA_Family extends GKA_Root
 {
@@ -630,6 +642,8 @@ class GKA_Family extends GKA_Root
  * Class GKA_Input
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_API
+ * @see GKA_DataGroup
  */
 class GKA_Input extends GKA_Root
 {
@@ -668,9 +682,10 @@ class GKA_Input extends GKA_Root
 		
 
 /**
- * Class GKA_Output
+ * Class GKA_Output, parents are api
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_API
  */
 class GKA_Output extends GKA_Root
 {
@@ -701,6 +716,7 @@ class GKA_Output extends GKA_Root
  * @package gokabam_api
  * @see GKA_Everything
  * @see GKA_Use_Part
+ * @see GKA_Element
  *
  * the selects are an extra data group output elements
  * the inputs for each section is up to two database groups, and any input element
@@ -722,22 +738,22 @@ class GKA_SQL_Part extends GKA_Root
 	public $sql_part_enum = '';
 
 	/**
-	 * @var string|GKA_Kid|null $table_element - KID format
+	 * @var string|GKA_Kid|null $db_element - KID format
 	 * must be from any data group that is of database type
 	 */
-	public $db_element_kid = '';
+	public $db_element = '';
 
 	/**
-	 * @var string|GKA_Kid|null $reference_table_element_kid - KID format
+	 * @var string|GKA_Kid|null $reference_table_element - KID format
 	 * must be from any data group that is of database type
 	 */
-	public $reference_db_element_kid = '';
+	public $reference_db_element = '';
 
 	/**
-	 * @var string|GKA_Kid|null $outside_element_kid - KID format
+	 * @var string|GKA_Kid|null $outside_element - KID format
 	 * must be from a data group which is part of the input of this use case part
 	 */
-	public $outside_element_kid = '';
+	public $outside_element = '';
 
 
 	/**
@@ -749,29 +765,32 @@ class GKA_SQL_Part extends GKA_Root
 
 }
 
+//todo remove the suffix kid from any of these properties
 
 
 /**
  * Class GKA_Use_Part_Connection
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_Use_Part
+ * @see GKA_Use_Case
  */
 class GKA_Use_Part_Connection extends GKA_Root
 {
 
 	/**
-	 * @var string|GKA_Kid|null $parent_part_kid
+	 * @var string|GKA_Kid|null $parent_part
 	 *  a reference to the start of the connection
 	 *  this part must be in the same use case as the destination
 	 */
-	public $source_part_kid = '';
+	public $source_part = '';
 
 	/**
-	 * @var string|GKA_Kid|null $parent_part_kid
+	 * @var string|GKA_Kid|null $parent_part
 	 *  a reference to the start of the connection
 	 *  this part must be in the same use case as the source
 	 */
-	public $destination_part_kid = '';
+	public $destination_part = '';
 
 	/**
 	 * @var int|null $rank
@@ -789,6 +808,9 @@ class GKA_Use_Part_Connection extends GKA_Root
  * @see GKA_Everything
  * @see GKA_Use_Part_Connection
  * @see GKA_Use_Case
+ * @see GKA_API
+ * @see GKA_DataGroup
+ * @see GKA_SQL_Part
  */
 class GKA_Use_Part extends GKA_Root
 {
@@ -805,7 +827,7 @@ class GKA_Use_Part extends GKA_Root
 	 * if the input is an api
 	 *  this is a reference only
 	 */
-	public $in_api_kid = '';
+	public $in_api = '';
 
 
 	/**
@@ -847,6 +869,10 @@ class GKA_Use_Part extends GKA_Root
  * Class GKA_Use_Case
  * @package gokabam_api
  * @see GKA_Everything
+ * @see GKA_Use_Part
+ * @see GKA_Use_Part_Connection
+ * @see GKA_API
+ * @see GKA_API_Version
  */
 class GKA_Use_Case extends GKA_Root
 {
@@ -871,6 +897,11 @@ class GKA_Use_Case extends GKA_Root
 /**
  * Class GKA_API
  * @package gokabam_api
+ * @see GKA_Header
+ * @see GKA_Input
+ * @see GKA_Output
+ * @see GKA_Use_Case
+ * @see GKA_Everything
  *  - the http calls that make up the api
  *  they have different inputs, outputs, headers and use cases
  */
@@ -938,12 +969,143 @@ class GKA_ServerData {
 	public $ajax_nonce = '';
 }
 		 
+/*
 
+
+     *      string      'trace_as_string' =>
+     *      array|null  'chained' => an array of exceptions chained to this one, with the same info as above
+		  */
+class GKA_Exception_Info {
+	/**
+	 * @var string  $hostname ,  the name of the machine the exception occurred on
+	 */
+	public $hostname = '';
+
+	/**
+	 * @var string $machine_id , mac address or similar id
+	 */
+	public $machine_id = '';
+
+	/**
+	 * @var string $caller_ip_address ,the ip address of the browser caller, else will be null
+	 */
+	public $caller_ip_address = '';
+
+	/**
+	 * @var string $branch, the git branch
+	 */
+	public $branch = '';
+
+	/**
+	 * @var string $last_commit_hash, the sha1 hash of the last commit made on the code throwing the exception
+	 */
+	public $last_commit_hash = '';
+
+	/**
+	 * @var boolean $is_commit_modified, true if the code has been changed since the last commit
+	 */
+	public $is_commit_modified = '';
+
+	/**
+	 * @var string[]|null $argv, array of arguments if this is called from the command line
+	 */
+	public $argv = [];
+
+	/**
+	 * @var string $request_method, usually post or get
+	 */
+	public $request_method = '';
+
+	/**
+	 * @var array|null $post_super,  the post vars, if set
+	 */
+	public $post_super = [];
+
+	/**
+	 * @var array|null $get_super,  the get vars, if set
+	 */
+	public $get_super = [];
+
+	/**
+	 * @var array|null $cookies_super,  the cookies
+	 */
+	public $cookies_super = [];
+
+	/**
+	 * @var array|null $server_super,  the server info
+	 */
+	public $server_super = [];
+
+	/**
+	 * @var string $message, what is this all about
+	 */
+	public $message = '';
+
+	/**
+	 * @var string $class_of_exception, the name of the exception class
+	 */
+	public $class_of_exception = '';
+
+	/**
+	 * @var string $code_of_exception , exception code
+	 */
+	public $code_of_exception = '';
+
+	/**
+	 * @var string $file_name, the file the exception occurred in
+	 */
+	public $file_name = '';
+
+	/**
+	 * @var string  $line, line number in the file of the exception
+	 */
+	public $line = '';
+
+
+	/**
+	 * @var string $class, if the exception occurred inside a class, it will be listed here
+	 */
+	public $class = '';
+
+	/**
+	 * @var string $function_name, if the exception occurred inside a function, it will be listed here
+	 */
+	public $function_name = '';
+
+	/**
+	 * @var string $trace_as_string, the trace in an easier to read string format
+	 */
+	public $trace_as_string = '';
+
+	/**
+	 * @var GKA_Exception_Info[] $chained, any chained exceptions
+	 */
+	public $chained = [];
+
+}
 
 /**
  * Class GKA_Everything
  * @package gokabam_api
- *
+ * @see GKA_Element
+ * @see GKA_DataGroup
+ * @see GKA_DataExample
+ * @see GKA_Header
+ * @see GKA_Output
+ * @see GKA_Input
+ * @see GKA_API
+ * @see GKA_Family
+ * @see GKA_API_Version
+ * @see GKA_Version
+ * @see GKA_SQL_Part
+ * @see GKA_Use_Part_Connection
+ * @see GKA_Use_Part
+ * @see GKA_Use_Case
+ * @see GKA_Word
+ * @see GKA_Tag
+ * @see GKA_Journal
+ * @see GKA_ServerData
+ * @see GKA_Exception_Info
  */
 class GKA_Everything
 {
@@ -974,7 +1136,7 @@ class GKA_Everything
 	public $is_valid = true;
 
 	/**
-	 * @var null|object - if error then this will contain exception information
+	 * @var GKA_Exception_Info|null - if error then this will contain exception information
 	 */
 	public $exception_info = null;
 

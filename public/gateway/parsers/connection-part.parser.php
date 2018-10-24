@@ -9,7 +9,7 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 class ParseConnectionPart {
 
-	protected static  $keys_to_check = ['kid','parent','delete','source_part_kid','destination_part_kid','rank'];
+	protected static  $keys_to_check = ['kid','parent','delete','source_part','destination_part','rank'];
 
 	protected static  $reference_table = 'gokabam_api_use_case_part_connections';
 
@@ -152,11 +152,11 @@ class ParseConnectionPart {
 		}
 
 		//convert the string kids to object kids
-		$db_thing->source_part_kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-										$db_thing->source_part_kid,'gokabam_api_use_case_parts');
+		$db_thing->source_part = $manager->kid_talk->generate_or_refresh_primary_kid(
+										$db_thing->source_part,'gokabam_api_use_case_parts');
 
-		$db_thing->destination_part_kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-			$db_thing->destination_part_kid,'gokabam_api_use_case_parts');
+		$db_thing->destination_part = $manager->kid_talk->generate_or_refresh_primary_kid(
+			$db_thing->destination_part,'gokabam_api_use_case_parts');
 
 
 
@@ -190,11 +190,11 @@ class ParseConnectionPart {
 		$db_dest_id = null;
 
 
-		if ($db_thing->source_part_kid) {
-			$db_source_id = $db_thing->source_part_kid->primary_id;
+		if ($db_thing->source_part) {
+			$db_source_id = $db_thing->source_part->primary_id;
 		}
-		if ($db_thing->destination_part_kid) {
-			$db_dest_id = $db_thing->destination_part_kid->primary_id;
+		if ($db_thing->destination_part) {
+			$db_dest_id = $db_thing->destination_part->primary_id;
 		}
 
 

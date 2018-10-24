@@ -12,6 +12,7 @@ class Fill_GKA_DataExample {
 	 * @return GKA_DataExample
 	 * @throws SQLException
 	 * @throws FillException
+	 * @throws JsonException
 	 */
 	public static function fill($root,$filler_manager, $mydb, $first_ts, $last_ts) {
 
@@ -61,7 +62,12 @@ class Fill_GKA_DataExample {
 		$parent->table = 'gokabam_api_data_groups';
 		$root->parent = $parent;
 
-		$root->text = $data->json_example;
+		if (empty($data->json_example)) {
+			$root->text = null;
+		} else {
+			$root->text = JsonHelper::fromString($data->json_example);
+		}
+
 
 
 		return $root;

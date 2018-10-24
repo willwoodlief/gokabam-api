@@ -10,7 +10,7 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 class ParseSqlPart {
 
 	protected static  $keys_to_check = ['kid','parent','delete','text','sql_part_enum',
-		'db_element_kid','reference_db_element_kid','outside_element_kid','constant_value','rank'];
+		'db_element','reference_db_element','outside_element','constant_value','rank'];
 
 	protected static  $reference_table = 'gokabam_api_use_case_parts_sql';
 
@@ -153,40 +153,40 @@ class ParseSqlPart {
 		}
 
 		//convert the string kids to object kids
-		$db_thing->db_element_kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-										$db_thing->db_element_kid,'gokabam_api_data_elements');
+		$db_thing->db_element = $manager->kid_talk->generate_or_refresh_primary_kid(
+										$db_thing->db_element,'gokabam_api_data_elements');
 
-		$db_thing->reference_db_element_kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-			$db_thing->reference_db_element_kid,'gokabam_api_data_elements');
+		$db_thing->reference_db_element = $manager->kid_talk->generate_or_refresh_primary_kid(
+			$db_thing->reference_db_element,'gokabam_api_data_elements');
 
-		$db_thing->outside_element_kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-			$db_thing->outside_element_kid,'gokabam_api_data_elements');
+		$db_thing->outside_element = $manager->kid_talk->generate_or_refresh_primary_kid(
+			$db_thing->outside_element,'gokabam_api_data_elements');
 
-		if ($db_thing->db_element_kid) {
+		if ($db_thing->db_element) {
 			$res = $manager->mydb->execSQL("SELECT g.id from gokabam_api_data_elements e 
 									 INNER JOIN gokabam_api_data_groups g ON g.id = e.group_id
 									 WHERE g.group_type_enum = 'database_table'",
-				['i',$db_thing->db_element_kid->primary_id],
+				['i',$db_thing->db_element->primary_id],
 				MYDB::RESULT_SET,
 				'@sey@ParseSQLPart::convert->check(database_table)'
 			);
 
 			if (empty($res)) {
-				throw new ApiParseException("db_element_kid of {$db_thing->db_element_kid->kid} is not a correct element for sql");
+				throw new ApiParseException("db_element of {$db_thing->db_element->kid} is not a correct element for sql");
 			}
 		}
 
-		if ($db_thing->reference_db_element_kid) {
+		if ($db_thing->reference_db_element) {
 			$res = $manager->mydb->execSQL("SELECT g.id from gokabam_api_data_elements e 
 									 INNER JOIN gokabam_api_data_groups g ON g.id = e.group_id
 									 WHERE g.group_type_enum = 'database_table'",
-				['i',$db_thing->reference_db_element_kid->primary_id],
+				['i',$db_thing->reference_db_element->primary_id],
 				MYDB::RESULT_SET,
 				'@sey@ParseSQLPart::convert->check(database_table)'  #deliberately same thing as above
 			);
 
 			if (empty($res)) {
-				throw new ApiParseException("reference_db_element_kid of {$db_thing->reference_db_element_kid->kid} is not a correct element for sql");
+				throw new ApiParseException("reference_db_element of {$db_thing->reference_db_element->kid} is not a correct element for sql");
 			}
 		}
 
@@ -221,14 +221,14 @@ class ParseSqlPart {
 		$db_ref_id = null;
 		$outside_id = null;
 
-		if ($db_thing->db_element_kid) {
-			$db_id = $db_thing->db_element_kid->primary_id;
+		if ($db_thing->db_element) {
+			$db_id = $db_thing->db_element->primary_id;
 		}
-		if ($db_thing->reference_db_element_kid) {
-			$db_ref_id = $db_thing->reference_db_element_kid->primary_id;
+		if ($db_thing->reference_db_element) {
+			$db_ref_id = $db_thing->reference_db_element->primary_id;
 		}
-		if ($db_thing->outside_element_kid) {
-			$outside_id = $db_thing->outside_element_kid->primary_id;
+		if ($db_thing->outside_element) {
+			$outside_id = $db_thing->outside_element->primary_id;
 		}
 
 

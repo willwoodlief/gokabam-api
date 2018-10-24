@@ -12,6 +12,7 @@ class Fill_GKA_Element {
 	 * @return GKA_Element
 	 * @throws SQLException
 	 * @throws FillException
+	 * @throws JsonException
 	 */
 	public static function fill($root,$filler_manager, $mydb, $first_ts, $last_ts) {
 
@@ -77,7 +78,7 @@ class Fill_GKA_Element {
 	data_elements
 
 		 */
-		$root->enum_values = $data->enum_values;
+		$root->enum_values = JsonHelper::fromString($data->enum_values);
 		$root->default_value = $data->default_value;
 			$root->is_nullable = $data->is_nullable;
 			$root->min = $data->data_min;

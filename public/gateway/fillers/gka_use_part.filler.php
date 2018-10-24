@@ -81,7 +81,7 @@ class Fill_GKA_Use_Part {
 		$pos              = new GKA_Kid();
 		$pos->primary_id  = $data->in_api_id;
 		$pos->table       = 'gokabam_api_apis';
-		$root->in_api_kid[] = $pos;
+		$root->in_api[] = $pos;
 
 
 		//get sql

@@ -89,7 +89,7 @@ class ParseWord {
 		$classname = get_called_class();
 		$db_thing = null;
 		if (is_array($node)) {
-			$db_thing = new GKA_Journal();
+			$db_thing = new GKA_Word();
 		} else {
 			if (is_string($node)) {
 				/**

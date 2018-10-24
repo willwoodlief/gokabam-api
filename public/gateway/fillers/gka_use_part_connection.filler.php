@@ -64,12 +64,12 @@ class Fill_GKA_Use_Part_Connection {
 		$pos              = new GKA_Kid();
 		$pos->primary_id  = $data->parent_use_case_part_id;
 		$pos->table       = 'gokabam_api_use_case_parts';
-		$root->source_part_kid = $pos;
+		$root->source_part = $pos;
 
 		$pos              = new GKA_Kid();
 		$pos->primary_id  = $data->child_use_case_part_id;
 		$pos->table       = 'gokabam_api_use_case_parts';
-		$root->destination_part_kid = $pos;
+		$root->destination_part = $pos;
 
 
 

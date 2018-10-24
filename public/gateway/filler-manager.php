@@ -275,7 +275,7 @@ class FillerManager {
 		$last->version = $pos;
 
 
-		$last->user_id = $this->get_user_id($data->last_user);
+		$last->user = $this->get_user_id($data->last_user);
 		$last->ts = $data->last_ts;
 
 		$first = new GKA_Touch();
@@ -291,7 +291,7 @@ class FillerManager {
 
 		$first->version = $pos;
 
-		$first->user_id = $this->get_user_id($data->initial_user);
+		$first->user = $this->get_user_id($data->initial_user);
 		$first->ts = $data->last_ts;
 
 		$root->initial_touch = $first;
@@ -642,7 +642,7 @@ class FillerManager {
 				/**
 				 * @var GKA_Element $element
 				 */
-				$element = $what;
+				$element = $root;
 				//flatten anything in the elements array
 				foreach ($element->elements as $key => $value) {
 					$element->elements[$key] = $value->kid;
@@ -654,7 +654,7 @@ class FillerManager {
 				/**
 				 * @var GKA_DataGroup $group
 				 */
-				$group = $what;
+				$group = $root;
 				//flatten anything in the elements array
 				foreach ($group->elements as $key => $value) {
 					$group->elements[$key] = $value->kid;
@@ -681,7 +681,7 @@ class FillerManager {
 				/**
 				 * @var GKA_Header $header
 				 */
-				$header = $what;
+				$header = $root;
 				//flatten anything in the data groups array
 				foreach ($header->data_groups as $key => $value) {
 					$header->data_groups[$key] = $value->kid;
@@ -693,7 +693,7 @@ class FillerManager {
 				/**
 				 * @var GKA_Output $output
 				 */
-				$output = $what;
+				$output = $root;
 				//flatten anything in the data groups array
 				foreach ($output->data_groups as $key => $value) {
 					$output->data_groups[$key] = $value->kid;
@@ -710,7 +710,7 @@ class FillerManager {
 				/**
 				 * @var GKA_Input $input
 				 */
-				$input = $what;
+				$input = $root;
 				//flatten anything in the data groups array
 				foreach ($input->data_groups as $key => $value) {
 					$input->data_groups[$key] = $value->kid;
@@ -722,7 +722,7 @@ class FillerManager {
 				/**
 				 * @var GKA_API $api
 				 */
-				$api = $what;
+				$api = $root;
 
 				foreach ($api->inputs as $key => $value) {
 					$api->inputs[$key] = $value->kid;
@@ -746,7 +746,7 @@ class FillerManager {
 				/**
 				 * @var GKA_Family $family
 				 */
-				$family = $what;
+				$family = $root;
 
 				foreach ($family->apis as $key => $value) {
 					$family->apis[$key] = $value->kid;
@@ -762,7 +762,7 @@ class FillerManager {
 				/**
 				 * @var GKA_API_Version $api_version
 				 */
-				$api_version = $what;
+				$api_version = $root;
 
 				foreach ($api_version->headers as $key => $value) {
 					$api_version->headers[$key] = $value->kid;
@@ -771,7 +771,7 @@ class FillerManager {
 				foreach ($api_version->families as $key => $value) {
 					$api_version->families[$key] = $value->kid;
 				}
-				$this->everything->api_versions[] = $root;
+				$this->everything->api_versions[] = $root->kid;
 				break;
 			}
 			case 'GKA_SQL_Part': {
@@ -779,10 +779,10 @@ class FillerManager {
 				 * notice hear we are dealing with the kids here, and assume the plugin set up them correctly
 				 * @var GKA_SQL_Part $sql_part
 				 */
-				$sql_part = $what;
-				$sql_part->outside_element_kid = $sql_part->outside_element_kid->kid;
-				$sql_part->reference_db_element_kid = $sql_part->reference_db_element_kid->kid;
-				$sql_part->db_element_kid = $sql_part->db_element_kid->kid;
+				$sql_part = $root;
+				$sql_part->outside_element = $sql_part->outside_element->kid;
+				$sql_part->reference_db_element = $sql_part->reference_db_element->kid;
+				$sql_part->db_element = $sql_part->db_element->kid;
 				$this->everything->sql_parts[] = $root->kid;
 				break;
 			}
@@ -790,8 +790,8 @@ class FillerManager {
 				/**
 				 * @var GKA_Use_Part $use_part
 				 */
-				$use_part = $what;
-				$use_part->in_api_kid = $use_part->in_api_kid->kid;
+				$use_part = $root;
+				$use_part->in_api = $use_part->in_api->kid;
 				foreach ($use_part->in_data_groups as $key => $value) {
 					$use_part->in_data_groups[$key] = $value->kid;
 				}
@@ -810,9 +810,9 @@ class FillerManager {
 				/**
 				 * @var GKA_Use_Part_Connection $use_part_connection
 				 */
-				$use_part_connection = $what;
-				$use_part_connection->source_part_kid = $use_part_connection->source_part_kid->kid;
-				$use_part_connection->destination_part_kid = $use_part_connection->destination_part_kid->kid;
+				$use_part_connection = $root;
+				$use_part_connection->source_part = $use_part_connection->source_part->kid;
+				$use_part_connection->destination_part = $use_part_connection->destination_part->kid;
 				$this->everything->use_part_connections[] = $root->kid;
 				break;
 			}
@@ -820,7 +820,7 @@ class FillerManager {
 				/**
 				 * @var GKA_Use_Case $use_case
 				 */
-				$use_case = $what;
+				$use_case = $root;
 
 				foreach ($use_case->use_parts as $key => $value) {
 					$use_case->use_parts[$key] = $value->kid;
@@ -835,7 +835,7 @@ class FillerManager {
 			}
 			case 'GKA_Version': {
 				//version does not have any dependencies other than words tags and journals
-				$this->everything->versions[] = $root;
+				$this->everything->versions[] = $root->kid;
 				break;
 			}
 			default : {
@@ -878,10 +878,7 @@ class FillerManager {
 		//fill in the everything library
 		// unless is a api version
 		if (!array_key_exists($root->kid,$this->everything->library)) {
-			if ($the_class !== 'GKA_API_Version') {
-				$this->everything->library[$root->kid] = $root;
-			}
-
+			$this->everything->library[$root->kid] = $root;
 		}
 
 

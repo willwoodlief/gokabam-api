@@ -9,7 +9,7 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 class ParsePart {
 
-	protected static  $keys_to_check = ['kid','parent','ref_id','in_api_kid','delete'];
+	protected static  $keys_to_check = ['kid','parent','ref_id','in_api','delete'];
 	protected static  $reference_table = 'gokabam_api_use_case_parts';
 
 	/**
@@ -179,8 +179,8 @@ class ParsePart {
 		}
 
 		//convert the string kids to object kids
-		$db_thing->in_api_kid = $manager->kid_talk->generate_or_refresh_primary_kid(
-			$db_thing->in_api_kid,'gokabam_api_apis');
+		$db_thing->in_api = $manager->kid_talk->generate_or_refresh_primary_kid(
+			$db_thing->in_api,'gokabam_api_apis');
 
 
 		switch ($db_thing->parent->table) {
@@ -209,8 +209,8 @@ class ParsePart {
 
 		$last_page_load_id = $manager->last_load_id;
 		$api_id = null;
-		if ($db_thing->in_api_kid) {
-			$api_id = $db_thing->in_api_kid->primary_id;
+		if ($db_thing->in_api) {
+			$api_id = $db_thing->in_api->primary_id;
 		}
 
 

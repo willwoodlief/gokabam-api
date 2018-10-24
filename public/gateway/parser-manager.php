@@ -343,7 +343,7 @@ API (A)
 		header (D)
 	header (E)
 
-HERE, the order is AB CD E and bcde all need their parent info
+HERE, the order is AB CD E and b c d e all need their parent info
 
 for each type of parser, key the factory to a lookup table for the table:
 create the class, and it will return when that segment is done

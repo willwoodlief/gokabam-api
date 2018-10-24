@@ -75,17 +75,17 @@ class Fill_GKA_SQL_Part {
 		$pos              = new GKA_Kid();
 		$pos->primary_id  = $data->table_element_id;
 		$pos->table       = 'gokabam_api_data_elements';
-		$root->db_element_kid = $pos;
+		$root->db_element = $pos;
 
 		$pos              = new GKA_Kid();
 		$pos->primary_id  = $data->reference_table_element_id;
 		$pos->table       = 'gokabam_api_data_elements';
-		$root->reference_db_element_kid = $pos;
+		$root->reference_db_element = $pos;
 
 		$pos              = new GKA_Kid();
 		$pos->primary_id  = $data->outside_element_id;
 		$pos->table       = 'gokabam_api_data_elements';
-		$root->outside_element_kid = $pos;
+		$root->outside_element = $pos;
 
 
 

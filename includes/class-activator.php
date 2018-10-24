@@ -558,7 +558,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-              group_type_enum varchar(20) default null comment 'database_table,regular',
+              group_type_enum varchar(20) default 'regular' comment 'database_table,regular',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_elements varchar(255) default null comment 'checksum of the element it contains',

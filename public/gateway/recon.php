@@ -702,9 +702,9 @@ class Recon {
 					$obj->parent->primary_id = $data->use_case_id ;
 					$obj->parent->table = 'gokabam_api_use_cases';
 
-					$obj->in_api_kid = new GKA_Kid();
-					$obj->in_api_kid->object_id = $data->in_api_kid ;
-					$obj->in_api_kid->table = 'gokabam_api_apis';
+					$obj->in_api = new GKA_Kid();
+					$obj->in_api->object_id = $data->in_api ;
+					$obj->in_api->table = 'gokabam_api_apis';
 
 
 					$obj->ref_id = $data->rank ;
@@ -778,13 +778,13 @@ class Recon {
 				$obj->parent->primary_id = $data->use_case_id ;
 				$obj->parent->table = 'gokabam_api_use_cases';
 
-				$obj->destination_part_kid = new GKA_Kid();
-				$obj->destination_part_kid->object_id = $data->child_use_case_part_id ;
-				$obj->destination_part_kid->table = 'gokabam_api_use_case_parts';
+				$obj->destination_part = new GKA_Kid();
+				$obj->destination_part->object_id = $data->child_use_case_part_id ;
+				$obj->destination_part->table = 'gokabam_api_use_case_parts';
 
-				$obj->source_part_kid = new GKA_Kid();
-				$obj->source_part_kid->object_id = $data->parent_use_case_part_id ;
-				$obj->source_part_kid->table = 'gokabam_api_use_case_parts';
+				$obj->source_part = new GKA_Kid();
+				$obj->source_part->object_id = $data->parent_use_case_part_id ;
+				$obj->source_part->table = 'gokabam_api_use_case_parts';
 
 				$obj->rank = $data->ranking ;
 
@@ -803,17 +803,17 @@ class Recon {
 					$obj->parent->primary_id = $data->use_case_part_id ;
 					$obj->parent->table = 'gokabam_api_use_case_parts';
 
-					$obj->db_element_kid = new GKA_Kid();
-					$obj->db_element_kid->object_id = $data->table_element_id ;
-					$obj->db_element_kid->table = 'gokabam_api_data_elements';
+					$obj->db_element = new GKA_Kid();
+					$obj->db_element->object_id = $data->table_element_id ;
+					$obj->db_element->table = 'gokabam_api_data_elements';
 
-					$obj->reference_db_element_kid = new GKA_Kid();
-					$obj->reference_db_element_kid->object_id = $data->reference_table_element_id ;
-					$obj->reference_db_element_kid->table = 'gokabam_api_data_elements';
+					$obj->reference_db_element = new GKA_Kid();
+					$obj->reference_db_element->object_id = $data->reference_table_element_id ;
+					$obj->reference_db_element->table = 'gokabam_api_data_elements';
 
-					$obj->outside_element_kid = new GKA_Kid();
-					$obj->outside_element_kid->object_id = $data->outside_element_id ;
-					$obj->outside_element_kid->table = 'gokabam_api_data_elements';
+					$obj->outside_element = new GKA_Kid();
+					$obj->outside_element->object_id = $data->outside_element_id ;
+					$obj->outside_element->table = 'gokabam_api_data_elements';
 
 					$obj->text = $data->constant_value ;
 					$obj->sql_part_enum = $data->sql_part_enum ;
