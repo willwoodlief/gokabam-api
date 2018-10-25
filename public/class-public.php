@@ -108,9 +108,10 @@ class Plugin_Public
     	}
         wp_enqueue_script($this->plugin_name. '_public', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
 	    wp_enqueue_script($this->plugin_name. '_typedefs', plugin_dir_url(__FILE__) . 'js/gokabam.typedefs.js', array(), $this->version, false);
+	    wp_enqueue_script($this->plugin_name. '_heartbeat', plugin_dir_url(__FILE__) . 'js/gokabam.heartbeat.js', array(), $this->version, false);
+	    wp_enqueue_script($this->plugin_name. '_gokabam', plugin_dir_url(__FILE__) . 'js/gokabam.js', array(), $this->version, false);
 
-
-    	$title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
+	    $title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
         wp_localize_script($this->plugin_name. '_public', strtolower( PLUGIN_NAME) . '_frontend_ajax_obj', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'action' => strtolower( PLUGIN_NAME) . '_submit_chart_step',

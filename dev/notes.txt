@@ -136,6 +136,220 @@ development
          SELECT INET6_NTOA(ip); // output: 127.0.0.1 (string)
          /////////////////
 
+---------------------------------------
+JS development
+
+listener will query every few minutes and update listeners on new, updated or deleted things
+   listeners can specify which things and actions they want
+     * listen to all
+     * listen to all in an action
+     * listen to a list of things in an action
+     * listen to just one thing
+
+Updater accepts a class and sends that to the server, (updates and inserts)
+  accepts a callback to return the processed info
+
+Displayers and Editors should be designed to be easily swapped out and plugable, allowing rapid gui development on the fly when wanted
+Displayer and Editors
+* register what they do and what for
+* Displayers always listen to things and will update when their listeners called
+    * will hook onto an element, the element can be framed by something else (like to drag or be put into a collection)
+* Editors know how to display the inputs and will send the completed stuff to the updater
+
+global function returns an editor or display or inserter based on the type
+
+class defines a type, and which property in the everything to get its stuff
+  class will return a list of editors and displayers and inserters, by class name, it has for it
+        multiple types of same thing (like different editors will have a name for each)
+    when a displayer is instantiated, its keyed to an existing object and it will listen to messages just for that
+
+  there are two types of editor. One for an existing object, and one for a new object
+    inserters get a list of potential parents, the parent can be pre-chosen
+    editors are instantiated with a single existing object
+
+  a menu is automatically created for inserting new things, is created from going through the types and getting the different inserters
+
+  views will show displayers for a collection of classes ( children will be classes inside those classes)
+
+  views: different sizes
+  -----------
+   class for each
+
+   heartbeat:
+
+
+    notification_id= notification(   callback: callable,
+                    sent_current:true,
+                    {edit:{types:{attributes}} :insert(types:{attributes}) :delete(types:{attributes})}
+
+    cancel_notification(notification_id)
+
+
+    attributes: (includes kid)
+        attribute_x: regular expression or range
+
+    each notification listener:
+      when new or updated kid comes in, see if matches the rules of the notification and send them out
+      at first, go through library of everything and for each thing see if it matches  match_notifications(rules,library object)
+      if listener is just for one object by full kid, then mark that so do not loop through each time
+
+    //update(class) {
+        class->add_to_everything(ev);
+        send everything {
+            response : see if match_notifications
+        }
+    }
+
+    match_notifications(rules,object) {
+        for each property see if matches (attribute_x: regular expression or range)
+    }
+
+    //
+    get: at page load and timer, get new everything
+       and for each new thing, match notifications for each rule
+
+    -----
+    $.Gokabam  ; heartbeat
+               ; register display(displaytype, object type)
+               ; get_display[] (parent-div,css-class-to-add,ruleset, displaytype) : return an array of displays , created which are
+                    children of the parent div and are already listening
+
+       -- display will :
+            register the listener when created
+            listen for any changes, and update the display
+            common methods: refresh(), remove(), get_object(), get_class(),get_display_style(), get_ruleset(),get_edit()
+            display is responsible for having a way to click or get the edit
+            a display can have some words as part of the element, but needs to have a way to edit all words too
+
+        -- edit will
+            be created to be a child of a given div
+            ; register_edit(displaytype, object_type)
+            ; get_edit(  parent-div,css-class-to-add,ruleset,displaytype,object|null)
+
+            if object is null, will be an insert edit, else a regular edit
+            //when submit is pressed or activated, will call heartbeat.update
+            common methods: submit(),delete_object(),refresh(),remove(),get_class(), get_display_style(), get_ruleset()
+            edits will all have a way to update and delete what they are editing
+
+       -- contianer will hold one or more displays of a ruleset
+            -- rulesets are always the same object_type
+            -- has a gui way to create a new object type with the same ruleset
+            -- use the same display_type for itself, and for the displays and edits
+
+        containers can be nested in each layer of display. For instance a journal will have a child container for its tags
+        or a container that shows journals of a certain tag will have each journal display hold its containers for words and tags
+
+        -- exceptions: all tags for an object will have the same edit and display. A container of tags will not be like above.
+        So need to incapsulate it
+            how does a display go about creating a container for each of its member types?
+                I thought it could just call a generic container class with the ruleset, and that container class would go about
+                managing the edits itside of it. However for tags, it will do a different stragagy . But this different strategy
+                will be hidden from anything outside the container. So, its okay
+
+                so when a display is instantiating itself, it calls for a container for each of its members
+
+
+----------------------------------------------------
+taking the above notes
+
+ruleset {
+    actions: [] add:edit:delete
+    specifically: [] array of kids
+    properties:
+        property_name : string|regex|or range {min, max}
+        -- note: There is property name called kabam_class
+}
+
+heartbeat class:
+    create_notification(callback,b_send_current,ruleset) : returns notification_id
+
+    void cancel_notification(notification_id)
+
+    void update(kabam_class): will call server and issue any processed data through the notifications
+
+    void get : refreshes entire everything from the server, any changed md5s for existing objets will result in notifications
+                                                        as well as any new things, or deleted things: will use previous
+                                                                everything to decide if somthing is new or needs delete notice
+
+
+$.GoKabam // hold heartbeat and on load will call its get method
+    get_heartbeat()
+    register_display(kabam_class_name,display_type,edit_class,is_multiple)
+                                                                     declaring if a display handles multiple objects allows
+                                                                     the get display to decide which editor to call best when given
+                                                                     a ruleset,
+                                                                     + if there is only one in the ruleset then
+                                                                     will first try a single, but will setttle for a multiple
+                                                                    + if there is multiple objects in the ruleset, and a single is
+                                                                      registered only will put each object in a different display
+                                                                      but if there is a multiple display registered will use that instead
+
+    get_display(parent-div,css-class-to-add,ruleset, displaytype) : return an array of displays , already created and listening
+                                                                    which are children of the parent div and are already listening
+                                                                    sometimes different objects share the same display
+                                                                        like tags
+
+    register_edit(kabam_class_name,display_type,display_class,is_multiple) : see notes for multiple above
+
+    get_edit(parent-div,css-class-to-add,displaytype,object|object[]|null) : returns an edit for the display
+                                                                                      if array of objects passed will return a grouped edit
+                                                                                      only if that kind exists, else exception
+
+    register_container(kabam_class_name,display_type,container_class)
+    get_container(parent-div,css_class-to-add,ruleset, display type) -- will get the container and have the container instantiate the ruleset
+
+
+    display classes need to have the following methods:
+        constructor to take the object, or array of objects that it will display
+        refresh(), remove(), get_object(), get_class(),get_display_style(), get_ruleset(),get_edit(), static is multiple
+                display is responsible for having a way to click or get the edit
+                a display can have some words as part of the element, but needs to have a way to edit all words too
+
+
+    edit classes need to have the following methods:
+        constructor that takes the object (or array or objects) to edit, or null if insert
+        submit(),delete_object(),refresh(),remove(), get_object(), get_class(), get_display_style(), get_ruleset(), static is_multiple
+                edits will all have a gui way to update and delete what they are editing
+
+    container classes need to have the following methods:
+        refresh(),remove(), get_displays(), get_class(), get_display_style   ,get_ruleset()
+         containers must have a gui way to create new objects in the ruleset,and can be initially empty
+         - its up to the container to manage paging or organazation given its size
+
+    // the web page should have three containers for the top objects (version, api_version, and database tables) already made
+        -- this will allow all other things to be created or viewed
+
+
+-------------------------------------------
+order of work:
+finish the classes to hold data
+make heartbeat
+    test it out by itself with the different functions
+
+create two dummy display for word. One multiple, and one single (display_style:test)
+and then add in the register display, and get_display
+
+create two dummy edits for word, one multiple and other single
+and then add in the register edit and get edit
+
+create a container for words    (display_style:test) and then add in the register and get container methods
+
+make classes for display simple:
+each a display,edit, and container
+
+word : multiple only
+tag  : multiple only
+
+single only after this:
+journal
+version
+element
+data group
+header
+output
+input
+api
+... e
 
 
 

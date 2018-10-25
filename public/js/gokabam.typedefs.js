@@ -1,3 +1,4 @@
+
 /**
  * Typedef the identity of a GKA object
  * @typedef {string|null} GKA_Kid
@@ -34,12 +35,44 @@
  * @property {GKA_Kid[]} words          , 0 or more words
  * @property {GKA_Kid[]} journals       , 0 or more journals
  * @property {GKA_Kid[]} tags           , 0 or more tags
- * @property {GKA_Touch} initial_touch
- * @property {GKA_Touch} recent_touch
+ * @property {GKA_Touch|null} initial_touch
+ * @property {GKA_Touch|null} recent_touch
  * @property {string}  md5_checksum
  */
 
+class KabamRoot {
 
+    /**
+     * @param {GKA_Root}root
+     */
+    constructor(root) {
+        if (root) {
+            this.kid = root.kid;
+            this.status = root.status;
+            this.delete = root.delete;
+            this.parent = root.parent;
+            this.pass_through = root.pass_through;
+            this.words = root.words.slice();
+            this.journals = root.journals.slice();
+            this.tags = root.tags.slice();
+            this.initial_touch = root.initial_touch;
+            this.recent_touch = root.recent_touch;
+            this.md5_checksum = root.md5_checksum;
+        } else {
+            this.kid = null;
+            this.status = null;
+            this.delete = 0;
+            this.parent = null;
+            this.pass_through = null;
+            this.words = [];
+            this.journals = [];
+            this.tags = [];
+            this.initial_touch = null;
+            this.recent_touch = null;
+            this.md5_checksum = null;
+        }
+    }
+}
 
 /**
  * Typedef for GKA_Version, it inherits from GKA_Root
@@ -54,6 +87,32 @@
 
 
 
+class KabamVersion extends KabamRoot {
+
+    /**
+     * @param {GKA_Version|GKA_Root} version
+     */
+    constructor(version) {
+
+        super(version);
+        if (version) {
+            this.website_url = version.website_url;
+            this.post_id = version.post_id;
+            this.git_repo_url = version.git_repo_url;
+            this.git_tag = version.git_tag;
+            this.git_commit_id = version.git_commit_id;
+            this.text = version.text;
+        } else {
+            this.website_url = null;
+            this.post_id = null;
+            this.git_repo_url = null;
+            this.git_tag = null;
+            this.git_commit_id = null;
+            this.text = null;
+        }
+    }
+}
+
 /**
  * Typedef for GKA_Word, it inherits from GKA_Root, the parent can be anything but tags and words
  * @typedef {GKA_Root} GKA_Word
@@ -62,7 +121,25 @@
  * @property {string} text
  */
 
+class KabamWord extends KabamRoot {
 
+    /**
+     * @param {GKA_Word|GKA_Root} word
+     */
+    constructor(word) {
+
+        super(word);
+        if (word) {
+            this.type = word.type;
+            this.language = word.language;
+            this.text = word.text;
+        } else {
+            this.type = null;
+            this.language = null;
+            this.text = null;
+        }
+    }
+}
 
 
 /**
@@ -71,7 +148,21 @@
  * @property {string} text
  */
 
+class KabamJournal extends KabamRoot {
 
+    /**
+     * @param {GKA_Journal|GKA_Root} journal
+     */
+    constructor(journal) {
+
+        super(journal);
+        if (journal) {
+            this.text = journal.text;
+        } else {
+            this.text = null;
+        }
+    }
+}
 
 
 /**
@@ -81,7 +172,23 @@
  * @property {string} value
  */
 
+class KabamTag extends KabamRoot {
 
+    /**
+     * @param {GKA_Tag|GKA_Root} tag
+     */
+    constructor(tag) {
+
+        super(tag);
+        if (tag) {
+            this.text = tag.text;
+            this.value = tag.value;
+        } else {
+            this.text = null;
+            this.value = null;
+        }
+    }
+}
 
 
 
@@ -128,7 +235,7 @@
  * @property {string|null} default_value    , if not set , the default is always null
                                                will throw error if set for array or object
 
- * @property (integer|null} min             , error if set to non zero for object or boolean
+ * @property {integer|null} min             , error if set to non zero for object or boolean
                                                   type string is min character length
                                                   type integer and number the min value
                                                   type array is the min number of elements
@@ -154,6 +261,63 @@
                                                  do an insert or update with the kid of that element
  */
 
+/**
+ *  @class
+ * @augments KabamRoot
+ */
+class KabamElement extends KabamRoot {
+
+    /**
+     *
+     * @param {GKA_Element | GKA_Root} element
+     */
+    constructor(element) {
+
+        super(element);
+        if (element) {
+            this.text = element.text;
+            this.value = element.value;
+            this.format = element.format;
+            this.pattern = element.pattern;
+            this.is_nullable =  element.is_nullable;
+            this.is_optional = element.is_optional;
+            if (element.enum_values) {
+                this.enum_values = element.enum_values.slice();
+            } else {
+                this.enum_values = [];
+            }
+
+            this.default_value = element.default_value;
+
+            this.min = element.min;
+            this.max = element.max;
+            this.multiple = element.multiple;
+            this.precision = element.precision;
+            this.rank = element.rank;
+            this.radio_group = element.radio_group;
+            this.elements = element.elements.slice();
+
+        } else {
+            this.text = null;
+            this.value = null;
+            this.format = null;
+            this.pattern = null;
+            this.is_nullable =  null;
+            this.is_optional = null;
+            this.enum_values = [];
+            this.default_value = v;
+            this.min = null;
+            this.max = null;
+            this.multiple = null;
+            this.precision = null;
+            this.rank = null;
+            this.radio_group = null;
+            this.elements = [];
+
+        }
+    }
+}
+
 
 
 /**
@@ -165,6 +329,22 @@
  * @typedef {GKA_Root} GKA_DataExample
  * @property {object|null} text            , an example object
  */
+
+class KabamDataExample extends KabamRoot {
+
+    /**
+     * @param {GKA_DataExample|GKA_Root} example
+     */
+    constructor(example) {
+
+        super(example);
+        if (example) {
+            this.text = example.text;
+        } else {
+            this.text = null;
+        }
+    }
+}
 
 
 
@@ -186,6 +366,36 @@
  */
 
 
+class KabamDataGroup extends KabamRoot {
+
+    /**
+     * @param {GKA_DataGroup|GKA_Root} group
+     */
+    constructor(group) {
+
+        super(group);
+        if (group) {
+            this.type = group.type;
+            if (group.examples) {
+                this.examples = group.examples.slice();
+            } else {
+                this.examples = [];
+            }
+
+            if (group.elements) {
+                this.examples = group.elements.slice();
+            } else {
+                this.elements = [];
+            }
+        } else {
+            this.type = null;
+            this.elements = [];
+            this.examples = [];
+        }
+    }
+}
+
+
 /**
  * Typedef for  GKA_Header
  * headers are what are sent out during api calls, they have parents of api versions, families, outputs and apis
@@ -204,6 +414,30 @@
  */
 
 
+class KabamHeader extends KabamRoot {
+
+    /**
+     * @param {GKA_Header|GKA_Root} header
+     */
+    constructor(header) {
+
+        super(header);
+        if (header) {
+            this.name = header.name;
+            this.value = header.value;
+            if (header.data_groups) {
+                this.data_groups = header.data_groups.slice();
+            } else {
+                this.data_groups = [];
+            }
+        } else {
+            this.name = null;
+            this.value = null;
+            this.data_groups = [];
+        }
+    }
+
+}
 
 /**
  * Typedef for GKA_Output, parents are GKA_API
@@ -217,7 +451,36 @@
  * @property {GKA_Kid[]} headers            , 0 or more GKA_Header
  */
 
+class KabamOutput extends KabamRoot {
 
+    /**
+     * @param {GKA_Output|GKA_Root} output
+     */
+    constructor(output) {
+
+        super(output);
+        if (output) {
+            this.http_code = output.http_code;
+
+            if (output.data_groups) {
+                this.data_groups = output.data_groups.slice();
+            } else {
+                this.data_groups = [];
+            }
+
+            if (output.headers) {
+                this.headers = output.headers.slice();
+            } else {
+                this.headers = [];
+            }
+
+        } else {
+            this.http_code = null;
+            this.headers = [];
+            this.data_groups = [];
+        }
+    }
+}
 
 
 /**
@@ -243,6 +506,36 @@
  */
 
 
+
+class KabamInput extends KabamRoot {
+
+    /**
+     * @param {GKA_Input|GKA_Root} input
+     */
+    constructor(input) {
+
+        super(input);
+        if (input) {
+            this.origin = input.origin;
+            this.properties = input.properties;
+
+
+            if (input.data_groups) {
+                this.data_groups = input.data_groups.slice();
+            } else {
+                this.data_groups = [];
+            }
+
+        } else {
+            this.origin = null;
+            this.properties = null;
+            this.data_groups = [];
+        }
+    }
+}
+
+
+
 /**
  * Type Def for  GKA_API, their parents are families
  * @see GKA_Header
@@ -258,8 +551,58 @@
  * @property {GKA_Kid[]} inputs             , 0 or more GKA_Input
  * @property {GKA_Kid[]} outputs            , 0 or more GKA_Output
  * @property {GKA_Kid[]} headers            , 0 or more GKA_Header
- * @property {GKA_Kid[]} user_cases         , 0 or more GKA_Use_Case
+ * @property {GKA_Kid[]} use_cases         , 0 or more GKA_Use_Case
  */
+
+
+class KabamApi extends KabamRoot {
+
+    /**
+     * @param {GKA_API|GKA_Root} api
+     */
+    constructor(api) {
+
+        super(api);
+        if (api) {
+            this.text = api.text;
+            this.method = api.method;
+
+            if (api.inputs) {
+                this.inputs = api.inputs.slice();
+            } else {
+                this.inputs = [];
+            }
+
+            if (api.outputs) {
+                this.outputs = api.outputs.slice();
+            } else {
+                this.outputs = [];
+            }
+
+            if (api.use_cases) {
+                this.use_cases = api.use_cases.slice();
+            } else {
+                this.use_cases = [];
+            }
+
+            if (api.headers) {
+                this.headers = api.headers.slice();
+            } else {
+                this.headers = [];
+            }
+
+        } else {
+            this.text = null;
+            this.method = null;
+            this.inputs = [];
+            this.outputs = [];
+            this.headers = [];
+            this.use_cases = [];
+        }
+    }
+}
+
+
 
 /**
  * Type def for GKA_Family, parents are api versions
@@ -273,6 +616,38 @@
  * @property {GKA_Kid[]} apis               , 0 or more GKA_API
  */
 
+
+class KabamFamily extends KabamRoot {
+
+    /**
+     * @param {GKA_Family|GKA_Root} family
+     */
+    constructor(family) {
+
+        super(family);
+        if (family) {
+            this.text = family.text;
+
+            if (family.apis) {
+                this.apis = family.apis.slice();
+            } else {
+                this.apis = [];
+            }
+
+            if (family.headers) {
+                this.headers = family.headers.slice();
+            } else {
+                this.headers = [];
+            }
+
+        } else {
+            this.text = null;
+            this.apis = [];
+            this.headers = [];
+
+        }
+    }
+}
 
 
 /**
@@ -289,6 +664,43 @@
  */
 
 
+class KabamApiVersion extends KabamRoot {
+
+    /**
+     * @param {GKA_API_Version|GKA_Root} api_version
+     */
+    constructor(api_version) {
+
+        super(api_version);
+        if (api_version) {
+            this.text = api_version.text;
+
+            if (api_version.families) {
+                this.families = api_version.families.slice();
+            } else {
+                this.families = [];
+            }
+
+            if (api_version.headers) {
+                this.headers = api_version.headers.slice();
+            } else {
+                this.headers = [];
+            }
+
+            if (api_version.use_cases) {
+                this.use_cases = api_version.use_cases.slice();
+            } else {
+                this.use_cases = [];
+            }
+
+        } else {
+            this.text = null;
+            this.families = [];
+            this.headers = [];
+            this.use_cases = [];
+        }
+    }
+}
 
 /**
  * Type def for  GKA_SQL_Part, their parents are use case parts
@@ -307,7 +719,32 @@
  */
 
 
+class KabamSqlPart extends KabamRoot {
 
+    /**
+     * @param {GKA_SQL_Part|GKA_Root} sql_part
+     */
+    constructor(sql_part) {
+
+        super(sql_part);
+        if (sql_part) {
+            this.text = sql_part.text;
+            this.sql_part_enum = sql_part.sql_part_enum;
+            this.db_element = sql_part.db_element;
+            this.reference_db_element = sql_part.reference_db_element;
+            this.outside_element = sql_part.outside_element;
+            this.rank = sql_part.rank;
+
+        } else {
+            this.text = null;
+            this.sql_part_enum = null;
+            this.db_element = null;
+            this.reference_db_element =null;
+            this.outside_element = null;
+            this.rank = null;
+        }
+    }
+}
 
 
 /**
@@ -323,7 +760,27 @@
  */
 
 
+class KabamPartConnection extends KabamRoot {
 
+    /**
+     * @param {GKA_Use_Part_Connection|GKA_Root} sql_connection
+     */
+    constructor(sql_connection) {
+
+        super(sql_connection);
+        if (sql_connection) {
+            this.source_part = sql_connection.source_part;
+            this.destination_part = sql_connection.destination_part;
+            this.rank = sql_connection.rank;
+
+
+        } else {
+            this.source_part = null;
+            this.destination_part = null;
+            this.rank = null;
+        }
+    }
+}
 
 /**
  * Type Def for  GKA_Use_Part, parent is GKA_Use_Case
@@ -344,6 +801,53 @@
 
 
 
+class KabamUsePart extends KabamRoot {
+
+    /**
+     * @param {GKA_Use_Part|GKA_Root} use_part
+     */
+    constructor(use_part) {
+
+        super(use_part);
+        if (use_part) {
+            this.ref_id = use_part.ref_id;
+            this.in_api = use_part.in_api;
+
+            if (use_part.in_data_groups) {
+                this.in_data_groups = use_part.in_data_groups.slice();
+            } else {
+                this.in_data_groups = [];
+            }
+
+            if (use_part.out_data_groups) {
+                this.out_data_groups = use_part.out_data_groups.slice();
+            } else {
+                this.out_data_groups = [];
+            }
+
+            if (use_part.sql_parts) {
+                this.sql_parts = use_part.sql_parts.slice();
+            } else {
+                this.sql_parts = [];
+            }
+
+            if (use_part.source_connections) {
+                this.source_connections = use_part.source_connections.slice();
+            } else {
+                this.source_connections = [];
+            }
+
+        } else {
+            this.ref_id = null;
+            this.in_api = null;
+            this.in_data_groups = [];
+            this.out_data_groups = [];
+            this.sql_parts = [];
+            this.source_connections = [];
+        }
+    }
+}
+
 
 
 /**
@@ -359,7 +863,35 @@
  */
 
 
+class KabamUseCase extends KabamRoot {
 
+    /**
+     * @param {GKA_Use_Case|GKA_Root} use_case
+     */
+    constructor(use_case) {
+
+        super(use_case);
+        if (use_case) {
+
+            if (use_case.use_parts) {
+                this.use_parts = use_case.use_parts.slice();
+            } else {
+                this.use_parts = [];
+            }
+
+            if (use_case.connections) {
+                this.connections = use_case.connections.slice();
+            } else {
+                this.connections = [];
+            }
+
+        } else {
+
+            this.use_parts = [];
+            this.connections = [];
+        }
+    }
+}
 
 
 /**
@@ -455,20 +987,222 @@
  */
 
 
+/**
+ * Everything
+ * @class
+ * @param {GKA_Everything} everything
+ */
+function KabamEverything(everything)  {
+
+
+    if (everything) {
+
+        this.server = everything.server;
+        this.pass_through_data = everything.pass_through_data;
+        this.api_action = everything.api_action;
+        this.begin_timestamp = everything.begin_timestamp;
+        this.end_timestamp = everything.end_timestamp;
+        this.message = everything.message;
+        this.is_valid = everything.is_valid;
+        this.exception_info = everything.exception_info;
+        this.deleted_kids = everything.deleted_kids.slice();
+
+        this.library = [];
+
+        let props = [
+                        'words',
+                        'tags',
+                        'journals',
+                        'versions',
+                        'api_versions',
+                        'families',
+                        'apis',
+                        'headers',
+                        'inputs',
+                        'outputs',
+                        'sql_parts',
+                        'use_part_connections',
+                        'use_parts',
+                        'use_cases',
+                        'data_groups',
+                        'table_groups',
+                        'examples',
+                        'elements',
+                        'library',
+                        'deleted_kids',
+                        'users'
+        ];
 
 
 
+        for(let prop_index = 0; prop_index < props.length; prop_index++ ) {
+            let prop = props[prop_index];
+            this[prop] = [];
+            for(let i = 0; i < everything[prop].length; i++) {
+                let kid = everything[prop][i];
+                if (!everything.library.hasOwnProperty(kid)) {throw new Error("Everything has a reference of "+ kid + " in "+ prop +" that is not in library")}
+                let oh = everything.library[kid];
+                let node = null;
+                switch(prop) {
+                    case 'words': {
+                        node = new KabamWord(oh);
+                        break;
+                    }
+                    case 'tags': {
+                        node =  new KabamTag(oh);
+                        break;
+                    }
+                    case 'journals': {
+                        node =  new KabamJournal(oh);
+                        break;
+                    }
+                    case 'versions': {
+                        node =  new KabamVersion(oh);
+                        break;
+                    }
+                    case 'api_versions': {
+                        node =  new KabamApiVersion(oh);
+                        break;
+                    }
+                    case 'families': {
+                        node =  new KabamFamily(oh);
+                        break;
+                    }
+                    case 'apis': {
+                        node =  new KabamApi(oh);
+                        break;
+                    }
+                    case 'headers': {
+                        node =  new KabamHeader(oh);
+                        break;
+                    }
+                    case 'inputs': {
+                        node =  new KabamInput(oh);
+                        break;
+                    }
+                    case 'outputs': {
+                        node =  new KabamOutput(oh);
+                        break;
+                    }
+                    case 'sql_parts': {
+                        node =  new KabamSqlPart(oh);
+                        break;
+                    }
+                    case 'use_part_connections': {
+                        node =  new KabamPartConnection(oh);
+                        break;
+                    }
+                    case 'use_parts': {
+                        node =  new KabamUsePart(oh);
+                        break;
+                    }
+                    case 'use_cases': {
+                        node =  new KabamUseCase(oh);
+                        break;
+                    }
+                    case 'data_groups': {
+                        node =  new KabamDataGroup(oh);
+                        break;
+                    }
+                    case 'table_groups': {
+                        node =  new KabamDataGroup(oh);
+                        break;
+                    }
+                    case  'examples': {
+                        node =  new KabamDataExample(oh);
+                        break;
+                    }
+                    case 'elements': {
+                        node =  new KabamElement(oh);
+                        break;
+                    }
+                    case 'library': {
+                        node =  new KabamTag(oh);
+                        break;
+                    }
+                    case 'deleted_kids': {
+                        node =  new KabamTag(oh);
+                        break;
+                    }
+                    case  'users': {
+                        node =  oh; //no class as we never write anything with it
+                        break;
+                    }
+                    default: {
+                        throw new Error("Case does not include what is in property array");
+                    }
+                }
+
+                this.library[kid] = node;
+                this[prop].push(kid);
+            }
+        }
 
 
+    }
+    else {
+
+        this.server = null;
+        this.pass_through_data = null;
+        this.api_action = null;
+        this.begin_timestamp = null;
+        this.end_timestamp = null;
+        this.message = null;
+        this.is_valid = null;
+        this.exception_info = null;
 
 
+        this.words = [] ;
+        this.tags = [] ;
+        this.journals = [] ;
+        this.versions = [] ;
+        this.api_versions = [] ;
+        this.families = [] ;
+        this.apis = [] ;
+        this.headers = [] ;
+        this.inputs = [] ;
+        this.outputs = [] ;
+        this.sql_parts = [] ;
+        this.use_part_connections = [] ;
+        this.use_parts = [] ;
+        this.use_cases = [] ;
+        this.data_groups = [] ;
+        this.table_groups = [] ;
+        this.examples = [] ;
+        this.elements = [] ;
+        this.library = [] ;
+        this.deleted_kids = [] ;
+        this.users = [] ;
+    }
 
+    /**
+     * todo implement get_changed_deleted, and cache results
+     * returns an array of ids that were deleted after this data was cached
+     * @param {KabamEverything|null} other
+     * @return {GKA_Kid[]}
+     */
+    this.get_changed_deleted = function(other) {
 
+    };
 
+    /**
+     * todo implement get_changed_inserted, and cache results
+     * returns an array of ids that were inserted after this data was cached
+     * @param {KabamEverything|null}  other
+     * @return {GKA_Kid[]}
+     */
+    this.get_changed_inserted = function(other) {
 
+    };
 
+    /**
+     * todo implement get_changed_updated, and cache results
+     * returns an array of ids that were changed (md5 difference) after this data was cached
+     * @param {KabamEverything|null} other
+     * @return {GKA_Kid[]}
+     */
+    this.get_changed_updated = function(other) {
 
+    };
 
-
-
-
+}
