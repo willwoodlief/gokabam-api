@@ -765,7 +765,7 @@ class GKA_SQL_Part extends GKA_Root
 
 }
 
-//todo remove the suffix kid from any of these properties
+
 
 
 /**

@@ -88,6 +88,7 @@ class KidTalk {
 		);
 	}
 
+
 	/**
 	 * @param string $table
 	 *
@@ -396,26 +397,7 @@ class KidTalk {
 
 	}
 
-	/**
-	 * generated a string id
-	 * @param string|null $base
-	 * @param integer $id
-	 *
-	 * @return string
-	 * @throws ApiParseException
-	 */
-	public function generate_string_id($base,$id) {
-		$encoding = $this->hashids->encode($id);
-		if (empty($encoding)) {
-			throw new ApiParseException("Could not encode $id");
-		}
-		if ($base) {
-			return $base. "_". $encoding;
-		} else {
-			return $encoding;
-		}
 
-	}
 	/**
 	 * @param GKA_Kid $kid
 	 * will fill in missing parts
@@ -491,6 +473,28 @@ class KidTalk {
 	}
 
 	/**
+	 * generated a string id
+	 * this is different from the above because we do not use tables
+	 * @param string|null $base
+	 * @param integer $id
+	 *
+	 * @return string
+	 * @throws ApiParseException
+	 */
+	public function generate_string_id($base,$id) {
+		$encoding = $this->hashids->encode($id);
+		if (empty($encoding)) {
+			throw new ApiParseException("Could not encode $id");
+		}
+		if ($base) {
+			return $base. "_". $encoding;
+		} else {
+			return $encoding;
+		}
+
+	}
+
+	/**
 	 * @param string $string_kid
 	 *
 	 * @return bool
@@ -505,6 +509,46 @@ class KidTalk {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @param GKA_Kid|null $kid
+	 * @param string $md5
+	 * @return void
+	 * @throws ApiParseException
+	 * @throws SQLException
+	 */
+	public function md5_check($kid,$md5) {
+		if (empty($kid)) {return;}
+
+		if (!is_object($kid)) {
+			$kid = $this->convert_parent_string_kid($kid);
+		}
+		if (strcmp(get_class($kid),'gokabam_api\GKA_Kid') !== 0 ) {
+			throw new ApiParseException("Kid needs to be GKA_Kid and not " .  get_class($kid));
+		}
+		$table = $kid->table;
+		$primary_key = $kid->primary_id;
+		if (!$table || !$primary_key) {
+			throw new ApiParseException("Need a table and primary key to compare the md5");
+		}
+
+		if (empty($md5)) {
+			throw new ApiParseException("Need an md5_checksum to update an object");
+		}
+
+		$check = $this->mydb->execSQL(
+			/** @lang text */
+			"select id  from $table  where md5_checksum = ? and id = ?",
+			[ 'si', $md5, $primary_key ],
+			MYDB::RESULT_SET,
+			"@sey@KidTalk::md5_check/echo" );
+
+		if ( empty( $check ) ) {
+			throw new ApiParseException( "md5_checksum check failed for " . $kid->kid );
+		}
+
+
 	}
 
 

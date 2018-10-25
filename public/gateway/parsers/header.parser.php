@@ -154,6 +154,10 @@ class ParseHeader {
 			$db_thing->pass_through = $node['pass_through'];
 		}
 
+		if (array_key_exists('md5_checksum',$node)) {
+			$db_thing->md5_checksum = $node['md5_checksum'];
+		}
+
 		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
 
 		if (empty($db_thing->parent)) {
@@ -313,6 +317,9 @@ class ParseHeader {
 			if (empty($id)) {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
+			$manager->kid_talk->md5_check($db_thing->kid,$db_thing->md5_checksum);
+
+
 			switch ($db_thing->parent->table) {
 				case 'gokabam_api_api_versions': {
 
