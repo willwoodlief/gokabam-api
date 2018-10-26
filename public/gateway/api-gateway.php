@@ -122,6 +122,7 @@ class ApiGateway {
 	 * @throws ApiParseException
 	 * @throws JsonException
 	 * @throws SQLException
+	 * @throws FillException
 	 */
 	protected function update_everything($init_everything){
 		global $GokabamGoodies;
@@ -132,12 +133,16 @@ class ApiGateway {
 		if (!is_array($the_json)  || empty($the_json)) {
 			throw new ApiParseException("No data found in request send under the key of gokabam_api_data");
 		}
-		$everything = new GKA_Everything();
-		$everything->api_action = $init_everything->api_action;
-		$everything->pass_through_data = $init_everything->pass_through_data;
+		$everything_update = new GKA_Everything();
 		$page_load_id = $GokabamGoodies->get_page_load_id();
 
-		$this->parser_manager    = new ParserManager($this->kid_talk,$this->mydb,$everything,$page_load_id,$the_json);
+		$this->parser_manager    = new ParserManager($this->kid_talk,$this->mydb,$everything_update,$page_load_id,$the_json);
+
+		$filler_manager = new FillerManager($GokabamGoodies,null,null,$this->user_map);
+		$filler_manager->convert_everything_from_update($everything_update);
+		$everything = $filler_manager->get_everything(true, $page_load_id,false);
+		$everything->api_action = $init_everything->api_action;
+		$everything->pass_through_data = $init_everything->pass_through_data;
 		return $everything;
 
 	}

@@ -105,11 +105,13 @@ class Plugin_Public
 		    wp_enqueue_script('jquery-bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/js/bootstrap.min.js', array('jquery'), '3.3.7', false);
 		    wp_enqueue_script('bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js', array('jquery-bootstrap'), '1.35.4', false);
 		   // wp_enqueue_script('gokabam-family', PLUGIN_URL . 'public/js/gokabam.family.js', array('jquery'), '0.0.1', false);
+		    wp_enqueue_script($this->plugin_name. '_public', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
+		    wp_enqueue_script($this->plugin_name. '_typedefs', plugin_dir_url(__FILE__) . 'js/gokabam.typedefs.js', array(), $this->version, false);
+		    wp_enqueue_script($this->plugin_name. '_heartbeat', plugin_dir_url(__FILE__) . 'js/gokabam.heartbeat.js', array(), $this->version, false);
+		    wp_enqueue_script($this->plugin_name. '_gokabam', plugin_dir_url(__FILE__) . 'js/gokabam.js', array(), $this->version, false);
+		    remove_filter( 'the_content', 'wpautop' );
+		    remove_filter( 'the_excerpt', 'wpautop' );
     	}
-        wp_enqueue_script($this->plugin_name. '_public', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
-	    wp_enqueue_script($this->plugin_name. '_typedefs', plugin_dir_url(__FILE__) . 'js/gokabam.typedefs.js', array(), $this->version, false);
-	    wp_enqueue_script($this->plugin_name. '_heartbeat', plugin_dir_url(__FILE__) . 'js/gokabam.heartbeat.js', array(), $this->version, false);
-	    wp_enqueue_script($this->plugin_name. '_gokabam', plugin_dir_url(__FILE__) . 'js/gokabam.js', array(), $this->version, false);
 
 	    $title_nonce = wp_create_nonce(strtolower( PLUGIN_NAME) . 'public_nonce');
         wp_localize_script($this->plugin_name. '_public', strtolower( PLUGIN_NAME) . '_frontend_ajax_obj', array(

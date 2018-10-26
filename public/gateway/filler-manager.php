@@ -105,23 +105,27 @@ class FillerManager {
 
 	/**
 	 * @param boolean $b_show_deleted default false , if true fills in deleted_kids
+	 * @param integer|null $deleted_page_load_id, default null, but if set will show deleted only from that page load and not time range set earlier
+	 * @param boolean $b_show_stragglers, if true will search out and find anything missing in the date time range, default true
 	 * @return GKA_Everything
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 * @throws FillException
 	 */
-	public function get_everything($b_show_deleted = false) {
+	public function get_everything($b_show_deleted = true,$deleted_page_load_id = null,$b_show_stragglers = true) {
 		if (!$this->b_open) {
 			return $this->everything;
 		}
+		if ($b_show_stragglers) {
+			$this->fill_in_stragglers();
+		}
+
 		$this->b_open = false;
-		$this->fill_in_stragglers();
+
 
 		$this->finalize_processed_roots();
 		if ($b_show_deleted) {
-			if (empty($this->array_deleted_kids)) {
-				$this->array_deleted_kids = $this->get_deleted_array();
-			}
+			$this->array_deleted_kids = $this->get_deleted_array($deleted_page_load_id);
 			$this->everything->deleted_kids = $this->array_deleted_kids;
 		}
 		$this->everything->users = [];
@@ -130,6 +134,62 @@ class FillerManager {
 			$this->everything->library[$user->user_id] = $user;
 		}
 		return $this->everything;
+	}
+
+	/**
+	 * Pulls all the nodes off the everything, and submits it to be filled
+	 * Get the result the normal way of the class, like using all
+	 * @param GKA_Everything $everything
+	 *
+	 * @throws ApiParseException
+	 * @throws FillException
+	 * @throws SQLException
+	 */
+	public function convert_everything_from_update($everything) {
+		/*
+		 * the update code does not use the library, and only puts the things that were changed
+		 * in the type arrays, but as full objects, goes through each type array, get the kid
+		 * reverse the kid string to a kid object, and then submit to fill
+		 */
+		$steps = [
+			['property'=> 'words',                  'table'=> 'gokabam_api_words'],
+			['property'=> 'tags',                   'table'=> 'gokabam_api_tags'],
+			['property'=> 'journals',               'table'=> 'gokabam_api_journals'],
+			['property'=> 'versions',               'table'=> 'gokabam_api_versions'],
+			['property'=> 'api_versions',           'table'=> 'gokabam_api_versions'],
+			['property'=> 'families',               'table'=> 'gokabam_api_family'],
+			['property'=> 'apis',                   'table'=> 'gokabam_api_apis'],
+			['property'=> 'headers',                'table'=> 'gokabam_api_output_headers'],
+			['property'=> 'inputs',                 'table'=> 'gokabam_api_inputs'],
+			['property'=> 'outputs',                'table'=> 'gokabam_api_outputs'],
+			['property'=> 'sql_parts',              'table'=> 'gokabam_api_use_case_parts_sql'],
+			['property'=> 'use_part_connections',   'table'=> 'gokabam_api_use_case_part_connections'],
+			['property'=> 'use_parts',              'table'=> 'gokabam_api_use_case_parts'],
+			['property'=> 'use_cases',              'table'=> 'gokabam_api_use_cases'],
+			['property'=> 'data_groups',            'table'=> 'gokabam_api_data_groups'],
+			['property'=> 'table_groups',           'table'=> 'gokabam_api_data_groups'],
+			['property'=> 'examples',               'table'=> 'gokabam_api_data_group_examples'],
+			['property'=> 'elements',               'table'=> 'gokabam_api_data_elements']
+		];
+
+		$kids = [];
+		foreach ( $steps as $stack) {
+			$property = $stack['property'];
+			$table_to_check = $stack['table'];
+			$arr = $everything->$property;
+			if (is_array($arr) ) {
+				foreach ($arr as $ang) {
+					$kid_string = $ang->kid;
+					$kid = $this->kid_talk->generate_or_refresh_primary_kid($kid_string,$table_to_check);
+					$kids[] = $kid;
+				}
+			}
+		}
+
+		//do the fill
+		foreach ($kids as $kid_object) {
+			$this->fill($kid_object);
+		}
 	}
 
 	/**
@@ -292,7 +352,7 @@ class FillerManager {
 		$first->version = $pos;
 
 		$first->user = $this->get_user_id($data->initial_user);
-		$first->ts = $data->last_ts;
+		$first->ts = $data->initial_ts;
 
 		$root->initial_touch = $first;
 		$root->recent_touch = $last;
@@ -941,23 +1001,42 @@ class FillerManager {
 	}
 
 	/**
+	 * if page load is null, then select deleted by timestamp range set in the constructor
+	 * @param integer|null $page_load_id, default null
 	 * @return array
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 */
-	protected function get_deleted_array() {
-		$first_ts_param = $this->start_ts;
-		$last_ts_param = $this->end_ts;
+	protected function get_deleted_array($page_load_id=null) {
 
-		if (is_null($first_ts_param)) {
-			$first_ts_param = 0;
-		}
+		if ($page_load_id) {
 
-		if (is_null($last_ts_param)) {
-			$last_ts_param = 999999999999999;
-		}
+			$res = $this->mydb->execSQL("
+			SELECT 
+				o.id as object_id,
+				o.primary_key,
+				o.da_table_name
+			FROM gokabam_api_objects o
+			INNER JOIN gokabam_api_change_log g ON g.target_object_id = o.id 		
+			WHERE g.edit_action = 'delete'  AND g.page_load_id =  ?",
+				['i',$page_load_id],
+				MYDB::RESULT_SET,
+				"@sey@get_deleted_array!page_load!.filler-manager.php"
+			);
 
-		$res = $this->mydb->execSQL("
+		} else {
+			$first_ts_param = $this->start_ts;
+			$last_ts_param = $this->end_ts;
+
+			if (is_null($first_ts_param)) {
+				$first_ts_param = 0;
+			}
+
+			if (is_null($last_ts_param)) {
+				$last_ts_param = 999999999999999;
+			}
+
+			$res = $this->mydb->execSQL("
 			SELECT 
 				o.id as object_id,
 				o.primary_key,
@@ -967,10 +1046,12 @@ class FillerManager {
 			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = g.page_load_id
 			
 			WHERE g.edit_action = 'delete'  AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
-			['ii',$first_ts_param,$last_ts_param],
-			MYDB::RESULT_SET,
-			"@sey@get_deleted_array.filler-manager.php"
-		);
+				['ii',$first_ts_param,$last_ts_param],
+				MYDB::RESULT_SET,
+				"@sey@get_deleted_array.filler-manager.php"
+			);
+		}
+
 		$ret = [];
 		if (empty($res))  {return $ret;}
 		foreach($res as $row) {
