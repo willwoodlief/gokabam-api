@@ -130,7 +130,7 @@ function GoKabamHeartbeat (error_callback) {
         this.process_everything = function(everything) {
 
             if (filter == null) {
-                send_to_callback('get',[]);
+                send_to_callback('get',[]); //todo do not trip after an update ?
                 return;
             }
 
@@ -363,11 +363,6 @@ function GoKabamHeartbeat (error_callback) {
      */
     this.da_callbacks = [];
 
-    /**
-     *
-     * @type {integer|null}
-     */
-     this.last_server_time = null;
 
     /**
      *
@@ -375,8 +370,11 @@ function GoKabamHeartbeat (error_callback) {
      */
     this.everything = null;
 
+    let that = this;
+
 
     /**
+     * @public
      * if filter is null the callback will be called without any objects and action refresh
      * @param {HeartbeatNotificationCallback} callback
      * @param {RuleFilter|null} filter
@@ -391,6 +389,7 @@ function GoKabamHeartbeat (error_callback) {
      };
 
     /**
+     * @public
      * stops this notification
      * @param {integer} notification_id
      */
@@ -414,58 +413,142 @@ function GoKabamHeartbeat (error_callback) {
 
 
     /**
+     * @public
      * @description this will get all the data first call
      *              on the second and onward calls, it will get only updates, insert and deletes since the last call
      */
      this.get_information = function() {
 
-        let hugs = {api_action: 'get',pass_through_data: 'heartbeat get',begin_timestamp: this.last_server_time , end_timestamp: null};
-        let that = this;
-        $.GokabamTalk('gokabam_api',
-            {gokabam_api_data:hugs}, //pass the params to the wordpress backend
+         //always get full updates
+        let hugs = {api_action: 'get',pass_through_data: 'heartbeat get',begin_timestamp: null , end_timestamp: null};
+        data_push_and_recieve(hugs);
 
-            /**
-             * This is the success function that will be called as long as the php system does not crash
-             * @param {GKA_Everything} data
-             */
-            function(data) {
+    };
 
-                // noinspection JSUnresolvedVariable
-                gokabam_api_frontend_ajax_obj.nonce = data.server.ajax_nonce;
-                if (!data.is_valid) {
-                    if (error_callback) {
-                        error_callback(data.exception_info);
-                        return;
-                    }
-                }
+    /**
+     * @public
+     * @description will update the server and then run the filter callbacks with the new information
+     *  if any one of these fail then nothing gets updated,
+     *  if the md5 is obsolete for any of them, then all will be rejected, but the notice will come through the error callback
+     *  To delete an object, set delete to 1 . They can be recovered later, but not through this js library
+     * @param {KabamRoot[]}  root_array , 1 or more objects  derived from root, must use the actual classes
+     * @return {void}  the updated info and side effects will be sent through the filter callbacks already registered
+     */
+    this.push_update = function(root_array) {
 
-                that.last_server_time = data.server.server_timestamp;  //get ready for next call, do not overlap the times
+        let every_update = new KabamEverything(null);
+        for(let i = 0; i < root_array.length; i++) {
+            let root = root_array[i];
+            let added_copy = every_update.add_root(root,true); //will throw error if root not correct class
+            added_copy.clean();  //clear out dependencies
+        }
+        every_update.api_action = 'update';
+        data_push_and_recieve(every_update);
+     };
 
-                if (that.everything === null) {
-                    that.everything = new KabamEverything(data);
-                    that.send_to_notify(that.everything);
+     function data_push_and_recieve(data) {
+         $.GokabamTalk('gokabam_api',
+             {gokabam_api_data:data}, //pass the params to the wordpress backend
 
-                } else {
-                    let new_everything = new KabamEverything(data);
-                    //compare the difference between this and what we have
-                   everything.get_changed_deleted(new_everything);
-                   everything.get_changed_inserted(new_everything);
-                   everything.get_changed_updated(new_everything);
-                   that.send_to_notify(everything);
-                   that.everything = new_everything;
-                }
+             /**
+              * This is the success function that will be called as long as the php system does not crash
+              * @param {GKA_Everything} data
+              */
+             function(data) {
 
-            },
+                 // noinspection JSUnresolvedVariable
+                 gokabam_api_frontend_ajax_obj.nonce = data.server.ajax_nonce;
+                 if (!data.is_valid) {
+                     if (error_callback) {
+                         error_callback(data.exception_info);
+                         return;
+                     }
+                 }
 
-            /**
-             * This is the function that is called in case of a serious backend crash
-             * @param {*} message
-             */
-            function(message) {
-                if (error_callback) {
-                    error_callback(message);
-                }
-            }
-        )
-    }
+
+
+                 if (that.everything === null) {
+                        that.everything = new KabamEverything(data);
+                        that.send_to_notify(that.everything);
+
+                 } else {
+
+                     let new_everything = null;
+                     if (data.api_action === 'update') {
+                        //the new everything is what we already have plus the new changes
+
+                         //make a copy of our old
+                         new_everything = new KabamEverything(that.everything);
+                         let updated_everything = new KabamEverything(data);
+
+                         {
+                             //for any new deleted things, add the deleted kids to our deleted_kids, and remove the ids from our library
+                             let new_deleted_kids_array = new_everything.get_changed_deleted(updated_everything);
+                             for (let i = 0; i < new_deleted_kids_array.length; i++) {
+                                 let del_kid = new_deleted_kids_array[i];
+                                 if (new_everything.library.hasOwnProperty(del_kid)) {
+                                     delete new_everything.library[del_kid];
+                                 }
+                             }
+                             new_everything.deleted_kids.concat(new_deleted_kids_array);
+                         }
+
+                         {
+                             //for any new inserted things, add them to the library and to the appropriate property array
+                             let new_inserted_kids_array = new_everything.get_changed_inserted(updated_everything);
+                             for (let i = 0; i < new_inserted_kids_array.length; i++) {
+                                 let ins_kid = new_inserted_kids_array[i];
+                                 if (updated_everything.library.hasOwnProperty(ins_kid)) {
+                                     let libtard =  updated_everything.library[ins_kid];
+                                     new_everything.add_root(libtard,false);
+                                 }
+                             }
+                         }
+
+                         {
+                             //for any updated things, just copy over the library entry
+                             let new_updated_kids_array = new_everything.get_changed_updated(updated_everything);
+                             for (let i = 0; i < new_updated_kids_array.length; i++) {
+                                 let up_kid = new_updated_kids_array[i];
+                                 if (updated_everything.library.hasOwnProperty(up_kid)
+                                     &&
+                                     new_everything.library.hasOwnProperty(up_kid)
+                                 ) {
+                                     new_everything.library[up_kid] =  updated_everything.library[up_kid];
+                                 }
+                             }
+                         }
+
+                     } else if (data.api_action === 'get') {
+                         new_everything = new KabamEverything(data);
+                     }
+
+
+                     //compare the difference between this and what we have
+
+                     //set up the change caches
+                     that.everything.get_changed_deleted(new_everything);
+                     that.everything.get_changed_inserted(new_everything);
+                     that.everything.get_changed_updated(new_everything);
+                     that.send_to_notify(that.everything);
+                     that.everything = new_everything;
+
+
+                 }
+
+             },
+
+             /**
+              * This is the function that is called in case of a serious backend crash
+              * @param {*} message
+              */
+             function(message) {
+                 if (error_callback) {
+                     error_callback(message);
+                 }
+             }
+         )
+     }
+
+
 }

@@ -72,6 +72,12 @@ class KabamRoot {
             this.md5_checksum = null;
         }
     }
+
+    clean() {
+        this.words = [];
+        this.journals = [];
+        this.tags = [];
+    }
 }
 
 /**
@@ -111,6 +117,10 @@ class KabamVersion extends KabamRoot {
             this.text = null;
         }
     }
+
+    clean() {
+        super.clean();
+    }
 }
 
 /**
@@ -139,6 +149,10 @@ class KabamWord extends KabamRoot {
             this.text = null;
         }
     }
+
+    clean() {
+        super.clean();
+    }
 }
 
 
@@ -161,6 +175,10 @@ class KabamJournal extends KabamRoot {
         } else {
             this.text = null;
         }
+    }
+
+    clean() {
+        super.clean();
     }
 }
 
@@ -187,6 +205,10 @@ class KabamTag extends KabamRoot {
             this.text = null;
             this.value = null;
         }
+    }
+
+    clean() {
+        super.clean();
     }
 }
 
@@ -316,6 +338,11 @@ class KabamElement extends KabamRoot {
 
         }
     }
+
+    clean() {
+        super.clean();
+        this.elements = [];
+    }
 }
 
 
@@ -343,6 +370,10 @@ class KabamDataExample extends KabamRoot {
         } else {
             this.text = null;
         }
+    }
+
+    clean() {
+        super.clean();
     }
 }
 
@@ -393,6 +424,12 @@ class KabamDataGroup extends KabamRoot {
             this.examples = [];
         }
     }
+
+    clean() {
+        super.clean();
+        this.elements = [];
+        this.examples = [];
+    }
 }
 
 
@@ -437,6 +474,11 @@ class KabamHeader extends KabamRoot {
         }
     }
 
+    clean() {
+        super.clean();
+        this.data_groups = [];
+    }
+
 }
 
 /**
@@ -479,6 +521,12 @@ class KabamOutput extends KabamRoot {
             this.headers = [];
             this.data_groups = [];
         }
+    }
+
+    clean() {
+        super.clean();
+        this.headers = [];
+        this.data_groups = [];
     }
 }
 
@@ -531,6 +579,11 @@ class KabamInput extends KabamRoot {
             this.properties = null;
             this.data_groups = [];
         }
+    }
+
+    clean() {
+        super.clean();
+        this.data_groups = [];
     }
 }
 
@@ -600,6 +653,14 @@ class KabamApi extends KabamRoot {
             this.use_cases = [];
         }
     }
+
+    clean() {
+        super.clean();
+        this.inputs = [];
+        this.outputs = [];
+        this.headers = [];
+        this.use_cases = [];
+    }
 }
 
 
@@ -646,6 +707,12 @@ class KabamFamily extends KabamRoot {
             this.headers = [];
 
         }
+    }
+
+    clean() {
+        super.clean();
+        this.apis = [];
+        this.headers = [];
     }
 }
 
@@ -700,6 +767,13 @@ class KabamApiVersion extends KabamRoot {
             this.use_cases = [];
         }
     }
+
+    clean() {
+        super.clean();
+        this.families = [];
+        this.headers = [];
+        this.use_cases = [];
+    }
 }
 
 /**
@@ -744,6 +818,10 @@ class KabamSqlPart extends KabamRoot {
             this.rank = null;
         }
     }
+
+    clean() {
+        super.clean();
+    }
 }
 
 
@@ -779,6 +857,10 @@ class KabamPartConnection extends KabamRoot {
             this.destination_part = null;
             this.rank = null;
         }
+    }
+
+    clean() {
+        super.clean();
     }
 }
 
@@ -840,11 +922,16 @@ class KabamUsePart extends KabamRoot {
         } else {
             this.ref_id = null;
             this.in_api = null;
-            this.in_data_groups = [];
-            this.out_data_groups = [];
-            this.sql_parts = [];
-            this.source_connections = [];
+
         }
+    }
+
+    clean() {
+        super.clean();
+        this.in_data_groups = [];
+        this.out_data_groups = [];
+        this.sql_parts = [];
+        this.source_connections = [];
     }
 }
 
@@ -890,6 +977,12 @@ class KabamUseCase extends KabamRoot {
             this.use_parts = [];
             this.connections = [];
         }
+    }
+
+    clean() {
+        super.clean();
+        this.use_parts = [];
+        this.connections = [];
     }
 }
 
@@ -990,14 +1083,14 @@ class KabamUseCase extends KabamRoot {
 /**
  * Everything
  * @class
- * @param {GKA_Everything} everything
+ * @param {GKA_Everything|KabamEverything} everything
  */
 function KabamEverything(everything)  {
 
 
     if (everything) {
 
-        this.server = everything.server;
+        this.server = jQuery.extend(true, {}, everything.server);
         this.pass_through_data = everything.pass_through_data;
         this.api_action = everything.api_action;
         this.begin_timestamp = everything.begin_timestamp;
@@ -1112,14 +1205,6 @@ function KabamEverything(everything)  {
                     }
                     case 'elements': {
                         node =  new KabamElement(oh);
-                        break;
-                    }
-                    case 'library': {
-                        node =  new KabamTag(oh);
-                        break;
-                    }
-                    case 'deleted_kids': {
-                        node =  new KabamTag(oh);
                         break;
                     }
                     case  'users': {
@@ -1279,8 +1364,254 @@ function KabamEverything(everything)  {
             }
         }
 
-        return this.remember_changed_inserted;
+        return this.remember_changed_updated;
 
     };
 
+    /**
+     * Woo needs to be derived from KabamRoot or should implement the user property
+     * returns the copy made
+     * @param {*} woo
+     * @param {boolean} b_twist, default false
+     * @return {*}
+     */
+    this.add_root = function(woo,b_twist) {
+        if (!woo) {return null;}
+        if (!b_twist) {b_twist = false;}
+        if (this.library.hasOwnProperty(woo.kid)) {
+            throw new Error("Cannot add " + woo.kid + " as its already in the library");
+        }
+        let ret = null;
+        let what_the_hell_is_this = woo.constructor.name;
+        switch (what_the_hell_is_this) {
+            case 'KabamWord': {
+                ret = new KabamWord(woo);
+                if (b_twist) {
+                    this.words.push(ret);
+                } else {
+                    this.words.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+            }
+            case 'KabamTag': {
+                ret = new KabamTag(woo);
+                if (b_twist) {
+                    this.tags.push(ret);
+                } else {
+                    this.tags.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamJournal': {
+                ret = new KabamJournal(woo);
+                if (b_twist) {
+                    this.journals.push(ret);
+                } else {
+                    this.journals.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+            }
+            case 'KabamVersion': {
+                ret = new KabamVersion(woo);
+                if (b_twist) {
+                    this.versions.push(ret);
+                } else {
+                    this.versions.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+            }
+            case 'KabamApiVersion': {
+                ret = new KabamApiVersion(woo);
+                if (b_twist) {
+                    this.api_versions.push(ret);
+                } else {
+                    this.api_versions.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+            }
+            case 'KabamFamily': {
+                ret = new KabamFamily(woo);
+                if (b_twist) {
+                    this.families.push(ret);
+                } else {
+                    this.families.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamApi': {
+                ret = new KabamApi(woo);
+                if (b_twist) {
+                    this.apis.push(ret);
+                } else {
+                    this.apis.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamHeader': {
+                ret = new KabamHeader(woo);
+                if (b_twist) {
+                    this.headers.push(ret);
+                } else {
+                    this.headers.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamInput': {
+                ret = new KabamInput(woo);
+                if (b_twist) {
+                    this.inputs.push(ret);
+                } else {
+                    this.inputs.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamOutput': {
+                ret = new KabamOutput(woo);
+                if (b_twist) {
+                    this.outputs.push(ret);
+                } else {
+                    this.outputs.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamSqlPart': {
+                ret = new KabamSqlPart(woo);
+                if (b_twist) {
+                    this.sql_parts.push(ret);
+                } else {
+                    this.sql_parts.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamPartConnection': {
+                ret = new KabamPartConnection(woo);
+                if (b_twist) {
+                    this.use_part_connections.push(ret);
+                } else {
+                    this.use_part_connections.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamUsePart': {
+                ret = new KabamUsePart(woo);
+                if (b_twist) {
+                    this.use_parts.push(ret);
+                } else {
+                    this.use_parts.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+            }
+            case 'KabamUseCase': {
+                ret = new KabamUseCase(woo);
+                if (b_twist) {
+                    this.use_cases.push(ret);
+                } else {
+                    this.use_cases.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamDataGroup': {
+                ret = new KabamDataGroup(woo);
+                if (b_twist) {
+                    if (woo.type === 'database_table') {
+                        this.table_groups.push(ret);
+                    } else {
+                        this.data_groups.push(ret);
+                    }
+                } else {
+                    if (woo.type === 'database_table') {
+                        this.table_groups.push(woo.kid);
+                    } else {
+                        this.data_groups.push(woo.kid);
+                    }
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+
+            case  'KabamDataExample': {
+                ret = new KabamDataExample(woo);
+                if (b_twist) {
+                    this.examples.push(ret);
+                } else {
+                    this.examples.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+            case 'KabamElement': {
+                ret = new KabamElement(woo);
+                if (b_twist) {
+                    this.elements.push(ret);
+                } else {
+                    this.elements.push(woo.kid);
+                    this.library[woo.kid] = ret;
+                }
+
+                break;
+
+            }
+
+            default: {
+                //check to see if object is a user by if property is set, as it does not have a defined class
+                //but only if not twisting, else it makes no sense to add it that way, as the server never writes from there
+                if (!b_twist) {
+                    if (woo.hasOwnProperty('user_name')) {
+                        //okay, its a user
+                        this.users.push(woo.user_id); // users do not have the same structure
+                        ret = this.library[woo.kid] = jQuery.extend(true, {}, woo);
+                        break;
+                    }
+                }
+
+                //else throw exception
+                throw new Error("Add to Everything: case does not include the object being added. That was " + what_the_hell_is_this);
+            }
+        }
+        return ret;
+    }
+
 }
+
+

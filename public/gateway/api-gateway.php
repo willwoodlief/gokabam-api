@@ -141,7 +141,7 @@ class ApiGateway {
 		$filler_manager = new FillerManager($GokabamGoodies,null,null,$this->user_map);
 		$filler_manager->convert_everything_from_update($everything_update);
 		$everything = $filler_manager->get_everything(true, $page_load_id,false);
-		$everything->api_action = $init_everything->api_action;
+		$everything->api_action = 'update';
 		$everything->pass_through_data = $init_everything->pass_through_data;
 		return $everything;
 
@@ -266,6 +266,7 @@ class ApiGateway {
 															$everything->end_timestamp,$this->user_map);
 		$filler_manager->do_all();
 		$everything = $filler_manager->get_everything();
+		$everything->api_action = 'get';
 		return $everything;
 	}
 

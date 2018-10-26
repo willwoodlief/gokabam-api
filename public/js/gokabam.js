@@ -61,12 +61,19 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
         this.heartbeat.cancel_notification(notification_id);
     };
 
+    this.update = function(root_array) {
+        this.heartbeat.push_update(root_array);
+    }
+
+
 
 }
 
+var test_version = null;
+
 jQuery(function($){
 
-    debugger;
+
     /**
      * @param {GKA_Exception_Info|string} exception_info - Exception information
      */
@@ -75,6 +82,8 @@ jQuery(function($){
     }
 
     let nid = null;
+
+
     /**
      *
      * @param {GoKabam} go_kabam
@@ -88,6 +97,7 @@ jQuery(function($){
              */
             function handler(event) {
                 console.log(event);
+                test_version = event.targets[0]; //grab the literal
             }
 
             var re = /^version_\w+$/;
@@ -124,7 +134,7 @@ jQuery(function($){
         $.GoKabam.refresh();
     });
 
-    $('button.tgk-test2').click(function() {
-        $.GoKabam.cancel_notification(nid);
+    $('button.gk-test2').click(function() {
+        $.GoKabam.update([test_version]);
     });
 });

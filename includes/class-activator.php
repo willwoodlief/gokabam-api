@@ -60,6 +60,18 @@ class Activator {
 				And its not possible to create something already deleted
 
 		.193 sql parts now have auto date stamps
+
+	    .194 Data Group lists its parents, it was the only table with reverse parent child relations, but too complicated for code
+			group needs parents:
+				use_part, (with use part role)
+				output
+				input
+				header
+	     TODO: Add parent fields to data group
+		TODO:  remove child datagroup fields from parent tables
+		TODO: fix triggers for affected tables
+		TODO:  fix parsers for affected tables
+		TODO:  fix fillers for affected tables
 	*/
 
 
