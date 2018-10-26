@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.193;
+	const DB_VERSION = 0.194;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -61,17 +61,17 @@ class Activator {
 
 		.193 sql parts now have auto date stamps
 
-	    .194 Data Group lists its parents, it was the only table with reverse parent child relations, but too complicated for code
-			group needs parents:
-				use_part, (with use part role)
-				output
-				input
-				header
-	     TODO: Add parent fields to data group
-		TODO:  remove child datagroup fields from parent tables
-		TODO: fix triggers for affected tables
-		TODO:  fix parsers for affected tables
-		TODO:  fix fillers for affected tables
+	    .194 Make Data Group lists its parents
+			 It was the only table with reverse parent child relations, this was an issue after the code was made
+			 and the ideas solidified. too complicated for code
+			 So add 5 new fields to data group: parent ids for input, output,header and use part
+			 Remove the data group fields from the above tables
+	         add in a data direction boolean to groups
+	         alter data group triggers to deal with the new fields
+			 , and also make sure that only one parent can be selected at a time
+			remove references of dropped columns in the other table's triggers
+
+
 	*/
 
 
@@ -87,7 +87,7 @@ class Activator {
 		if ($b_safety_swith) return ;
 
 		//make it update
-		$b_force_create = false;
+		$b_force_create = true;
 
 		$installed_ver = floatval( get_option( "_".strtolower( PLUGIN_NAME) ."_db_version" ));
 
@@ -537,10 +537,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_data_elements_has_data_group_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_data_group_id 
-										FOREIGN KEY (group_id) REFERENCES gokabam_api_data_groups(id);' );
-			}
+			//add in fk for groups after its made
 
 			if (!$mydb->foreignKeyExists('fk_data_elements_has_parent_element_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_parent_element_id 
@@ -555,8 +552,15 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 
 ###########################################################################################################################################
 /*
+ *
 *              gokabam_api_data_groups
 *
+ *              data_direction
+ *
+
+ *
+		TODO:  fix parsers for affected tables
+		TODO:  fix fillers for affected tables
 *
 */
 ###########################################################################################################################################
@@ -570,6 +574,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
+              use_case_part_id int default null comment 'if parent is a use case part id ',
+              api_output_id int default null comment 'if parent is an output',
+              api_input_id int default null comment 'if parent is an input',
+              header_id int default null comment 'if parent is a header',
+              is_data_direction_in tinyint default 1 not null comment 'set to 1 if the group is an input source, else mark it 0 for output',
               group_type_enum varchar(20) default 'regular' comment 'database_table,regular',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
@@ -582,6 +591,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
+              KEY use_case_part_id_key (use_case_part_id),
+              KEY api_output_id_key (api_output_id),
+              KEY api_input_id_key (api_input_id),
+              KEY header_id_key (header_id),
+              KEY is_data_direction_in_key (is_data_direction_in),
               KEY group_type_enum_key (group_type_enum)
               ) $charset_collate;";
 
@@ -602,6 +616,33 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_use_case_part_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_use_case_part_parent_id 
+										FOREIGN KEY (use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_output_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_output_parent_id 
+										FOREIGN KEY (api_output_id) REFERENCES gokabam_api_outputs(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_input_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_input_parent_id 
+										FOREIGN KEY (api_input_id) REFERENCES gokabam_api_inputs(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_header_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_header_parent_id 
+										FOREIGN KEY (header_id) REFERENCES gokabam_api_output_headers(id);' );
+			}
+
+
+		//from elements above
+			if (!$mydb->foreignKeyExists('fk_data_elements_has_data_group_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_data_group_id 
+										FOREIGN KEY (group_id) REFERENCES gokabam_api_data_groups(id);' );
+			}
 
 
 
@@ -854,7 +895,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               api_id int not null comment '',
-              in_data_group_id int default null comment 'the data maps to what is defined in this',
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
@@ -871,7 +911,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
-              KEY in_data_group_id_key (in_data_group_id),
               KEY is_deleted_key (is_deleted),
               KEY is_required_key (is_required),
               KEY origin_enum_key (origin_enum)
@@ -900,10 +939,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (api_id) REFERENCES gokabam_api_apis(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_api_inputs_has_group_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_inputs ADD CONSTRAINT fk_api_inputs_has_group_id 
-										FOREIGN KEY (in_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
-			}
+
 
 
 ###########################################################################################################################################
@@ -925,7 +961,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               api_id int not null,
               http_return_code int not null,
-              out_data_group_id int default null,
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,
               md5_checksum_groups varchar(255) default null,
@@ -937,7 +972,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
-              KEY out_data_group_id_key (out_data_group_id),
               KEY http_return_code_key (http_return_code),
               KEY is_deleted_key (is_deleted)
               ) $charset_collate;";
@@ -965,10 +999,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (api_id) REFERENCES gokabam_api_apis(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_api_outputs_has_group_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_outputs ADD CONSTRAINT fk_api_outputs_has_group_id 
-										FOREIGN KEY (out_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
-			}
+
 
 ###########################################################################################################################################
 /*
@@ -992,7 +1023,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               api_family_id int default null comment 'optionally associated with any return only for this family',	
               api_id int default null comment 'optionally associated with any return only for this api call',
               api_output_id int default null  comment 'optinally tied to a specific return type',
-              out_data_group_id int default null comment 'for non static headers',
               header_name varchar(255) not null comment 'the name of the header',
               header_value text not null comment 'the contents/value of the header can have regex groups with names that match the out data group',
               md5_checksum varchar(255) default null,
@@ -1005,7 +1035,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
-              KEY out_data_group_id_key (out_data_group_id),
               KEY api_family_id_key (api_family_id),
               KEY api_version_key (api_version_id),
               KEY api_output_id_key (api_output_id),
@@ -1035,10 +1064,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (api_id) REFERENCES gokabam_api_apis(id);' );
 			}
 
-			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_group_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_output_headers ADD CONSTRAINT fk_api_output_headers_has_group_id 
-										FOREIGN KEY (out_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
-			}
+
 
 			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_family_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_output_headers ADD CONSTRAINT fk_api_output_headers_has_family_id 
@@ -1258,9 +1284,7 @@ table structure for all types
               initial_page_load_id int default null,
               last_page_load_id int default null,
               use_case_id int not null comment 'use case that this belongs to',
-              in_data_group_id int default null comment 'used by any type',
-              in_api_id int default null comment 'can only be used by generic_node, locks out other inputs',
-              out_data_group_id  int default null comment 'all types can use this, if there is an in_api then this cannot be used because that apis output will be used instead ',
+              in_api_id int default null comment 'if the input is the output of an api',
               rank int default 0 comment 'used to help organize this outside the db',
               is_deleted tinyint DEFAULT 0 not null,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1277,10 +1301,8 @@ table structure for all types
               KEY object_id_key (object_id), 
               KEY initial_page_load_id_key (initial_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
-              KEY user_case_id_key (use_case_id) ,	
-              KEY in_data_group_id_key (in_data_group_id), 
+              KEY user_case_id_key (use_case_id),	
               KEY in_api_id_key (in_api_id), 
-              KEY out_data_group_id_key (out_data_group_id), 
               KEY is_deleted_key (is_deleted),
               UNIQUE KEY no_dupe_ranks (rank,use_case_id)
               ) $charset_collate;";
@@ -1313,16 +1335,6 @@ table structure for all types
 										FOREIGN KEY (use_case_id) REFERENCES gokabam_api_use_cases(id);' );
 			}
 
-
-			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_group_in_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_api_use_case_part_has_group_in_id 
-										FOREIGN KEY (in_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
-			}
-
-			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_group_out_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_api_use_case_part_has_group_out_id 
-										FOREIGN KEY (out_data_group_id) REFERENCES gokabam_api_data_groups(id);' );
-			}
 
 ###############################################################################
 #

@@ -2,6 +2,42 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_groups
   BEFORE UPDATE ON gokabam_api_data_groups
   FOR EACH ROW
   BEGIN
+
+
+    -- only one parent allowed
+    IF (NEW.api_output_id IS NOT NULL) AND (NEW.api_input_id IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Groups cannot have more than one parent: output and input parent both set';
+    end if;
+
+    IF (NEW.api_output_id IS NOT NULL) AND (NEW.header_id IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Groups cannot have more than one parent: output and header parent both set';
+    end if;
+
+    IF (NEW.api_output_id IS NOT NULL) AND (NEW.use_case_part_id IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Groups cannot have more than one parent: output and use part parent both set';
+    end if;
+
+
+    IF (NEW.api_input_id IS NOT NULL) AND (NEW.header_id IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Groups cannot have more than one parent: input and header parent both set';
+    end if;
+
+    IF (NEW.api_input_id IS NOT NULL) AND (NEW.use_case_part_id IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Groups cannot have more than one parent: input and use part parent both set';
+    end if;
+
+    IF (NEW.header_id IS NOT NULL) AND (NEW.use_case_part_id IS NOT NULL) THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Groups cannot have more than one parent: header and use part parent both set';
+    end if;
+
+
+
     if NEW.group_type_enum not in (
       'database_table',
       'regular'
@@ -33,6 +69,12 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_groups
             coalesce(NEW.md5_checksum_examples,' '),
 
             coalesce(NEW.group_type_enum,' '),
+            coalesce(NEW.is_data_direction_in,' '),
+            coalesce(NEW.use_case_part_id,' '),
+            coalesce(NEW.header_id,' '),
+            coalesce(NEW.api_input_id,' '),
+            coalesce(NEW.api_output_id,' '),
+
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_journals,' ')

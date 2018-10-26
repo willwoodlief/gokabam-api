@@ -69,13 +69,6 @@ CREATE TRIGGER trigger_after_update_gokabam_api_output_headers
       VALUES (@edit_log_id,'api_output_id',OLD.api_output_id);
     END IF;
 
-    IF (NEW.out_data_group_id <> OLD.out_data_group_id) OR (NEW.out_data_group_id IS NULL AND OLD.out_data_group_id IS NOT NULL) OR (NEW.out_data_group_id IS NOT NULL AND OLD.out_data_group_id IS  NULL)
-    THEN
-      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'out_data_group_id',OLD.out_data_group_id);
-    END IF;
-
-
     IF (NEW.is_deleted <> OLD.is_deleted) OR (NEW.is_deleted IS NULL AND OLD.is_deleted IS NOT NULL) OR (NEW.is_deleted IS NOT NULL AND OLD.is_deleted IS  NULL)
     THEN
       INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
@@ -179,8 +172,7 @@ CREATE TRIGGER trigger_after_update_gokabam_api_output_headers
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents
       UPDATE gokabam_api_data_groups s
-      INNER JOIN gokabam_api_output_headers i on s.id = i.out_data_group_id
-      SET s.is_deleted = NEW.is_deleted WHERE i.id = NEW.id;
+      SET s.is_deleted = NEW.is_deleted WHERE s.header_id = NEW.id;
 
       UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
       UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;

@@ -80,17 +80,7 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
       VALUES (@edit_log_id,'in_api_id',OLD.in_api_id);
     END IF;
 
-    IF (NEW.out_data_group_id <> OLD.out_data_group_id) OR (NEW.out_data_group_id IS NULL AND OLD.out_data_group_id IS NOT NULL) OR (NEW.out_data_group_id IS NOT NULL AND OLD.out_data_group_id IS  NULL)
-    THEN
-      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'out_data_group_id',OLD.out_data_group_id);
-    END IF;
 
-    IF (NEW.in_data_group_id <> OLD.in_data_group_id) OR (NEW.in_data_group_id IS NULL AND OLD.in_data_group_id IS NOT NULL) OR (NEW.in_data_group_id IS NOT NULL AND OLD.in_data_group_id IS  NULL)
-    THEN
-      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
-      VALUES (@edit_log_id,'in_data_group_id',OLD.in_data_group_id);
-    END IF;
 
     IF (NEW.rank <> OLD.rank) OR (NEW.rank IS NULL AND OLD.rank IS NOT NULL) OR (NEW.rank IS NOT NULL AND OLD.rank IS  NULL)
     THEN
@@ -128,12 +118,9 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
       -- update delete status of dependents
 
       UPDATE gokabam_api_data_groups s
-      INNER JOIN gokabam_api_use_case_parts i on s.id = i.out_data_group_id
-      SET s.is_deleted = NEW.is_deleted WHERE i.id = NEW.id;
+      SET s.is_deleted = NEW.is_deleted WHERE s.use_case_part_id = NEW.id;
 
-      UPDATE gokabam_api_data_groups s
-      INNER JOIN gokabam_api_use_case_parts i on s.id = i.in_data_group_id
-      SET s.is_deleted = NEW.is_deleted WHERE i.id = NEW.id;
+
 
 
       UPDATE gokabam_api_use_case_parts_sql s SET s.is_deleted = NEW.is_deleted WHERE s.use_case_part_id = NEW.id;
