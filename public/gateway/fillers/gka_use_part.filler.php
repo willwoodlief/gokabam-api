@@ -21,8 +21,6 @@ class Fill_GKA_Use_Part {
 				a.object_id,
 				a.is_deleted,
 						
-				a.out_data_group_id,
-				a.in_data_group_id,
 				a.in_api_id,
 				a.use_case_id,
 				a.rank,
@@ -67,15 +65,36 @@ class Fill_GKA_Use_Part {
 		$root->ref_id = $data->rank;
 
 
-		$pos              = new GKA_Kid();
-		$pos->primary_id  = $data->out_data_group_id;
-		$pos->table       = 'gokabam_api_data_groups';
-		$root->out_data_groups[] = $pos;
+		//get data groups
+		$res = $mydb->execSQL("
+			SELECT 
+				a.id,
+				a.object_id,
+				a.is_data_direction_in
+			FROM gokabam_api_data_groups a 
+			WHERE a.use_case_part_id = ? AND a.is_deleted = 0",
+			['i',$root->kid->primary_id],
+			MYDB::RESULT_SET,
+			"@sey@groups.gka_user_part.filler.php"
+		);
 
-		$pos              = new GKA_Kid();
-		$pos->primary_id  = $data->in_data_group_id;
-		$pos->table       = 'gokabam_api_data_groups';
-		$root->in_data_groups[] = $pos;
+		if (!empty($res)) {
+			foreach ( $res as $row ) {
+				$pos              = new GKA_Kid();
+				$pos->object_id   = $row->object_id;
+				$pos->primary_id  = $row->id;
+				$pos->table       = 'gokabam_api_data_groups';
+
+				$b_is_in = intval($row->is_data_direction_in);
+				if ($b_is_in) {
+					$root->in_data_groups[] = $pos;
+				} else {
+					$root->out_data_groups[] = $pos;
+				}
+
+
+			}
+		}
 
 
 		$pos              = new GKA_Kid();

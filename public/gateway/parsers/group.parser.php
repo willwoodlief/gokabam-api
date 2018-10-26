@@ -9,7 +9,7 @@ require_once( PLUGIN_PATH .'/lib/DBSelector.php' );
 
 class ParseGroup {
 
-	protected static  $keys_to_check = ['kid','parent','type','delete'];
+	protected static  $keys_to_check = ['kid','parent','type','delete','b_direction_is_in'];
 	protected static  $reference_table = 'gokabam_api_data_groups';
 
 	/**
@@ -190,21 +190,101 @@ class ParseGroup {
 			}
 
 			//create this
-			$new_id = $manager->mydb->execSQL(
-				"INSERT INTO gokabam_api_data_groups(
+
+			switch ($db_thing->parent->table) {
+				case 'gokabam_api_output_headers':{
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_data_groups(
 						group_type_enum,
 						last_page_load_id,
-						initial_page_load_id
-						) VALUES(?,?,?)",
-				[
-					'sii',
-					$db_thing->type,
-					$last_page_load_id,
-					$last_page_load_id
-				],
-				MYDB::LAST_ID,
-				'@sey@ParseGroup::manage->insert'
-			);
+						initial_page_load_id,
+						is_data_direction_in,
+						header_id
+						) VALUES(?,?,?,?,?)",
+						[
+							'sii',
+							$db_thing->type,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->b_direction_is_in,
+							$db_thing->parent->primary_id
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseGroup::manage->insert(parent=header)'
+					);
+					break;
+				}
+				case 'gokabam_api_inputs':{
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_data_groups(
+						group_type_enum,
+						last_page_load_id,
+						initial_page_load_id,
+						is_data_direction_in,
+						api_input_id
+						) VALUES(?,?,?,?,?)",
+						[
+							'sii',
+							$db_thing->type,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->b_direction_is_in,
+							$db_thing->parent->primary_id
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseGroup::manage->insert(parent=input)'
+					);
+					break;
+				}
+				case 'gokabam_api_outputs':{
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_data_groups(
+						group_type_enum,
+						last_page_load_id,
+						initial_page_load_id,
+						is_data_direction_in,
+						api_output_id
+						) VALUES(?,?,?,?,?)",
+						[
+							'sii',
+							$db_thing->type,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->b_direction_is_in,
+							$db_thing->parent->primary_id
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseGroup::manage->insert(parent=output)'
+					);
+					break;
+				}
+				case 'gokabam_api_use_case_parts':{
+					$new_id = $manager->mydb->execSQL(
+						"INSERT INTO gokabam_api_data_groups(
+						group_type_enum,
+						last_page_load_id,
+						initial_page_load_id,
+						is_data_direction_in,
+						use_case_part_id
+						) VALUES(?,?,?,?,?)",
+						[
+							'sii',
+							$db_thing->type,
+							$last_page_load_id,
+							$last_page_load_id,
+							$db_thing->b_direction_is_in,
+							$db_thing->parent->primary_id
+						],
+						MYDB::LAST_ID,
+						'@sey@ParseGroup::manage->insert(parent=part)'
+					);
+					break;
+				}
+				default: {
+					$code = KidTalk::get_code_for_table($db_thing->parent->table);
+					throw new ApiParseException("parent for a group needs to be input,output,header,use case part only [$code] was given");
+				}
+			}
 
 			$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid(
 				$db_thing->kid,self::$reference_table,$new_id,null);
@@ -217,25 +297,121 @@ class ParseGroup {
 				throw new ApiParseException("Internal code did not generate an id for update");
 			}
 			$manager->kid_talk->md5_check($db_thing->kid,$db_thing->md5_checksum);
-
-
-			$manager->mydb->execSQL(
-				"UPDATE gokabam_api_data_groups 
+			switch ($db_thing->parent->table) {
+				case 'gokabam_api_output_headers':{
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_data_groups 
 					  SET 
+					  header_id = ?,
+					  api_input_id = null,
+					  api_output_id = null,
+					  use_case_part_id = null,
+					  
 					  group_type_enum = ?,
 					  is_deleted = ?,
 					  last_page_load_id = ?
 					   WHERE id = ? ",
-				[
-					'siii',
-					$db_thing->type,
-					$db_thing->delete,
-					$last_page_load_id,
-					$id
-				],
-				MYDB::ROWS_AFFECTED,
-				'@sey@ParseGroup::manage->update'
-			);
+						[
+							'isiii',
+							$db_thing->parent->primary_id,
+							$db_thing->type,
+							$db_thing->delete,
+							$last_page_load_id,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseGroup::manage->update(parent=header)'
+					);
+					break;
+				}
+				case 'gokabam_api_inputs':{
+
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_data_groups 
+					  SET 
+					  header_id = NULL,
+					  api_input_id = ?,
+					  api_output_id = null,
+					  use_case_part_id = null,
+					  
+					  group_type_enum = ?,
+					  is_deleted = ?,
+					  last_page_load_id = ?
+					   WHERE id = ? ",
+						[
+							'isiii',
+							$db_thing->parent->primary_id,
+							$db_thing->type,
+							$db_thing->delete,
+							$last_page_load_id,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseGroup::manage->update(parent=input)'
+					);
+					break;
+				}
+				case 'gokabam_api_outputs':{
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_data_groups 
+					  SET 
+					  header_id = null,
+					  api_input_id = null,
+					  api_output_id = ?,
+					  use_case_part_id = null,
+					  
+					  group_type_enum = ?,
+					  is_deleted = ?,
+					  last_page_load_id = ?
+					   WHERE id = ? ",
+						[
+							'isiii',
+							$db_thing->parent->primary_id,
+							$db_thing->type,
+							$db_thing->delete,
+							$last_page_load_id,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseGroup::manage->update(parent=output)'
+					);
+					break;
+
+				}
+				case 'gokabam_api_use_case_parts':{
+					$manager->mydb->execSQL(
+						"UPDATE gokabam_api_data_groups 
+					  SET 
+					  header_id = null,
+					  api_input_id = null,
+					  api_output_id = null,
+					  use_case_part_id = ?,
+					  
+					  group_type_enum = ?,
+					  is_deleted = ?,
+					  last_page_load_id = ?
+					   WHERE id = ? ",
+						[
+							'isiii',
+							$db_thing->parent->primary_id,
+							$db_thing->type,
+							$db_thing->delete,
+							$last_page_load_id,
+							$id
+						],
+						MYDB::ROWS_AFFECTED,
+						'@sey@ParseGroup::manage->update(parent=part)'
+					);
+					break;
+
+				}
+				default: {
+					$code = KidTalk::get_code_for_table($db_thing->parent->table);
+					throw new ApiParseException("parent for a group needs to be input,output,header,use case part only [$code] was given");
+				}
+			}
+
+
 		}
 		$db_thing->status = true; //right now we do not do much with status
 		return $db_thing;

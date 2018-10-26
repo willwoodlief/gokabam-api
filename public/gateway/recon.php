@@ -356,8 +356,7 @@ class Recon {
 						api_family_id,
 						api_version_id,			
 						header_name,
-						header_value,
-						out_data_group_id	
+						header_value	
  							 FROM gokabam_api_output_headers WHERE id = ?",
 						['i',$id],
 						MYDB::RESULT_SET,
@@ -377,8 +376,7 @@ class Recon {
 						id,
 						is_deleted,
 						api_id,
-						http_return_code,
-						out_data_group_id	
+						http_return_code	
  							 FROM gokabam_api_outputs WHERE id = ?",
 						['i',$id],
 						MYDB::RESULT_SET,
@@ -398,8 +396,7 @@ class Recon {
 						is_deleted,
 						api_id,
 						origin_enum,
-						regex_string,
-						in_data_group_id	
+						regex_string	
  							 FROM gokabam_api_inputs WHERE id = ?",
 						['i',$id],
 						MYDB::RESULT_SET,
@@ -459,17 +456,12 @@ class Recon {
 								g.id,
 								g.is_deleted,
 								g.group_type_enum,
-								IF(w.id,w.id,0) as is_use_case_in,
-								IF(p.id,p.id,0) as is_use_case_out,
-								IF(o.id,o.id,0) as is_output,
-								IF(i.id,i.id,0) as is_input,
-								IF(h.id,h.id,0) as is_header
+								g.header_id,
+								g.use_case_part_id,
+								g.api_output_id,
+								g.api_input_id,
+								g.is_data_direction_in
  							 FROM gokabam_api_data_groups g
- 							  LEFT JOIN gokabam_api_output_headers h ON h.out_data_group_id = g.id 
- 							  LEFT JOIN gokabam_api_inputs i ON i.in_data_group_id = g.id 
- 							  LEFT JOIN gokabam_api_outputs o ON o.out_data_group_id = g.id 
- 							  LEFT JOIN gokabam_api_use_case_parts p ON p.out_data_group_id = g.id 
- 							  LEFT JOIN gokabam_api_use_case_parts w ON w.in_data_group_id = g.id  
  							  WHERE g.id = ?",
 					['i',$id],
 					MYDB::RESULT_SET,
@@ -709,6 +701,31 @@ class Recon {
 
 					$obj->ref_id = $data->rank ;
 
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id,is_data_direction_in
+                         FROM gokabam_api_data_groups WHERE use_case_part_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_groups_for_parts(datagroups)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_data_groups';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$b_is_in = intval($row->is_data_direction_in);
+							if ($b_is_in) {
+								$obj->in_data_groups[] = $what->kid;
+							} else {
+								$obj->out_data_groups[] = $what->kid;
+							}
+
+						}
+					}
 
 					//fill in sql connections
 
@@ -732,21 +749,6 @@ class Recon {
 						}
 					}
 
-					if ($data->out_data_group_id) {
-						$data_group = new GKA_Kid();
-						$data_group->table = 'gokabam_api_data_groups';
-						$data_group->primary_id = $data->out_data_group_id;
-						$this->kid_talk->fill_kids_in($data_group);
-						$obj->out_data_groups = [$data_group->kid];
-					}
-
-					if ($data->in_data_group_id) {
-						$data_group = new GKA_Kid();
-						$data_group->table = 'gokabam_api_data_groups';
-						$data_group->primary_id = $data->in_data_group_id;
-						$this->kid_talk->fill_kids_in($data_group);
-						$obj->in_data_groups = [$data_group->kid];
-					}
 
 					$res = $this->mydb->execSQL("SELECT id,object_id from gokabam_api_use_case_part_connections WHERE parent_use_case_part_id = ?",
 						['i',$obj->kid->primary_id],
@@ -851,13 +853,28 @@ class Recon {
 						$obj->parent->primary_id = $data->api_output_id;
 					}
 
-					if ($data->out_data_group_id) {
-						$data_group = new GKA_Kid();
-						$data_group->table = 'gokabam_api_data_groups';
-						$data_group->primary_id = $data->out_data_group_id;
-						$this->kid_talk->fill_kids_in($data_group);
-						$obj->data_groups = [$data_group->kid];
+
+
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_data_groups WHERE header_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_groups_for_headers(header)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_data_groups';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->data_groups[] = $what->kid;
+						}
 					}
+
 
 
 					return $obj;
@@ -875,12 +892,25 @@ class Recon {
 					$obj->parent->primary_id = $data->api_id;
 
 
-					if ($data->out_data_group_id) {
-						$data_group = new GKA_Kid();
-						$data_group->table = 'gokabam_api_data_groups';
-						$data_group->primary_id = $data->in_data_group_id;
-						$this->kid_talk->fill_kids_in($data_group);
-						$obj->data_groups = [$data_group->kid];
+
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_data_groups WHERE api_output_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_groups_for_outputs(data-group)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_data_groups';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->data_groups[] = $what->kid;
+						}
 					}
 
 					//fill in headers
@@ -918,12 +948,26 @@ class Recon {
 					$obj->parent->primary_id = $data->api_id;
 
 
-					if ($data->in_data_group_id) {
-						$data_group = new GKA_Kid();
-						$data_group->table = 'gokabam_api_data_groups';
-						$data_group->primary_id = $data->in_data_group_id;
-						$this->kid_talk->fill_kids_in($data_group);
-						$obj->data_groups = [$data_group->kid];
+
+
+					$res = $this->mydb->execSQL(
+						"SELECT 
+							id, object_id
+                         FROM gokabam_api_data_groups WHERE api_input_id = ?",
+						['i',$obj->kid->primary_id],
+						MYDB::RESULT_SET,
+						"@sey@Recon::create_object->get_groups_for_inputs(datagroups)"
+					);
+
+					if ($res) {
+						foreach ($res as $row) {
+							$what = new GKA_Kid();
+							$what->table ='gokabam_api_data_groups';
+							$what->primary_id = $row->id;
+							$what->object_id = $row->object_id;
+							$this->kid_talk->fill_kids_in($what);
+							$obj->data_groups[] = $what->kid;
+						}
 					}
 
 					return $obj;
@@ -1092,6 +1136,7 @@ class Recon {
 				$obj->kid = $kid;
 				$obj->delete = $data->is_deleted;
 				$obj->type = $data->group_type_enum ;
+				$obj->b_direction_is_in = intval($data->is_data_direction_in) ? true : false;
 				$obj->parent = new GKA_Kid();
 
 

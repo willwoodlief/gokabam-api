@@ -68,12 +68,7 @@ class ParseOutput {
 			if (sizeof($beer->data_groups) > 1) {
 				throw new ApiParseException("Output Can only have 0 or 1 data group");
 			}
-			//update the input to set the data group id
-			$manager->mydb->execSQL("UPDATE gokabam_api_outputs SET out_data_group_id = ? WHERE id = ?",
-				['ii',$beer->data_groups[0]->kid->primary_id],
-				MYDB::ROWS_AFFECTED,
-				'@sey@ParseOutput::parse->update(in_data_group_id)'
-			);
+
 
 			$ret[] = $beer;
 		}

@@ -69,12 +69,6 @@ class ParseInput {
 				throw new ApiParseException("Input Can only have 0 or 1 data group");
 			}
 
-			//update the input to set the data group id
-			$manager->mydb->execSQL("UPDATE gokabam_api_inputs SET in_data_group_id = ? WHERE id = ?",
-				['ii',$beer->data_groups[0]->kid->primary_id],
-				MYDB::ROWS_AFFECTED,
-				'@sey@ParseInput::parse->update(in_data_group_id)'
-			);
 
 			$ret[] = $beer;
 		}

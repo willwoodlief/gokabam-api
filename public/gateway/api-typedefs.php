@@ -530,6 +530,12 @@ class GKA_DataGroup extends GKA_Root
 	 * if empty will default to regular
 	 */
 	public $type = '';
+
+	/**
+	 * @var boolean $b_direction_is_in, default false
+	 * If direction is outbound, then
+	 */
+	public $b_direction_is_in = false;
 }
 
 

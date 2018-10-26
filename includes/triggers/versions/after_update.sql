@@ -53,6 +53,24 @@ CREATE TRIGGER trigger_after_update_gokabam_api_versions
       VALUES (@edit_log_id,'git_tag',OLD.git_tag);
     END IF;
 
+    IF (NEW.post_id <> OLD.post_id) OR (NEW.post_id IS NULL AND OLD.post_id IS NOT NULL) OR (NEW.post_id IS NOT NULL AND OLD.post_id IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'post_id',OLD.post_id);
+    END IF;
+
+    IF (NEW.git_repo_url <> OLD.git_repo_url) OR (NEW.git_repo_url IS NULL AND OLD.git_repo_url IS NOT NULL) OR (NEW.git_repo_url IS NOT NULL AND OLD.git_repo_url IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'git_repo_url',OLD.git_repo_url);
+    END IF;
+
+    IF (NEW.website_url <> OLD.website_url) OR (NEW.website_url IS NULL AND OLD.website_url IS NOT NULL) OR (NEW.website_url IS NOT NULL AND OLD.website_url IS  NULL)
+    THEN
+      INSERT INTO gokabam_api_change_log_edit_history(change_log_id,da_edited_column_name,da_edited_old_column_value)
+      VALUES (@edit_log_id,'website_url',OLD.website_url);
+    END IF;
+
 
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents

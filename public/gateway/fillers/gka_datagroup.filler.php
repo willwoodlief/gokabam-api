@@ -22,7 +22,7 @@ class Fill_GKA_DataGroup {
 				a.is_deleted,
 				
 				a.group_type_enum,
-			  	
+			  	a.is_data_direction_in,
 				a.md5_checksum,
 				a.initial_page_load_id,
 				a.last_page_load_id,
@@ -57,6 +57,9 @@ class Fill_GKA_DataGroup {
 
 
 		$root->type = $data->group_type_enum;
+
+		$b_is_in = intval($data->is_data_direction_in) ? true : false;
+		$root->b_direction_is_in = $b_is_in;
 
 		//get elements
 		$res = $mydb->execSQL("

@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.194;
+	const DB_VERSION = 0.195;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -71,6 +71,8 @@ class Activator {
 			 , and also make sure that only one parent can be selected at a time
 			remove references of dropped columns in the other table's triggers
 
+	    .195 Add in forgotten new fields for version trigger (urls and post ids)
+
 
 	*/
 
@@ -87,7 +89,7 @@ class Activator {
 		if ($b_safety_swith) return ;
 
 		//make it update
-		$b_force_create = true;
+		$b_force_create = false;
 
 		$installed_ver = floatval( get_option( "_".strtolower( PLUGIN_NAME) ."_db_version" ));
 
@@ -556,11 +558,6 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 *              gokabam_api_data_groups
 *
  *              data_direction
- *
-
- *
-		TODO:  fix parsers for affected tables
-		TODO:  fix fillers for affected tables
 *
 */
 ###########################################################################################################################################
@@ -578,7 +575,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               api_output_id int default null comment 'if parent is an output',
               api_input_id int default null comment 'if parent is an input',
               header_id int default null comment 'if parent is a header',
-              is_data_direction_in tinyint default 1 not null comment 'set to 1 if the group is an input source, else mark it 0 for output',
+              is_data_direction_in tinyint default 0 not null comment 'set to 1 if the group is an input source, else mark it 0 for output',
               group_type_enum varchar(20) default 'regular' comment 'database_table,regular',
               md5_checksum varchar(255) default null,
               md5_checksum_tags varchar(255) default null,

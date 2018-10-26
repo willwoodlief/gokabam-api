@@ -394,6 +394,7 @@ class KabamDataExample extends KabamRoot {
  * @property {GKA_Kid[]} examples           , 0 or more GKA_DataExample
  * @property {GKA_Kid[]} elements           , 0 or more GKA_Element
  * @property {string|null} type             , must be empty or database_table|regular; default null means regular
+ * @property {boolean} b_direction_is_in    , default false, set to true for the direction to be in, 0 for out
  */
 
 
@@ -407,6 +408,7 @@ class KabamDataGroup extends KabamRoot {
         super(group);
         if (group) {
             this.type = group.type;
+            this.b_direction_is_in = group.b_direction_is_in;
             if (group.examples) {
                 this.examples = group.examples.slice();
             } else {
@@ -420,6 +422,7 @@ class KabamDataGroup extends KabamRoot {
             }
         } else {
             this.type = null;
+            this.b_direction_is_in = false;
             this.elements = [];
             this.examples = [];
         }

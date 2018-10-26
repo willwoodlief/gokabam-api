@@ -23,8 +23,7 @@ class Fill_GKA_Output {
 						
 				a.api_id,
 				a.http_return_code,
-				a.out_data_group_id,
-			  	
+				
 				a.md5_checksum,
 				a.initial_page_load_id,
 				a.last_page_load_id,
@@ -62,14 +61,9 @@ class Fill_GKA_Output {
 		$parent->table = 'gokabam_api_apis';
 		$root->parent = $parent;
 
-		$root->http_code = $data->http_return_code;
-		$pos              = new GKA_Kid();
-		$pos->primary_id  = $data->out_data_group_id;
-		$pos->table       = 'gokabam_api_data_groups';
-		$root->data_groups[] = $pos;
 
 
-		//get elements
+		//get headers
 		$res = $mydb->execSQL("
 			SELECT 
 				a.id,
@@ -88,6 +82,28 @@ class Fill_GKA_Output {
 				$pos->primary_id  = $row->id;
 				$pos->table       = 'gokabam_api_output_headers';
 				$root->headers[] = $pos;
+			}
+		}
+
+		//get data groups
+		$res = $mydb->execSQL("
+			SELECT 
+				a.id,
+				a.object_id
+			FROM gokabam_api_data_groups a 
+			WHERE a.api_output_id = ? AND a.is_deleted = 0",
+			['i',$root->kid->primary_id],
+			MYDB::RESULT_SET,
+			"@sey@groups.gka_ouput.filler.php"
+		);
+
+		if (!empty($res)) {
+			foreach ( $res as $row ) {
+				$pos              = new GKA_Kid();
+				$pos->object_id   = $row->object_id;
+				$pos->primary_id  = $row->id;
+				$pos->table       = 'gokabam_api_data_groups';
+				$root->data_groups[] = $pos;
 			}
 		}
 

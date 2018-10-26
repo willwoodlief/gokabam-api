@@ -27,7 +27,6 @@ class Fill_GKA_Header {
 				a.api_id,
 				a.api_output_id,
 				a.api_version_id,
-				a.out_data_group_id,
 			  	
 				a.md5_checksum,
 				a.initial_page_load_id,
@@ -91,10 +90,27 @@ class Fill_GKA_Header {
 		}
 
 
-		$pos              = new GKA_Kid();
-		$pos->primary_id  = $data->out_data_group_id;
-		$pos->table       = 'gokabam_api_data_groups';
-		$root->data_groups[] = $pos;
+		//get data groups
+		$res = $mydb->execSQL("
+			SELECT 
+				a.id,
+				a.object_id
+			FROM gokabam_api_data_groups a 
+			WHERE a.header_id = ? AND a.is_deleted = 0",
+			['i',$root->kid->primary_id],
+			MYDB::RESULT_SET,
+			"@sey@groups.gka_header.filler.php"
+		);
+
+		if (!empty($res)) {
+			foreach ( $res as $row ) {
+				$pos              = new GKA_Kid();
+				$pos->object_id   = $row->object_id;
+				$pos->primary_id  = $row->id;
+				$pos->table       = 'gokabam_api_data_groups';
+				$root->data_groups[] = $pos;
+			}
+		}
 
 		$root->value = $data->header_value;
 		$root->name = $data->header_name;

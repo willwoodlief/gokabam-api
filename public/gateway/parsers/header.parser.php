@@ -76,14 +76,6 @@ class ParseHeader {
 				throw new ApiParseException("Header Can only have 0 or 1 data group");
 			}
 			
-			//update the header to set the data group id
-			$manager->mydb->execSQL("UPDATE gokabam_api_output_headers SET out_data_group_id = ? WHERE id = ?",
-				['ii',$beer->data_groups[0]->kid->primary_id],
-				MYDB::ROWS_AFFECTED,
-				'@sey@ParseHeader::parse->update(out_data_group_id)'
-				);
-			
-
 
 			$ret[] = $beer;
 		}
@@ -326,6 +318,9 @@ class ParseHeader {
 					$manager->mydb->execSQL(
 						"UPDATE gokabam_api_output_headers SET 
 								api_version_id = ?,
+								api_family_id = null,
+								api_id = null,
+								api_output_id = null,
 								is_deleted = ?,
 								last_page_load_id = ? ,
 								header_name = ?,
@@ -351,7 +346,10 @@ class ParseHeader {
 
 					$manager->mydb->execSQL(
 						"UPDATE gokabam_api_output_headers SET 
+								api_version_id = null,
 								api_family_id = ?,
+								api_id = null,
+								api_output_id = null,
 								is_deleted = ?,
 								last_page_load_id = ? ,
 								header_name = ?,
@@ -377,7 +375,10 @@ class ParseHeader {
 
 					$manager->mydb->execSQL(
 						"UPDATE gokabam_api_output_headers SET 
+								api_version_id = null,
+								api_family_id = null,
 								api_id = ?,
+								api_output_id = null,
 								is_deleted = ?,
 								last_page_load_id = ? ,
 								header_name = ?,
@@ -402,6 +403,9 @@ class ParseHeader {
 
 					$manager->mydb->execSQL(
 						"UPDATE gokabam_api_output_headers SET 
+								api_version_id = null,
+								api_family_id = null,
+								api_id = null,
 								api_output_id = ?,
 								is_deleted = ?,
 								last_page_load_id = ? ,
