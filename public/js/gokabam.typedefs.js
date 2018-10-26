@@ -1007,7 +1007,7 @@ function KabamEverything(everything)  {
         this.exception_info = everything.exception_info;
         this.deleted_kids = everything.deleted_kids.slice();
 
-        this.library = [];
+        this.library = {};
 
         let props = [
                         'words',
@@ -1028,8 +1028,6 @@ function KabamEverything(everything)  {
                         'table_groups',
                         'examples',
                         'elements',
-                        'library',
-                        'deleted_kids',
                         'users'
         ];
 
@@ -1170,38 +1168,118 @@ function KabamEverything(everything)  {
         this.table_groups = [] ;
         this.examples = [] ;
         this.elements = [] ;
-        this.library = [] ;
+        this.library = {} ;
         this.deleted_kids = [] ;
         this.users = [] ;
     }
 
+
+    this.remember_changed_deleted = [];
+    this.remember_changed_inserted = [];
+    this.remember_changed_updated = [];
+
     /**
-     * todo implement get_changed_deleted, and cache results
      * returns an array of ids that were deleted after this data was cached
+     * if null passed will not recompute, but return previous answer
      * @param {KabamEverything|null} other
      * @return {GKA_Kid[]}
      */
     this.get_changed_deleted = function(other) {
 
+        if (other == null) {
+            return this.remember_changed_deleted;
+        }
+
+        //see if the other's delete list has items that are not deleted here
+        // do not count other deleted items that are not know about
+
+        //get the intersection of other's delete list and array of this kids
+        let other_delete_list = other.deleted_kids;
+        let our_existing_list = [];
+        for(let kid in  this.library ) {
+            if (this.library.hasOwnProperty(kid)) {
+                our_existing_list.push(kid);
+            }
+        }
+        let intersection = other_delete_list.filter(x => our_existing_list.includes(x));
+        this.remember_changed_deleted = intersection;
+        return intersection;
     };
 
     /**
-     * todo implement get_changed_inserted, and cache results
      * returns an array of ids that were inserted after this data was cached
+     * if null passed will not recompute, but return previous answer
      * @param {KabamEverything|null}  other
      * @return {GKA_Kid[]}
      */
     this.get_changed_inserted = function(other) {
+        if (other == null) {
+            return this.remember_changed_inserted;
+        }
 
+        //get the array of kids from the other library, get our array of kids here,
+        // and return the kids that are in the other but not in this
+
+
+        let our_list = [];
+        for(let kid in  this.library ) {
+            if (this.library.hasOwnProperty(kid)) {
+                our_list.push(kid);
+            }
+        }
+
+        let their_list = [];
+        for(let kid in  other.library ) {
+            if (other.library.hasOwnProperty(kid)) {
+                their_list.push(kid);
+            }
+        }
+
+        let in_their_list_but_not_ours = their_list.filter(x => !our_list.includes(x));
+        this.remember_changed_inserted = in_their_list_but_not_ours;
+        return in_their_list_but_not_ours;
     };
 
     /**
-     * todo implement get_changed_updated, and cache results
      * returns an array of ids that were changed (md5 difference) after this data was cached
+     * if null passed will not recompute, but return previous answer
      * @param {KabamEverything|null} other
      * @return {GKA_Kid[]}
      */
     this.get_changed_updated = function(other) {
+        if (other == null) {
+            return this.remember_changed_updated;
+        }
+
+        //get the intersection of the other's library and this library
+        //for each thing in common, compare the md5 and put in list if different
+
+        let our_list = [];
+        for(let kid in  this.library ) {
+            if (this.library.hasOwnProperty(kid)) {
+                our_list.push(kid);
+            }
+        }
+
+        let their_list = [];
+        for(let kid in  other.library ) {
+            if (other.library.hasOwnProperty(kid)) {
+                their_list.push(kid);
+            }
+        }
+
+        this.remember_changed_updated = [];
+        let intersection = our_list.filter(x => their_list.includes(x));
+        for(let i = 0; i < intersection.length; i++) {
+            let kid = intersection[i];
+            let our_md5 = this.library[kid].md5_checksum;
+            let their_md5 = other.library[kid].md5_checksum;
+            if (our_md5 !== their_md5) {
+                this.remember_changed_updated.push(kid);
+            }
+        }
+
+        return this.remember_changed_inserted;
 
     };
 

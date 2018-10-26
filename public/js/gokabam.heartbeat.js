@@ -30,8 +30,9 @@
  * Typedef for the notification data
  * each event for the rule is grouped together, so if there was an insert, a delete , and update then three notifications
  * @typedef {object} HeartbeatNotification
- * @property {string} action   : inserted|updated|deleted|added-to-filter|removed-from-filter|init
+ * @property {string} action   : inserted|updated|deleted|added-to-filter|removed-from-filter|init|get
                             init is called once , right after the filter is made, and returns the initial matching objects
+                            get is used when a null filter is passed in, and will simply notify the refresh has taken place
 
  * @property {RuleFilter} filter  - the filter which can be changed
  * @property {KabamRoot[]}   targets - can be empty,or 1 or more  objects derived from root which this message is about
@@ -109,8 +110,13 @@ function GoKabamHeartbeat (error_callback) {
         /**
          * @type {KabamRoot[]} rem
          */
-        this.rem = find_objects_in_ruleset(everything,filter);
-        send_to_callback('init',this.rem);
+        if (everything && filter) {
+            this.rem = find_objects_in_ruleset(everything,filter);
+            send_to_callback('init',this.rem);
+        } else {
+            this.rem = [];
+        }
+
 
 
         /**
@@ -122,6 +128,11 @@ function GoKabamHeartbeat (error_callback) {
          * @return {void}
          */
         this.process_everything = function(everything) {
+
+            if (filter == null) {
+                send_to_callback('get',[]);
+                return;
+            }
 
             //get the current set of objects that match this rule (filter from the constructor params)
             let compare_rem = find_objects_in_ruleset(everything,filter);
@@ -226,14 +237,15 @@ function GoKabamHeartbeat (error_callback) {
         /**
          * @private
          * @description takes the ruleset given in the constructor , and sees which things in the everything library matches
-         *
+         *  returns empty array if filter is null
          * @param {KabamEverything} everything
          * @param {RuleFilter} filter
          * @return {KabamRoot[]}
          */
         function find_objects_in_ruleset(everything,filter) {
-            let ret = [];
-            if (!everything) {return ret;}
+            let ret_hash = {};
+            if (!everything) {return [];}
+            if (!filter) {return [];}
 
             let library = everything.library;
 
@@ -241,7 +253,7 @@ function GoKabamHeartbeat (error_callback) {
             for(let i =0; i < filter.literals.length; i++ ) {
                 let lit = filter.literals[i];
                 if (library.hasOwnProperty(lit)) {
-                    ret.push(lit);
+                    ret_hash[lit] =  library[lit];
                 }
             }
 
@@ -255,7 +267,7 @@ function GoKabamHeartbeat (error_callback) {
                 let what = library[kid];
 
                 for(let n = 0; n < filter.rules.length; n++) {
-                    let rule_node = filter.rules[i];
+                    let rule_node = filter.rules[n];
                     let property = rule_node.property_name;
 
                     if (! what.hasOwnProperty(property)) {
@@ -267,7 +279,7 @@ function GoKabamHeartbeat (error_callback) {
                     let thing = rule_node.property_value;
                     //special check for null and empty and string
                     if (thing === property_to_test) {
-                        ret.push(what);
+                        ret_hash[what.kid] = what;
                         continue;
                     }
                     if (property_to_test === null || property_to_test === '') {continue;}
@@ -284,27 +296,34 @@ function GoKabamHeartbeat (error_callback) {
                             let make_it_numeric = Number(property_to_test);
                             if ( thing.max != null && thing.min != null) {
                                 if ((make_it_numeric <= thing.max) && (make_it_numeric >= thing.min) ) {
-                                    ret.push(what);
+                                    ret_hash[what.kid] = what;
                                 }
                             } else if (thing.max == null && thing.min != null) {
                                 if ( make_it_numeric >= thing.min ) {
-                                    ret.push(what);
+                                    ret_hash[what.kid] = what;
                                 }
                             } else if (thing.min == null && thing.max != null) {
                                 if ( make_it_numeric <= thing.max ) {
-                                    ret.push(what);
+                                    ret_hash[what.kid] = what;
                                 }
                             }
                         }
                     } else if (thing instanceof RegExp) {
                         //test with regular expression
                         if (thing.test(property_to_test)) {
-                            ret.push(what);
+                            ret_hash[what.kid] = what;
                         }
                     } else {
                         throw new Error("No clue what this rule for " + property
                             + "is, its not a min,max or a regex. Type of =  " + (typeof  thing) )
                     }
+                }
+            }
+
+            let ret = [];
+            for(let i in ret_hash) {
+                if (ret_hash.hasOwnProperty(i)) {
+                    ret.push(ret_hash[i]);
                 }
             }
             return ret;
@@ -358,15 +377,14 @@ function GoKabamHeartbeat (error_callback) {
 
 
     /**
-     *
+     * if filter is null the callback will be called without any objects and action refresh
      * @param {HeartbeatNotificationCallback} callback
-     * @param {RuleFilter} filter
+     * @param {RuleFilter|null} filter
      * @return {(integer)} returns the number id
      */
     this.create_notification = function(callback,filter) {
-        if (!everything) { throw new  Error("Create notification was called before the server responding with the information");}
         let next_id = this.da_callbacks.length;
-        let handler = new CallbackHandler(callback,filter,next_id,everything);
+        let handler = new CallbackHandler(callback,filter,next_id,this.everything);
         this.da_callbacks.push(handler );
         return this.da_callbacks.length -1;
 
@@ -385,8 +403,11 @@ function GoKabamHeartbeat (error_callback) {
      * @param {KabamEverything} everything
      */
     this.send_to_notify = function( everything) {
-        for(let i = 0; i < this.da_callbacks.length; i++) {
-            this.da_callbacks[i].process_everything(everything);
+
+        //create copy of the callbacks array, in case extra things get added in the middle of all this
+        let callbacks = this.da_callbacks.slice();
+        for(let i = 0; i < callbacks.length; i++) {
+            callbacks[i].process_everything(everything);
         }
     };
 
@@ -418,10 +439,12 @@ function GoKabamHeartbeat (error_callback) {
                     }
                 }
 
-                that.last_server_time = data.end_timestamp + 1;  //get ready for next call, do not overlap the times
+                that.last_server_time = data.server.server_timestamp;  //get ready for next call, do not overlap the times
 
                 if (that.everything === null) {
                     that.everything = new KabamEverything(data);
+                    that.send_to_notify(that.everything);
+
                 } else {
                     let new_everything = new KabamEverything(data);
                     //compare the difference between this and what we have

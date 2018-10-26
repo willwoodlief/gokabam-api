@@ -1,10 +1,36 @@
 /**
+ * Typedef for get notification
+ *
+ * @callback GoKabamGetCallback
+ * @param {GoKabam} go_kabam - reference to self
+ * @Return {void} nothing is expected to be returned once this is called
+ */
+
+
+/**
  * @class
  * @param {HeartbeatErrorHandler} heartbeat_error_handler
+ * @param {GoKabamGetCallback[]} get_callbacks
  * @constructor
  */
-function GoKabam(heartbeat_error_handler) {
+function GoKabam(heartbeat_error_handler,get_callbacks) {
+
+    this.get_callbacks = get_callbacks.slice();
+    let that = this;
     this.heartbeat = new GoKabamHeartbeat(heartbeat_error_handler);
+
+    //add in a callback for when refresh is called
+
+    /**
+     * @param {HeartbeatNotification} event
+     */
+    function get_handler(event) {
+        for(let i = 0; i < that.get_callbacks.length; i++) {
+            that.get_callbacks[i](that);
+        }
+    }
+
+    this.heartbeat.create_notification(get_handler,null);
 
     /**
      * @description refreshes from server
@@ -15,6 +41,7 @@ function GoKabam(heartbeat_error_handler) {
 
 
     /**
+     * @public
      * @description wrapper for creating a notification, will add stuff here to help coordinate
      * @param {HeartbeatNotificationCallback} callback
      * @param {RuleFilter} filter
@@ -25,17 +52,21 @@ function GoKabam(heartbeat_error_handler) {
     };
 
     /**
+     * @public
      * stops this notification
      * @param {integer} notification_id
      * @return {void}
      */
     this.cancel_notification = function(notification_id) {
         this.heartbeat.cancel_notification(notification_id);
-    }
+    };
+
+
 }
 
 jQuery(function($){
 
+    debugger;
     /**
      * @param {GKA_Exception_Info|string} exception_info - Exception information
      */
@@ -43,38 +74,51 @@ jQuery(function($){
         console.log(exception_info);
     }
 
+    let nid = null;
+    /**
+     *
+     * @param {GoKabam} go_kabam
+     */
+    function on_get(go_kabam) {
+        if (nid == null) {
+            //create test handler
+
+            /**
+             * @param {HeartbeatNotification} event
+             */
+            function handler(event) {
+                console.log(event);
+            }
+
+            var re = /^version_\w+$/;
+            /**
+             * @type {RuleFilter}
+             */
+            let filter = {
+                rules:[
+                    {
+                        property_name: 'kid',
+                        property_value: re
+                    }
+                ],
+                literals: [
+                    'version_YD53eP'
+                ]
+            };
+
+            nid = $.GoKabam.create_notification(handler,filter);
+        }
+    }
+
     if (!$.GoKabam) {
-        $.GoKabam = new GoKabam(error_handler);
+        $.GoKabam = new GoKabam(error_handler,[on_get]);
     }
 
-    //create test handler
 
-    /**
-     * @param {HeartbeatNotification} event
-     */
-    function handler(event) {
-        console.log(event);
-    }
-
-    var re = /^version_\w+$/;
-    /**
-     * @type {RuleFilter}
-     */
-    let filter = {
-        rules:[
-                {
-                    property_name: 'kid',
-                    property_value: re
-                }
-            ],
-        literals: [
-            'version_YD53eP'
-        ]
-    };
 
     $.GoKabam.refresh();
 
-    let nid = $.GoKabam.create_notification(handler,filter);
+
 
     $('button.gk-test1').click(function() {
         $.GoKabam.refresh();
