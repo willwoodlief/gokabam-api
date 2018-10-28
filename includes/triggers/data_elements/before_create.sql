@@ -140,7 +140,8 @@ CREATE TRIGGER trigger_before_create_gokabam_api_data_elements
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
             coalesce(NEW.md5_checksum_journals,' '),
-            coalesce(NEW.md5_checksum_elements,' ')
+            coalesce(NEW.md5_checksum_elements,' '),
+            coalesce(NEW.is_deleted,' ')
         )
     );
   END

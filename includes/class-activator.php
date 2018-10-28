@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.195;
+	const DB_VERSION = 0.196;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -73,6 +73,10 @@ class Activator {
 
 	    .195 Add in forgotten new fields for version trigger (urls and post ids)
 
+		.196 Work on deletes and fix and typo
+			 Added a new field to all root based tables so that the children can mark the parents as changed when they are
+			 deleted. Previously could not do this when using only one delete field as the parents would try to mark
+				the children as deleted, but the children would update the parents same time creating a loop
 
 	*/
 
@@ -269,13 +273,13 @@ class Activator {
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
         	  iso_639_1_language_code char(2) not null default 'en',
         	  word_code_enum varchar(15) not null comment 'name,title,blurb,description,overview,data',
               da_words mediumtext DEFAULT NULL,
               md5_checksum varchar(255) default null,
-              md5_checksum_tags varchar(255) default null,
               PRIMARY KEY  (id),
               UNIQUE KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
@@ -324,6 +328,7 @@ class Activator {
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               post_id int default null comment 'if a blog post is made about this',
@@ -391,6 +396,7 @@ class Activator {
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               md5_checksum varchar(255) default null,
@@ -490,6 +496,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               is_nullable tinyint DEFAULT 0 not null comment 'any type can use this',
               is_optional tinyint DEFAULT 0 not null comment 'if this element can be skipped in the array type or object',	
               rank int default 0 NOT NULL comment 'how this is ordered in the viewing',
@@ -569,6 +576,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               use_case_part_id int default null comment 'if parent is a use case part id ',
@@ -661,6 +669,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               group_id int not null,
@@ -719,6 +728,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               api_version varchar(255) DEFAULT NULL ,
@@ -771,6 +781,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               hard_code_family_name varchar(255) not null,	
@@ -831,6 +842,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               last_page_load_id int default null,
               api_family_id int not null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               method_call_enum varchar(255) not null default 'get' comment 'get,put,post,delete,options,head,patch,trace',
@@ -893,6 +905,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               last_page_load_id int default null,
               api_id int not null comment '',
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               is_required tinyint DEFAULT 0 not null comment 'if this data is required, or is it optional ?',
@@ -954,6 +967,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               api_id int not null,
@@ -1014,6 +1028,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               api_version_id int default null comment 'optionally associated with any return only for this version',
@@ -1096,6 +1111,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               belongs_to_api_version_id int default null comment 'used if api id is not set (becomes a general use case)',
@@ -1284,6 +1300,7 @@ table structure for all types
               in_api_id int default null comment 'if the input is the output of an api',
               rank int default 0 comment 'used to help organize this outside the db',
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,  
               md5_checksum varchar(255) default null,
@@ -1351,6 +1368,7 @@ table structure for all types
               child_use_case_part_id int not null comment 'use case part which is the child, both of these must be in the same use case',
               rank int default 0 comment 'used to help organize this outside the db, does not need to be set and defaults to 0',
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,	  
               md5_checksum varchar(255) default null,
@@ -1411,6 +1429,7 @@ table structure for all types
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null,
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               use_case_part_id int not null comment 'use case that this belongs to',
@@ -1567,6 +1586,7 @@ data_group_examples
               initial_page_load_id int default null,
               last_page_load_id int default null,
               is_deleted tinyint DEFAULT 0 not null comment 'because deleted tags still around must allow for duplicates',
+              is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               md5_checksum varchar(255) default null,

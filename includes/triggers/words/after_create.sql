@@ -18,7 +18,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_words
                                    @crc,
                                    sha1(concat_ws('#', md5_checksum)))))
                ) as discard
-        INTO @off from gokabam_api_tags  WHERE target_object_id = NEW.target_object_id;
+        INTO @off from gokabam_api_words  WHERE target_object_id = NEW.target_object_id;
 
     IF @crc = ''
     THEN
@@ -108,7 +108,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_words
 
     IF local_table_name = 'gokabam_api_use_case_part_connections'
     THEN
-      UPDATE gokabam_api_use_case_part_connections SET md5_checksum_tags = @crc
+      UPDATE gokabam_api_use_case_part_connections SET md5_checksum_words = @crc
       WHERE id = local_primary_key;
     END IF;
 

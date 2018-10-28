@@ -59,30 +59,36 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_group_examples
 
 
 
-    #find all the examples the group uses, checksum them and update the group
+    IF NEW.is_downside_deleted <> 1 THEN
+      #find all the examples the group uses, checksum them and update the group
 
 
-    set @crc := '';
+      set @crc := '';
 
-    SELECT min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', s.md5_checksum)))))
-               ) as discard
-        INTO @off
-    FROM  gokabam_api_data_group_examples s
-    WHERE s.group_id = NEW.group_id;
-
-
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
-    END IF;
-
-    UPDATE gokabam_api_data_groups s SET md5_checksum_examples = @crc
-    WHERE s.id = NEW.group_id;
+      SELECT min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', s.md5_checksum)))))
+                 ) as discard
+          INTO @off
+      FROM  gokabam_api_data_group_examples s
+      WHERE s.group_id = NEW.group_id;
 
 
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_data_groups s SET md5_checksum_examples = @crc
+      WHERE s.id = NEW.group_id;
+    END IF ;
+
+    IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+    END IF ;
 
 
   END

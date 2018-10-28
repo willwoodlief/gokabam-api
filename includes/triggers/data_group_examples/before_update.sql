@@ -11,7 +11,8 @@ CREATE TRIGGER trigger_before_update_gokabam_api_data_group_examples
             coalesce(NEW.group_id,' '),
             coalesce(NEW.md5_checksum_tags,' '),
             coalesce(NEW.md5_checksum_words,' '),
-            coalesce(NEW.md5_checksum_journals,' ')
+            coalesce(NEW.md5_checksum_journals,' '),
+            coalesce(NEW.is_deleted,' ')
         )
     );
   END

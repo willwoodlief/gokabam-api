@@ -96,44 +96,40 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts
       VALUES (@edit_log_id,'is_deleted',OLD.is_deleted);
     END IF;
 
+    IF NEW.is_downside_deleted <> 1 THEN
 
-    set @crc := '';
+      set @crc := '';
 
-    select min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', md5_checksum)))))
-               ) as discard
-        INTO @off from gokabam_api_use_case_parts  WHERE use_case_id = NEW.use_case_id;
+      select min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', md5_checksum)))))
+                 ) as discard
+          INTO @off from gokabam_api_use_case_parts  WHERE use_case_id = NEW.use_case_id;
 
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_use_cases SET md5_checksum_apis = @crc
+      WHERE id = NEW.use_case_id;
     END IF;
-
-    UPDATE gokabam_api_use_cases SET md5_checksum_apis = @crc
-    WHERE id = NEW.use_case_id;
 
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents
 
-      UPDATE gokabam_api_data_groups s
-      SET s.is_deleted = NEW.is_deleted WHERE s.use_case_part_id = NEW.id;
-
-
-
-
-      UPDATE gokabam_api_use_case_parts_sql s SET s.is_deleted = NEW.is_deleted WHERE s.use_case_part_id = NEW.id;
-
-      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_data_groups s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.use_case_part_id = NEW.id;
+      UPDATE gokabam_api_use_case_parts_sql s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.use_case_part_id = NEW.id;
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
     END IF;
 
     if NEW.is_deleted = 1 AND OLD.is_deleted = 0 then
       -- delete the connection forever
-      UPDATE gokabam_api_use_case_part_connections s SET s.is_deleted = 1 WHERE s.parent_use_case_part_id = NEW.id;
-      UPDATE gokabam_api_use_case_part_connections s SET s.is_deleted = 1 WHERE s.child_use_case_part_id = NEW.id;
+      UPDATE gokabam_api_use_case_part_connections s SET s.is_deleted = 1, is_downside_deleted = 1 WHERE s.parent_use_case_part_id = NEW.id;
+      UPDATE gokabam_api_use_case_part_connections s SET s.is_deleted = 1, is_downside_deleted = 1 WHERE s.child_use_case_part_id = NEW.id;
     end if;
 
   END

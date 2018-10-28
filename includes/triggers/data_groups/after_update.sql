@@ -97,110 +97,113 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_groups
       VALUES (@edit_log_id,'use_case_part_id',OLD.use_case_part_id);
     END IF;
 
-    -- ----------------------------------------------------------------------
+    IF NEW.is_downside_deleted <> 1 THEN
+      -- ----------------------------------------------------------------------
 
-    set @crc := '';
+      set @crc := '';
 
-    SELECT min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', s.md5_checksum)))))
-               ) as discard
-        INTO @off
-    FROM  gokabam_api_data_groups s
-    WHERE s.use_case_part_id = NEW.use_case_part_id;
+      SELECT min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', s.md5_checksum)))))
+                 ) as discard
+          INTO @off
+      FROM  gokabam_api_data_groups s
+      WHERE s.use_case_part_id = NEW.use_case_part_id;
 
 
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_use_case_parts s SET md5_checksum_groups = @crc
+      WHERE s.id = NEW.use_case_part_id;
+
+
+      -- -----------------------------------------------------------------------
+
+      set @crc := '';
+
+      SELECT min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', s.md5_checksum)))))
+                 ) as discard
+          INTO @off
+      FROM  gokabam_api_data_groups s
+      WHERE s.header_id = NEW.header_id;
+
+
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_output_headers s SET md5_checksum_groups = @crc
+      WHERE s.id = NEW.header_id;
+
+
+      -- -----------------------------------------------------------------------
+
+      set @crc := '';
+
+      SELECT min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', s.md5_checksum)))))
+                 ) as discard
+          INTO @off
+      FROM  gokabam_api_data_groups s
+      WHERE s.api_input_id = NEW.api_input_id;
+
+
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_inputs s SET md5_checksum_groups = @crc
+      WHERE s.id = NEW.api_input_id;
+
+
+      -- -----------------------------------------------------------------------
+
+
+      set @crc := '';
+
+      SELECT min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', s.md5_checksum)))))
+                 ) as discard
+          INTO @off
+      FROM  gokabam_api_data_groups s
+      WHERE s.api_output_id = NEW.api_output_id;
+
+
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_outputs s SET md5_checksum_groups = @crc
+      WHERE s.id = NEW.api_output_id;
+
+
+      -- -----------------------------------------------------------------------
     END IF;
 
-    UPDATE gokabam_api_use_case_parts s SET md5_checksum_groups = @crc
-    WHERE s.id = NEW.use_case_part_id;
-
-
-    -- -----------------------------------------------------------------------
-
-    set @crc := '';
-
-    SELECT min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', s.md5_checksum)))))
-               ) as discard
-        INTO @off
-    FROM  gokabam_api_data_groups s
-    WHERE s.header_id = NEW.header_id;
-
-
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
-    END IF;
-
-    UPDATE gokabam_api_output_headers s SET md5_checksum_groups = @crc
-    WHERE s.id = NEW.header_id;
-
-
-    -- -----------------------------------------------------------------------
-
-    set @crc := '';
-
-    SELECT min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', s.md5_checksum)))))
-               ) as discard
-        INTO @off
-    FROM  gokabam_api_data_groups s
-    WHERE s.api_input_id = NEW.api_input_id;
-
-
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
-    END IF;
-
-    UPDATE gokabam_api_inputs s SET md5_checksum_groups = @crc
-    WHERE s.id = NEW.api_input_id;
-
-
-    -- -----------------------------------------------------------------------
-
-
-    set @crc := '';
-
-    SELECT min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', s.md5_checksum)))))
-               ) as discard
-        INTO @off
-    FROM  gokabam_api_data_groups s
-    WHERE s.api_output_id = NEW.api_output_id;
-
-
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
-    END IF;
-
-    UPDATE gokabam_api_outputs s SET md5_checksum_groups = @crc
-    WHERE s.id = NEW.api_output_id;
-
-
-    -- -----------------------------------------------------------------------
 
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents
 
-      UPDATE gokabam_api_data_elements s SET s.is_deleted = NEW.is_deleted WHERE s.group_id = NEW.id;
-      UPDATE gokabam_api_data_group_examples s SET s.is_deleted = NEW.is_deleted WHERE s.group_id = NEW.id;
+      UPDATE gokabam_api_data_elements s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.group_id = NEW.id;
+      UPDATE gokabam_api_data_group_examples s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.group_id = NEW.id;
 
-      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
     END IF;
 
   END

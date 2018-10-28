@@ -63,32 +63,32 @@ CREATE TRIGGER trigger_after_update_gokabam_api_inputs
       VALUES (@edit_log_id,'is_deleted',OLD.is_deleted);
     END IF;
 
+    IF NEW.is_downside_deleted <> 1 THEN
+      set @crc := '';
 
-    set @crc := '';
+      select min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', md5_checksum)))))
+                 ) as discard
+          INTO @off from gokabam_api_inputs  WHERE api_id = NEW.api_id;
 
-    select min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', md5_checksum)))))
-               ) as discard
-        INTO @off from gokabam_api_inputs  WHERE api_id = NEW.api_id;
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
 
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
+      UPDATE gokabam_api_apis SET md5_checksum_inputs = @crc
+      WHERE id = NEW.api_id;
     END IF;
-
-    UPDATE gokabam_api_apis SET md5_checksum_inputs = @crc
-    WHERE id = NEW.api_id;
 
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents
-      UPDATE gokabam_api_data_groups s
-      SET s.is_deleted = NEW.is_deleted WHERE s.api_input_id = NEW.id;
+      UPDATE gokabam_api_data_groups s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.api_input_id = NEW.id;
 
-      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
     END IF;
 
   END

@@ -120,11 +120,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_tags
       WHERE id = local_primary_key;
     END IF;
 
-    IF local_table_name = 'gokabam_api_words'
-    THEN
-      UPDATE gokabam_api_words SET md5_checksum_tags = @crc
-      WHERE id = local_primary_key;
-    END IF;
+
 
 
   END

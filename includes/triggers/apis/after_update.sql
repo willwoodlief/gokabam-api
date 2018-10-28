@@ -86,78 +86,80 @@ CREATE TRIGGER trigger_after_update_gokabam_api_apis
     END IF;
 
 
-    #   gokabam_api_use_case_parts, in_api_id , md5_checksum_apis
-    #  for each use case part find all the apis which include it, do a checksum on their md5 and update the field
-    SET done := false;
-    OPEN use_case_parts_cur;
-    a_loop: LOOP
-      FETCH use_case_parts_cur INTO a_use_case_part_id;
-      IF done THEN
-        LEAVE a_loop;
-      END IF;
+    IF NEW.is_downside_deleted <> 1 THEN
+      #   gokabam_api_use_case_parts, in_api_id , md5_checksum_apis
+      #  for each use case part find all the apis which include it, do a checksum on their md5 and update the field
+      SET done := false;
+      OPEN use_case_parts_cur;
+      a_loop: LOOP
+        FETCH use_case_parts_cur INTO a_use_case_part_id;
+        IF done THEN
+          LEAVE a_loop;
+        END IF;
 
+        set @crc := '';
+
+        SELECT min(
+                 length(@crc := sha1(concat(
+                                       @crc,
+                                       sha1(concat_ws('#', e1.md5_checksum)))))
+                   ) as discard
+            INTO @off
+        FROM  gokabam_api_use_case_parts s
+                INNER JOIN gokabam_api_apis e1 ON e1.id = s.in_api_id
+        WHERE s.id = a_use_case_part_id;
+
+
+        IF @crc = ''
+        THEN
+          SET @crc := NULL;
+        END IF;
+
+        UPDATE gokabam_api_use_case_parts s SET md5_checksum_apis = @crc
+        WHERE s.id = a_use_case_part_id;
+
+      END LOOP;
+      CLOSE use_case_parts_cur;
+
+      # gokabam_api_family , (api_family_id here), md5_checksum_apis
+      # for the family , find all the apis which include it, do a checksum on their md5 and update the field
+      #calculate elements md5
       set @crc := '';
 
-      SELECT min(
+      select min(
                length(@crc := sha1(concat(
                                      @crc,
-                                     sha1(concat_ws('#', e1.md5_checksum)))))
+                                     sha1(concat_ws('#', md5_checksum)))))
                  ) as discard
-          INTO @off
-      FROM  gokabam_api_use_case_parts s
-              INNER JOIN gokabam_api_apis e1 ON e1.id = s.in_api_id
-      WHERE s.id = a_use_case_part_id;
-
+          INTO @off from gokabam_api_apis  WHERE api_family_id = NEW.api_family_id;
 
       IF @crc = ''
       THEN
         SET @crc := NULL;
       END IF;
 
-      UPDATE gokabam_api_use_case_parts s SET md5_checksum_apis = @crc
-      WHERE s.id = a_use_case_part_id;
+      UPDATE gokabam_api_family SET md5_checksum_apis = @crc
+      WHERE id = NEW.api_family_id;
 
-    END LOOP;
-    CLOSE use_case_parts_cur;
+      #belongs_to_api_id in gokabam_api_use_cases
 
-    # gokabam_api_family , (api_family_id here), md5_checksum_apis
-    # for the family , find all the apis which include it, do a checksum on their md5 and update the field
-    #calculate elements md5
-    set @crc := '';
 
-    select min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', md5_checksum)))))
-               ) as discard
-        INTO @off from gokabam_api_apis  WHERE api_family_id = NEW.api_family_id;
-
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
+      UPDATE gokabam_api_use_cases SET md5_checksum_apis = New.md5_checksum
+      WHERE belongs_to_api_id = NEW.id;
     END IF;
-
-    UPDATE gokabam_api_family SET md5_checksum_apis = @crc
-    WHERE id = NEW.api_family_id;
-
-    #belongs_to_api_id in gokabam_api_use_cases
-
-
-    UPDATE gokabam_api_use_cases SET md5_checksum_apis = New.md5_checksum
-    WHERE belongs_to_api_id = NEW.id;
 
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents
 
-      UPDATE gokabam_api_inputs s SET s.is_deleted = NEW.is_deleted WHERE s.api_id = NEW.id;
-      UPDATE gokabam_api_outputs s SET s.is_deleted = NEW.is_deleted WHERE s.api_id = NEW.id;
-      UPDATE gokabam_api_use_cases s SET s.is_deleted = NEW.is_deleted WHERE s.belongs_to_api_id = NEW.id;
+      UPDATE gokabam_api_inputs s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.api_id = NEW.id;
+      UPDATE gokabam_api_outputs s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.api_id = NEW.id;
+      UPDATE gokabam_api_use_cases s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.belongs_to_api_id = NEW.id;
 
-      UPDATE gokabam_api_output_headers s SET s.is_deleted = NEW.is_deleted WHERE s.api_id = NEW.id;
+      UPDATE gokabam_api_output_headers s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE s.api_id = NEW.id;
 
-      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
     END IF;
 
 

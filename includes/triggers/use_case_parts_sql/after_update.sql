@@ -89,22 +89,28 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_case_parts_sql
     END IF;
 
 
-    set @crc := '';
+    IF NEW.is_downside_deleted <> 1 THEN
+      set @crc := '';
 
-    select min(
-             length(@crc := sha1(concat(
-                                   @crc,
-                                   sha1(concat_ws('#', md5_checksum)))))
-               ) as discard
-        INTO @off from gokabam_api_use_case_parts_sql  WHERE use_case_part_id = NEW.use_case_part_id;
+      select min(
+               length(@crc := sha1(concat(
+                                     @crc,
+                                     sha1(concat_ws('#', md5_checksum)))))
+                 ) as discard
+          INTO @off from gokabam_api_use_case_parts_sql  WHERE use_case_part_id = NEW.use_case_part_id;
 
-    IF @crc = ''
-    THEN
-      SET @crc := NULL;
+      IF @crc = ''
+      THEN
+        SET @crc := NULL;
+      END IF;
+
+      UPDATE gokabam_api_use_case_parts SET md5_checksum_sql_parts = @crc
+      WHERE id = NEW.use_case_part_id;
     END IF;
 
-    UPDATE gokabam_api_use_case_parts SET md5_checksum_sql_parts = @crc
-    WHERE id = NEW.use_case_part_id;
-
-
+    IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+    END IF ;
   END

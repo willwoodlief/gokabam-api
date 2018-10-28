@@ -156,102 +156,100 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
     END IF;
 
 
-    # update the group: if group_id is set get all fellow elements, sum up the checksums, and update the parent group
+    IF NEW.is_downside_deleted <> 1 THEN
+      # update the group: if group_id is set get all fellow elements, sum up the checksums, and update the parent group
 
-    IF NEW.group_id IS NOT NULL
-    THEN
-
-      set @crc := '';
-
-      SELECT min(
-               length(@crc := sha1(concat(
-                                     @crc,
-                                     sha1(concat_ws('#', e.md5_checksum)))))
-                 ) as discard
-          INTO @off
-      FROM  gokabam_api_data_elements e
-      WHERE group_id = NEW.group_id;
-
-      IF @crc = ''
+      IF NEW.group_id IS NOT NULL
       THEN
-        SET @crc := NULL;
-      END IF;
 
-      UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc
-      WHERE g.id = NEW.group_id;
+        set @crc := '';
 
-    end if;
+        SELECT min(
+                 length(@crc := sha1(concat(
+                                       @crc,
+                                       sha1(concat_ws('#', e.md5_checksum)))))
+                   ) as discard
+            INTO @off
+        FROM  gokabam_api_data_elements e
+        WHERE group_id = NEW.group_id;
+
+        IF @crc = ''
+        THEN
+          SET @crc := NULL;
+        END IF;
+
+        UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc
+        WHERE g.id = NEW.group_id;
+
+      end if;
 
 
 
-    # update the parent element: if parent_element_id is set get all fellow elements,
-    #  sum up the checksums, and update the parent element
+      # update the parent element: if parent_element_id is set get all fellow elements,
+      #  sum up the checksums, and update the parent element
 
-    IF NEW.parent_element_id IS NOT NULL
-    THEN
-
-      set @crc := '';
-
-      SELECT min(
-               length(@crc := sha1(concat(
-                                     @crc,
-                                     sha1(concat_ws('#', e.md5_checksum)))))
-                 ) as discard
-          INTO @off
-      FROM  gokabam_api_data_elements e
-      WHERE parent_element_id = NEW.parent_element_id;
-
-      IF @crc = ''
+      IF NEW.parent_element_id IS NOT NULL
       THEN
-        SET @crc := NULL;
-      END IF;
 
-      UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc
-      WHERE g.id = NEW.parent_element_id;
+        set @crc := '';
 
-    end if;
+        SELECT min(
+                 length(@crc := sha1(concat(
+                                       @crc,
+                                       sha1(concat_ws('#', e.md5_checksum)))))
+                   ) as discard
+            INTO @off
+        FROM  gokabam_api_data_elements e
+        WHERE parent_element_id = NEW.parent_element_id;
 
+        IF @crc = ''
+        THEN
+          SET @crc := NULL;
+        END IF;
 
+        UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc
+        WHERE g.id = NEW.parent_element_id;
 
-
-
-
-
-
-    #now do all the sql use case parts that has this element, there are three potential places
-    SET done := false;
-    OPEN parts_sql_cur;
-    b_loop: LOOP
-      FETCH parts_sql_cur INTO a_part_sql_id;
-      IF done THEN
-        LEAVE b_loop;
-      END IF;
-
-      set @crc := '';
-
-      SELECT min(
-               length(@crc := sha1(concat(
-                                     @crc,
-                                     sha1(concat_ws('#', e1.md5_checksum,e2.md5_checksum,e3.md5_checksum)))))
-                 ) as discard
-          INTO @off
-      FROM  gokabam_api_use_case_parts_sql s
-              LEFT JOIN gokabam_api_data_elements e1 ON e1.id = s.reference_table_element_id
-              LEFT JOIN gokabam_api_data_elements e2 ON e2.id = s.table_element_id
-              LEFT JOIN gokabam_api_data_elements e3 ON e3.id = s.outside_element_id
-      WHERE s.id = a_part_sql_id;
+      end if;
 
 
-      IF @crc = ''
-      THEN
-        SET @crc := NULL;
-      END IF;
 
-      UPDATE gokabam_api_use_case_parts_sql s SET md5_checksum_elements = @crc
-      WHERE s.id = a_part_sql_id;
+      #now do all the sql use case parts that has this element, there are three potential places
+      SET done := false;
+      OPEN parts_sql_cur;
+      b_loop: LOOP
+        FETCH parts_sql_cur INTO a_part_sql_id;
+        IF done THEN
+          LEAVE b_loop;
+        END IF;
 
-    END LOOP;
-    CLOSE parts_sql_cur;
+        set @crc := '';
+
+        SELECT min(
+                 length(@crc := sha1(concat(
+                                       @crc,
+                                       sha1(concat_ws('#', e1.md5_checksum,e2.md5_checksum,e3.md5_checksum)))))
+                   ) as discard
+            INTO @off
+        FROM  gokabam_api_use_case_parts_sql s
+                LEFT JOIN gokabam_api_data_elements e1 ON e1.id = s.reference_table_element_id
+                LEFT JOIN gokabam_api_data_elements e2 ON e2.id = s.table_element_id
+                LEFT JOIN gokabam_api_data_elements e3 ON e3.id = s.outside_element_id
+        WHERE s.id = a_part_sql_id;
+
+
+        IF @crc = ''
+        THEN
+          SET @crc := NULL;
+        END IF;
+
+        UPDATE gokabam_api_use_case_parts_sql s SET md5_checksum_elements = @crc
+        WHERE s.id = a_part_sql_id;
+
+      END LOOP;
+      CLOSE parts_sql_cur;
+
+    END IF;
 
 
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
@@ -259,9 +257,9 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
 
       UPDATE gokabam_api_data_elements s SET s.is_deleted = NEW.is_deleted WHERE s.parent_element_id = NEW.id;
 
-      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
     END IF;
 
 
