@@ -1060,7 +1060,7 @@ class FillerManager {
 			$xxx->table = $row->da_table_name;
 			$xxx->object_id = $row->object_id;
 			$this->kid_talk->fill_kids_in($xxx);
-			$ret[] = $xxx;
+			$ret[] = $xxx->kid;
 		}
 		return $ret;
 	}

@@ -21,7 +21,7 @@
  *  If literals are empty, then the matching starts with anything available
  *  If both rules and literals are empty, then everything is matched
  *
- * @typedef {object} RuleFilter
+ * @typedef {object} KabamRuleFilter
  * @property {HeartbeatRule[]} rules
  * @property {GKA_Kid[]} literals
  */
@@ -33,8 +33,8 @@
  * @property {string} action   : inserted|updated|deleted|added-to-filter|removed-from-filter|init|get
                             init is called once , right after the filter is made, and returns the initial matching objects
                             get is used when a null filter is passed in, and will simply notify the refresh has taken place
-
- * @property {RuleFilter} filter  - the filter which can be changed
+                            only null filters receive get notifications, but null filters only receive that one notification
+ * @property {KabamRuleFilter} filter  - the filter which can be changed
  * @property {KabamRoot[]}   targets - can be empty,or 1 or more  objects derived from root which this message is about
  * @property {number} notification_id
  */
@@ -100,24 +100,30 @@ function GoKabamHeartbeat (error_callback) {
 
     /**
      * @param {HeartbeatNotificationCallback} callback
-     * @param {RuleFilter} filter
+     * @param {object|null} callback_object
+     * @param {KabamRuleFilter} filter
 
      * @param {number} notification_id
      * @param {KabamEverything} everything
      */
-    function CallbackHandler(callback,filter,notification_id,everything) {
+    function CallbackHandler(callback,callback_object,filter,notification_id,everything) {
 
         /**
          * @type {KabamRoot[]} rem
          */
-        if (everything && filter) {
-            this.rem = find_objects_in_ruleset(everything,filter);
-            send_to_callback('init',this.rem);
-        } else {
-            this.rem = [];
-        }
+        this.rem = [];
 
 
+        /**
+         * kicks off the action, there may be multiple nested calls to different handlers created from here
+         * so cannot be part of the constructor
+         */
+        this.start_handler = function() {
+            if (everything && filter) {
+                this.rem = find_objects_in_ruleset(everything,filter);
+                send_to_callback('init',this.rem); //notice that init always called, even when nothing is found
+            }
+        };
 
         /**
          @public
@@ -125,12 +131,16 @@ function GoKabamHeartbeat (error_callback) {
                         everything this class was initialized with
 
          * @param {KabamEverything} everything
+         * @param {KabamEverything} new_everything , the updated refresh
          * @return {void}
          */
-        this.process_everything = function(everything) {
+        this.process_everything = function(everything,new_everything) {
 
             if (filter == null) {
-                send_to_callback('get',[]); //todo do not trip after an update ?
+                if (everything.api_action === 'get') {
+                    send_to_callback('get',[]);
+                }
+                 // only send out during a refresh
                 return;
             }
 
@@ -201,7 +211,7 @@ function GoKabamHeartbeat (error_callback) {
             }
 
             {
-                let inserted_kids = everything.get_changed_deleted(null);
+                let inserted_kids = everything.get_changed_inserted(null);
                 // for everything in both inserted and in compare_rem this goes to inserted callback
                 let intersection_compare_inserted = compare_rem_kids.filter(x => inserted_kids.includes(x));
                 if (intersection_compare_inserted.length > 0) {
@@ -222,7 +232,8 @@ function GoKabamHeartbeat (error_callback) {
                 if (intersection_rem_updated.length > 0) {
                     let objects_to_send = [];
                     for (let i = 0; i < intersection_rem_updated.length; i++) {
-                        objects_to_send.push(rem_hash[intersection_rem_updated[i]]);
+                        let updated_object = new_everything.library[intersection_rem_updated[i]];
+                        objects_to_send.push(updated_object);
                     }
                     send_to_callback('updated', objects_to_send);
                 }
@@ -239,7 +250,7 @@ function GoKabamHeartbeat (error_callback) {
          * @description takes the ruleset given in the constructor , and sees which things in the everything library matches
          *  returns empty array if filter is null
          * @param {KabamEverything} everything
-         * @param {RuleFilter} filter
+         * @param {KabamRuleFilter} filter
          * @return {KabamRoot[]}
          */
         function find_objects_in_ruleset(everything,filter) {
@@ -350,7 +361,14 @@ function GoKabamHeartbeat (error_callback) {
             };
 
             if (callback) {
-                callback(message);
+                if (callback_object) {
+                    //call with callback object
+                    callback.call(callback_object,message);
+                } else
+                {
+                    callback(message);
+                }
+
             }
 
         }
@@ -377,13 +395,15 @@ function GoKabamHeartbeat (error_callback) {
      * @public
      * if filter is null the callback will be called without any objects and action refresh
      * @param {HeartbeatNotificationCallback} callback
-     * @param {RuleFilter|null} filter
+     * @param {object|null} callback_object
+     * @param {KabamRuleFilter|null} filter
      * @return {(integer)} returns the number id
      */
-    this.create_notification = function(callback,filter) {
+    this.create_notification = function(callback,callback_object,filter) {
         let next_id = this.da_callbacks.length;
-        let handler = new CallbackHandler(callback,filter,next_id,this.everything);
+        let handler = new CallbackHandler(callback,callback_object,filter,next_id,this.everything);
         this.da_callbacks.push(handler );
+        handler.start_handler();
         return this.da_callbacks.length -1;
 
      };
@@ -391,7 +411,7 @@ function GoKabamHeartbeat (error_callback) {
     /**
      * @public
      * stops this notification
-     * @param {integer} notification_id
+     * @param {number} notification_id
      */
     this.cancel_notification = function(notification_id) {
         this.da_callbacks[notification_id] = null;
@@ -399,14 +419,15 @@ function GoKabamHeartbeat (error_callback) {
 
     /**
      *
-     * @param {KabamEverything} everything
+     * @param {KabamEverything} everything , the old refresh
+     * @param {KabamEverything} new_everything , the updated refresh
      */
-    this.send_to_notify = function( everything) {
+    this.send_to_notify = function( everything,new_everything) {
 
         //create copy of the callbacks array, in case extra things get added in the middle of all this
         let callbacks = this.da_callbacks.slice();
         for(let i = 0; i < callbacks.length; i++) {
-            callbacks[i].process_everything(everything);
+            callbacks[i].process_everything(everything,new_everything);
         }
     };
 
@@ -530,7 +551,7 @@ function GoKabamHeartbeat (error_callback) {
                      that.everything.get_changed_deleted(new_everything);
                      that.everything.get_changed_inserted(new_everything);
                      that.everything.get_changed_updated(new_everything);
-                     that.send_to_notify(that.everything);
+                     that.send_to_notify(that.everything,new_everything);
                      that.everything = new_everything;
 
 

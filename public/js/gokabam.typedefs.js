@@ -78,6 +78,73 @@ class KabamRoot {
         this.journals = [];
         this.tags = [];
     }
+
+    /**
+     * helper
+     * @param {string} root_type_string
+     * @return string
+     */
+    static get_kid_prefix(root_type_string) {
+
+        switch (root_type_string) {
+            case 'KabamWord': {
+                return 'word';
+            }
+            case 'KabamTag': {
+                return 'tag';
+            }
+            case 'KabamJournal': {
+                return 'journal';
+            }
+            case 'KabamVersion': {
+                return 'version';
+            }
+            case 'KabamApiVersion': {
+                return 'apiversion';
+            }
+            case 'KabamFamily': {
+                return 'family';
+            }
+            case 'KabamApi': {
+               return 'api';
+            }
+            case 'KabamHeader': {
+                return 'header';
+            }
+            case 'KabamInput': {
+                return 'input';
+            }
+            case 'KabamOutput': {
+                return 'output';
+            }
+            case 'KabamSqlPart': {
+                return 'sql';
+            }
+            case 'KabamPartConnection': {
+                return 'connection';
+            }
+            case 'KabamUsePart': {
+               return 'part';
+            }
+            case 'KabamUseCase': {
+               return 'case';
+            }
+            case 'KabamDataGroup': {
+                return 'group';
+            }
+
+            case  'KabamDataExample': {
+               return 'example';
+            }
+            case 'KabamElement': {
+                return 'element'
+            }
+            default: {
+                throw new Error('Did not recognize class in switch ' + root_type_string) ;
+            }
+        }
+
+        }
 }
 
 /**

@@ -109,6 +109,14 @@ class Plugin_Public
 		    wp_enqueue_script($this->plugin_name. '_typedefs', plugin_dir_url(__FILE__) . 'js/gokabam.typedefs.js', array(), $this->version, false);
 		    wp_enqueue_script($this->plugin_name. '_heartbeat', plugin_dir_url(__FILE__) . 'js/gokabam.heartbeat.js', array(), $this->version, false);
 		    wp_enqueue_script($this->plugin_name. '_gokabam', plugin_dir_url(__FILE__) . 'js/gokabam.js', array(), $this->version, false);
+
+		    wp_enqueue_script($this->plugin_name. '_display_base', plugin_dir_url(__FILE__) . 'js/gokabam_display/kabam.display.base.js', array(), $this->version, false);
+		    wp_enqueue_script($this->plugin_name. '_display_word_single', plugin_dir_url(__FILE__) . 'js/gokabam_display/kabam.display.word.single.js', array(), $this->version, false);
+		    wp_enqueue_script($this->plugin_name. '_display_container_base', plugin_dir_url(__FILE__) . 'js/gokabam_container/kabam.container.base.js', array(), $this->version, false);
+
+
+
+
 		    remove_filter( 'the_content', 'wpautop' );
 		    remove_filter( 'the_excerpt', 'wpautop' );
     	}
