@@ -97,7 +97,7 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
      * 
      * @param {GoKabamDisplayRegistration} entry
      * @return {void}
-     * todo add a register display for on load handler in the class file
+     *
      */
     this.register_display = function(entry) {
         let rooter = entry.root_class_string;
@@ -253,7 +253,7 @@ jQuery(function($){
 
 
     // noinspection JSCheckFunctionSignatures
-    $.GoKabam.register_container({style: 'minimal',register_class: KabamContainerBase});
+    $.GoKabam.register_container({style: 'minimal',register_class: KabamContainerMinimalSingle});
 
     // noinspection JSValidateTypes
     /**
@@ -277,14 +277,10 @@ jQuery(function($){
 
 
 
-//todo test the deletion of the word
-
 //todo make the editor base class
 // todo add the register and get edits
 //todo make a word editor (single and multiple)
 
-
-//todo test container with a ruleset for words
 
 //todo create the display, edit for tags (multiple only)
 //todo test it out, along with being in a container

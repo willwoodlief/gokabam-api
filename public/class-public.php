@@ -110,10 +110,17 @@ class Plugin_Public
 		    wp_enqueue_script($this->plugin_name. '_heartbeat', plugin_dir_url(__FILE__) . 'js/gokabam.heartbeat.js', array(), $this->version, false);
 		    wp_enqueue_script($this->plugin_name. '_gokabam', plugin_dir_url(__FILE__) . 'js/gokabam.js', array(), $this->version, false);
 
+
+		    //displays
 		    wp_enqueue_script($this->plugin_name. '_display_base', plugin_dir_url(__FILE__) . 'js/gokabam_display/kabam.display.base.js', array(), $this->version, false);
 		    wp_enqueue_script($this->plugin_name. '_display_word_single', plugin_dir_url(__FILE__) . 'js/gokabam_display/kabam.display.word.single.js', array(), $this->version, false);
-		    wp_enqueue_script($this->plugin_name. '_display_container_base', plugin_dir_url(__FILE__) . 'js/gokabam_container/kabam.container.base.js', array(), $this->version, false);
 
+		    //containers
+		    wp_enqueue_script($this->plugin_name. '_display_container_base', plugin_dir_url(__FILE__) . 'js/gokabam_container/kabam.container.base.js', array(), $this->version, false);
+		    wp_enqueue_script($this->plugin_name. '_display_container_minimals', plugin_dir_url(__FILE__) . 'js/gokabam_container/kabam.container.minimals.js', array(), $this->version, false);
+
+		    //editors
+		    wp_enqueue_script($this->plugin_name. '_editor_base', plugin_dir_url(__FILE__) . 'js/gokabam_editor/kabam.editor.base.js', array(), $this->version, false);
 
 
 

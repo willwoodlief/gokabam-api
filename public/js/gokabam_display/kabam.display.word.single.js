@@ -3,10 +3,7 @@ class KabamDisplayWordSingle extends KabamDisplayBase {
 
 
     constructor(gokabam,the_filter,container) {
-        super(gokabam,the_filter,container);
-        this._is_multiple = false;
-        this._style = 'minimal';
-        this._root_type = 'KabamWord';
+        super(gokabam,the_filter,container,'minimal',false,'KabamWord');
     }
 
     create_parent_div(classes) {

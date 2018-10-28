@@ -1,29 +1,29 @@
 /**
  * Containers can belong to displays or not, all they know is their parent div and which filters they use
  */
-class KabamContainerBase {
+class KabamContainerBase extends KabamEditorCallbacks {
 
 
     /**
-     * all derived classes should override this
-     * @abstract
+     * all derived classes should set style in the super constructor
      * @return {string}
      */
     get style() { return this.container_style;}
 
     //called by things creating this container, to place the div on the correct place
-    get div() { return this.container_div;}
+    get div() { return this.outer_div;}
 
     /**
      * @param {GoKabam} gokabam
      * @param {string[]} css_class_array
      * @param {KabamRuleFilter} filter
      * @param {boolean} prefer_multiple
+     * @param {string} style
      */
 
-    constructor(gokabam,css_class_array, filter, prefer_multiple) {
-
-        this.container_style = 'minimal';
+    constructor(gokabam,css_class_array, filter, prefer_multiple,style) {
+        super();
+        this.container_style = style;
         this.prefer_multiple = prefer_multiple;
         this.filter = filter;
 
@@ -33,12 +33,13 @@ class KabamContainerBase {
          */
         this.display_list = {};
         this.gokabam = gokabam;
-        this.container_div = jQuery('<div></div>');
-        this.css_class_array = css_class_array;
 
-        if (this.css_class_array.indexOf('gokabam-container') < 0) {
-            this.css_class_array.unshift('gokabam-container');
+        if (css_class_array.indexOf('gokabam-container') < 0) {
+            css_class_array.unshift('gokabam-container');
         }
+        this.outer_div = this.create_outer_div(css_class_array);
+
+        this.container_div = this.create_container_div(this.outer_div); //
 
 
         /**
@@ -56,9 +57,36 @@ class KabamContainerBase {
         gokabam.create_notification(this.on_notify,this,filter);
     }
 
+    // noinspection JSMethodCanBeStatic
+    /**
+     * can override this to create the parent div, add classes and create the none display area stuff
+     * @abstract
+     * @param {string[]} class_array
+     * @return {jQuery}
+     */
+    create_outer_div(class_array) {
+        let div = jQuery('<div></div>');
+        let class_string = class_array.join(' ');
+        div.addClass(class_string);
+        return div;
+    }
+
+    // noinspection JSMethodCanBeStatic
+    /**
+     * @abstract
+     * @param parent_div
+     * @return {jQuery}
+     */
+    create_container_div(parent_div) {
+        let div = jQuery('<div></div>');
+        parent_div.append(div);
+        div.addClass('gokabam-inside-container');
+        return div;
+    }
+
 
     /**
-     * @abstract derived can implement their own clean up, but should call base class
+     * derived can implement their own clean up, but should call base class
      * cancel the notification
      * go through list of displays and call their remove
      *  erase the contents of container div
@@ -246,6 +274,7 @@ class KabamContainerBase {
     }
 
     /**
+     * @abstract
      * called when display content is changed, base does nothing
      * @param {KabamDisplayBase} display
      */
@@ -293,6 +322,27 @@ class KabamContainerBase {
                 return;
             }
         }
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_starting(editor) {
+
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_submit(editor) {
+
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_cancel(editor) {
+
     }
 }
 

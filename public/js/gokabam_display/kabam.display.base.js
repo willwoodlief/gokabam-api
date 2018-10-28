@@ -9,10 +9,10 @@
  a display can have some words as part of the element, but needs to have a way to edit all words too
 todo add in edit support,
  */
-class KabamDisplayBase {
+class KabamDisplayBase extends KabamEditorCallbacks {
 
     /**
-     * all derived classes should set _style
+     * all derived classes should set _style in the constructor
      * @return {string}
      */
      get style() { return this._style;}
@@ -22,13 +22,13 @@ class KabamDisplayBase {
      * if true then this is designed to handle multiple objects
      * else it is only meant to display a single object
      *
-     * all derived classes need set is multiple as they will
+     * all derived classes need set is is_multiple in the constructor
      * @return {boolean}
      */
      get is_multiple() { return this._is_multiple;}
 
     /**
-     * derived classes need to set _root_type
+     * derived classes need to set root_type in the constructor
      * @return {string}
      */
     get root_type() { return this._root_type;}
@@ -37,9 +37,13 @@ class KabamDisplayBase {
      * @param {GoKabam} gokabam
      * @param {KabamRuleFilter} the_filter
      * @param {KabamContainerBase} container
+     * @param {string} style
+     * @param {boolean} is_multiple
+     * @param {string}  root_type
      */
-    constructor(gokabam,the_filter,container) {
+    constructor(gokabam,the_filter,container,style,is_multiple,root_type) {
 
+        super();
         /**
          * @type {KabamRuleFilter} this._filter
           */
@@ -48,13 +52,13 @@ class KabamDisplayBase {
         this._gokabam = gokabam;
         this._parent_div = null;
         this._parent_div_classes = ['gokabam-draw'];
-        this._style = 'base';
-        this._root_type  = 'KabamRoot';
+        this._style = style;
+        this._root_type  = root_type;
 
         /**
          * @type {boolean}
          */
-        this._is_multiple = false;
+        this._is_multiple = is_multiple;
 
         this._container = container;
 
@@ -323,6 +327,27 @@ class KabamDisplayBase {
             this._container.on_display_changed(this);
 
         }
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_starting(editor) {
+
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_submit(editor) {
+
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_cancel(editor) {
+
     }
 
 
