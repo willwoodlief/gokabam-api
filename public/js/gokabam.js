@@ -19,8 +19,19 @@
 /**
  * Typedef for GoKabamContainerRegistration
  * @typedef {object} GoKabamContainerRegistration
+ * @property {string|null} root_class_string :Name of Root Derived Class
  * @property {string} style   : the name of the style
  * @property {function} register_class  : the class of the display
+ */
+
+
+/**
+ * Typedef for GoKabamEditorRegistration
+ * @typedef {object} GoKabamEditorRegistration
+ * @property {string} root_class_string :Name of Root Derived Class
+ * @property {string} style   : the name of the style
+ * @property {boolean}  is_multiple  : if true can handle multiple objects
+ * @property {function} edit_class  : the class of the edit
  */
 
 
@@ -147,21 +158,78 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
      */
     this.register_container = function(entry) {
 
+        let rooter = entry.root_class_string;
+        if (!rooter) {
+            rooter = 'empty';
+        }
         let style = entry.style;
-        this.container_registry_map[style] = entry;
+        let decorated_style = style + '_' + rooter;
+
+        this.container_registry_map[decorated_style] = entry;
 
     };
 
     /**
-     * @param display_style
+     * @param {string} display_style
+     * @param {string=} root_type
      * @return {function}
      */
-    this.get_container = function(display_style) {
-        if (!this.container_registry_map.hasOwnProperty(display_style)) {
+    this.get_container = function(display_style,root_type ) {
+        if (!root_type) {
+            root_type = 'empty';
+        }
+        let decorated_style = display_style + '_' + root_type;
+
+        if (!this.container_registry_map.hasOwnProperty(decorated_style)) {
             return null
         }
-        return this.container_registry_map[display_style].register_class;
-    }
+        return this.container_registry_map[decorated_style].register_class;
+    };
+
+    /**
+     *
+     * @type {Object.<string, GoKabamEditorRegistration>} this.editor_registry_map
+     */
+    this.editor_registry_map = {};
+
+    /**
+     *
+     * @param {GoKabamEditorRegistration} entry
+     * @return {void}
+     *
+     */
+    this.register_editor = function(entry) {
+        let rooter = entry.root_class_string;
+        let style = entry.style;
+        let decorated_style = style + '_' + (entry.is_multiple? 'multiple' : 'single');
+        if (!this.editor_registry_map.hasOwnProperty(rooter)) {
+            this.editor_registry_map[rooter] = {};
+        }
+        if (this.editor_registry_map[rooter].hasOwnProperty(decorated_style)) {
+            throw new  Error('Already registered display of ' + decorated_style);
+        }
+        this.editor_registry_map[rooter][decorated_style] = entry;
+    };
+
+    /**
+     *
+     * @param root_class_string
+     * @param edit_style
+     * @param is_multiple
+     * @return {function}
+     */
+    this.get_editor = function(root_class_string,edit_style,is_multiple) {
+        if (!this.editor_registry_map.hasOwnProperty(root_class_string)) {
+            return null
+        }
+        let decorated_style = edit_style + '_' + (is_multiple? 'multiple' : 'single');
+
+        if (!this.editor_registry_map[root_class_string].hasOwnProperty(decorated_style)) {
+            return null;
+        }
+
+        return this.editor_registry_map[root_class_string][decorated_style].edit_class;
+    };
     
 
 }
@@ -271,15 +339,28 @@ jQuery(function($){
     $.GoKabam.register_display(entry);
 
 
+    // noinspection JSValidateTypes
+    /**
+     *
+     * @type {GoKabamEditorRegistration} edit_entry
+     */
+    let edit_entry = {
+        root_class_string : 'KabamWord',
+        style : 'minimal',
+        is_multiple : false,
+        edit_class : KabamEditorWordSingle
+    };
+
+
+    $.GoKabam.register_editor(edit_entry);
+
+
 
 });
 
 
 
 
-//todo make the editor base class
-// todo add the register and get edits
-//todo make a word editor (single and multiple)
 
 
 //todo create the display, edit for tags (multiple only)

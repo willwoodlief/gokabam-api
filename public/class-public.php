@@ -91,6 +91,15 @@ class Plugin_Public
 	    $this->pages->enqueue_styles();
     }
 
+    protected function quick_enqueue($prefix,$relative) {
+	    wp_enqueue_script(
+	    	$this->plugin_name. '_' . $prefix,
+		    plugin_dir_url(__FILE__) . $relative,
+		    array(),
+		    $this->version, false
+	    );
+
+    }
     /**
      * Register the JavaScript for the public-facing side of the site.
      *
@@ -101,26 +110,43 @@ class Plugin_Public
 
 	    $b_check = strpos($_SERVER['REQUEST_URI'], strtolower( PLUGIN_NAME));
     	if ($b_check) {
-		    wp_enqueue_script('moment', PLUGIN_URL . 'node_modules/moment/min/moment-with-locales.min.js', array('jquery'), '2.22.2', false);
-		    wp_enqueue_script('jquery-bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/js/bootstrap.min.js', array('jquery'), '3.3.7', false);
-		    wp_enqueue_script('bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js', array('jquery-bootstrap'), '1.35.4', false);
-		   // wp_enqueue_script('gokabam-family', PLUGIN_URL . 'public/js/gokabam.family.js', array('jquery'), '0.0.1', false);
-		    wp_enqueue_script($this->plugin_name. '_public', plugin_dir_url(__FILE__) . 'js/public.js', array('jquery'), $this->version, false);
-		    wp_enqueue_script($this->plugin_name. '_typedefs', plugin_dir_url(__FILE__) . 'js/gokabam.typedefs.js', array(), $this->version, false);
-		    wp_enqueue_script($this->plugin_name. '_heartbeat', plugin_dir_url(__FILE__) . 'js/gokabam.heartbeat.js', array(), $this->version, false);
-		    wp_enqueue_script($this->plugin_name. '_gokabam', plugin_dir_url(__FILE__) . 'js/gokabam.js', array(), $this->version, false);
+		    wp_enqueue_script('moment',
+			    PLUGIN_URL . 'node_modules/moment/min/moment-with-locales.min.js', array('jquery'), '2.22.2', false);
 
 
-		    //displays
-		    wp_enqueue_script($this->plugin_name. '_display_base', plugin_dir_url(__FILE__) . 'js/gokabam_display/kabam.display.base.js', array(), $this->version, false);
-		    wp_enqueue_script($this->plugin_name. '_display_word_single', plugin_dir_url(__FILE__) . 'js/gokabam_display/kabam.display.word.single.js', array(), $this->version, false);
+		    wp_enqueue_script('jquery-bootstrap',
+			    PLUGIN_URL . 'node_modules/bootstrap/dist/js/bootstrap.min.js', array('jquery'), '3.3.7', false);
+
+
+		    wp_enqueue_script('bootstrap-dialog',
+			    PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js',
+			    array('jquery-bootstrap'), '1.35.4', false);
+
+		    // wp_enqueue_script('gokabam-family', PLUGIN_URL . 'public/js/gokabam.family.js', array('jquery'), '0.0.1', false);
+
+		    $this->quick_enqueue('public','js/public.js');
+		    $this->quick_enqueue('typedefs','js/gokabam.typedefs.js');
+		    $this->quick_enqueue('heartbeat','js/gokabam.heartbeat.js');
+		    $this->quick_enqueue('editor_callbacks','js/gokabam_editor/KabamEditorCallbacks.js');
+
+
+			//displays
+		    $this->quick_enqueue('display_base','js/gokabam_display/kabam.display.base.js');
+		    $this->quick_enqueue('display_word_single','js/gokabam_display/kabam.display.word.single.js');
+
 
 		    //containers
-		    wp_enqueue_script($this->plugin_name. '_display_container_base', plugin_dir_url(__FILE__) . 'js/gokabam_container/kabam.container.base.js', array(), $this->version, false);
-		    wp_enqueue_script($this->plugin_name. '_display_container_minimals', plugin_dir_url(__FILE__) . 'js/gokabam_container/kabam.container.minimals.js', array(), $this->version, false);
+		    $this->quick_enqueue('container_base','js/gokabam_container/kabam.container.base.js');
+		    $this->quick_enqueue('container_minimals','js/gokabam_container/kabam.container.minimals.js');
+
 
 		    //editors
-		    wp_enqueue_script($this->plugin_name. '_editor_base', plugin_dir_url(__FILE__) . 'js/gokabam_editor/kabam.editor.base.js', array(), $this->version, false);
+		    $this->quick_enqueue('editor_base','js/gokabam_editor/kabam.editor.base.js');
+		    $this->quick_enqueue('editor_base_bs_dialog','js/gokabam_editor/kabam.editor.bsdialog.base.js');
+		    $this->quick_enqueue('editor_word_single','js/gokabam_editor/kabam.editor.word.single.js');
+
+		    //central library
+		    $this->quick_enqueue('gokabam_core','js/gokabam.js');
 
 
 

@@ -1,40 +1,4 @@
-/**
- * Used for shared callbacks from the editor
- * meant to have classes derived from this to add in the methods and provide an interface
- * @abstract
- */
-class KabamEditorCallbacks {
 
-    constructor() {
-
-    }
-    /**
-     * @abstract
-     * @param {KabamEditorBase} editor
-     */
-    on_edit_starting(editor) {
-
-    }
-
-    /**
-     * @abstract
-     * @param {KabamEditorBase} editor
-     */
-    on_edit_submit(editor) {
-
-    }
-
-    /**
-     * @abstract
-     * @param {KabamEditorBase} editor
-     */
-    on_edit_cancel(editor) {
-
-    }
-
-
-
-}
 
 /**
  * Both containers and displays can call this
@@ -97,7 +61,15 @@ class KabamEditorBase {
         if (roots == null) {
             roots = [];
         }
-        this._roots = roots;
+        this._roots = [];
+
+        //copy so that the original objects do not get changed during an aborted edit
+        for(let i = 0; i < roots.length; i++) {
+            let root = roots[i];
+            let new_root = new root.constructor(root);
+            this._roots.push( new_root);
+        }
+
 
         this._gokabam = gokabam;
         this._style = style;
@@ -127,7 +99,6 @@ class KabamEditorBase {
 
         this._callback_object = editor_callback_object;
         this._callback_object.on_edit_starting(this);
-        this.edit(); //start the editor
     }
 
     // noinspection JSMethodCanBeStatic

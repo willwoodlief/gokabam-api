@@ -34,6 +34,11 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     get root_type() { return this._root_type;}
 
     /**
+     * @return {GoKabam}
+     */
+    get gokabam() { return this._gokabam;}
+
+    /**
      * @param {GoKabam} gokabam
      * @param {KabamRuleFilter} the_filter
      * @param {KabamContainerBase} container
@@ -197,10 +202,15 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         this._roots = [];
         for(let i = 0; i < event.targets.length; i++) {
             let root = event.targets[i];
-            this._roots.push(jQuery.extend(true,{},root));
+            let new_root = new root.constructor(root);
+            this._roots.push(new_root);
         }
         this.create_parent_div(this._parent_div_classes);
         this._container.on_new_display(this);
+        //todo displays need to have content and frame divs, and to be able to
+        // anchor their subcontainers to the frame
+        // todo have standard way of creating containers here scoped to the object(s)
+        // todo make sure containers go out of scope propertly when display is released
         this.refresh();
     }
 
@@ -214,7 +224,8 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     on_event_inserted(event) {
         for(let i = 0; i < event.targets.length; i++) {
             let root = event.targets[i];
-            this._roots.push(jQuery.extend(true,{},root));
+            let new_root = new root.constructor(root);
+            this._roots.push(new_root);
         }
         this.refresh();
         this._container.on_display_changed(this);
@@ -242,7 +253,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
             if (!root_map.hasOwnProperty(kid)) {
                 throw new Error('Display Base\'s root map does not have the kid of ' + kid + ' during the update');
             }
-            this._roots[root_map[kid].index] = jQuery.extend(true,{},root);
+            this._roots[root_map[kid].index] = new root.constructor(root);
         }
         this.refresh();
         this._container.on_display_changed(this);
@@ -290,7 +301,8 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     on_event_added_to_filter(event) {
         for(let i = 0; i < event.targets.length; i++) {
             let root = event.targets[i];
-            this._roots.push(jQuery.extend(true,{},root));
+            let rootlet = new root.constructor(root);
+            this._roots.push(rootlet);
         }
         this.refresh();
         this._container.on_display_changed(this);

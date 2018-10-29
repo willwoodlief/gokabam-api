@@ -43,7 +43,7 @@
 class KabamRoot {
 
     /**
-     * @param {GKA_Root}root
+     * @param {GKA_Root|KabamRoot}root
      */
     constructor(root) {
         if (root) {
@@ -193,7 +193,7 @@ class KabamVersion extends KabamRoot {
 /**
  * Typedef for GKA_Word, it inherits from GKA_Root, the parent can be anything but tags and words
  * @typedef {GKA_Root} GKA_Word
- * @property {string} type
+ * @property {string} type  can be name,title,blurb,description,overview,data
  * @property {string} language
  * @property {string} text
  */
@@ -201,7 +201,7 @@ class KabamVersion extends KabamRoot {
 class KabamWord extends KabamRoot {
 
     /**
-     * @param {GKA_Word|GKA_Root} word
+     * @param {GKA_Word|GKA_Root|null} word
      */
     constructor(word) {
 
@@ -290,7 +290,7 @@ class KabamTag extends KabamRoot {
  * Typedef for GKA_Element, it inherits from GKA_Root
  * @typedef {GKA_Root} GKA_Element
  * @property {string} text              , the element name in the code and call
- * @property {string} value             , string|integer|number|boolean|object|array
+ * @property {string} type             , string|integer|number|boolean|object|array
  * @property {string} format            , format can can on certain values based on the type
                                             if set with type array or object will be error
                                             format integer:
@@ -365,7 +365,7 @@ class KabamElement extends KabamRoot {
         super(element);
         if (element) {
             this.text = element.text;
-            this.value = element.value;
+            this.type = element.type;
             this.format = element.format;
             this.pattern = element.pattern;
             this.is_nullable =  element.is_nullable;
@@ -388,7 +388,7 @@ class KabamElement extends KabamRoot {
 
         } else {
             this.text = null;
-            this.value = null;
+            this.type = null;
             this.format = null;
             this.pattern = null;
             this.is_nullable =  null;
