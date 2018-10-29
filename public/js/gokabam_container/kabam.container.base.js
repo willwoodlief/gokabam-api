@@ -344,5 +344,12 @@ class KabamContainerBase extends KabamEditorCallbacks {
     on_edit_cancel(editor) {
 
     }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_delete(editor) {
+
+    }
 }
 

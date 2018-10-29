@@ -1010,14 +1010,48 @@ class FillerManager {
 	protected function get_deleted_array($page_load_id=null) {
 
 		if ($page_load_id) {
-
 			$res = $this->mydb->execSQL("
-			SELECT 
+			SELECT DISTINCT 
 				o.id as object_id,
 				o.primary_key,
 				o.da_table_name
 			FROM gokabam_api_objects o
-			INNER JOIN gokabam_api_change_log g ON g.target_object_id = o.id 		
+			INNER JOIN gokabam_api_change_log g ON g.target_object_id = o.id 
+			INNER JOIN (
+				SELECT object_id from gokabam_api_api_versions where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_apis where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_data_elements where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_data_group_examples where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_data_groups where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_family where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_inputs where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_journals where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_output_headers where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_outputs where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_tags where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_case_part_connections where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_case_parts where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_case_parts_sql where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_cases where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_versions where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_words where is_deleted = 1
+			) as real_deletes ON real_deletes.object_id = o.id		
 			WHERE g.edit_action = 'delete'  AND g.page_load_id =  ?",
 				['i',$page_load_id],
 				MYDB::RESULT_SET,
@@ -1037,14 +1071,48 @@ class FillerManager {
 			}
 
 			$res = $this->mydb->execSQL("
-			SELECT 
+			SELECT DISTINCT 
 				o.id as object_id,
 				o.primary_key,
 				o.da_table_name
 			FROM gokabam_api_objects o
 			INNER JOIN gokabam_api_change_log g ON g.target_object_id = o.id 
 			LEFT JOIN gokabam_api_page_loads p_last ON p_last.id = g.page_load_id
-			
+			INNER JOIN (
+				SELECT object_id from gokabam_api_api_versions where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_apis where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_data_elements where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_data_group_examples where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_data_groups where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_family where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_inputs where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_journals where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_output_headers where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_outputs where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_tags where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_case_part_connections where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_case_parts where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_case_parts_sql where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_use_cases where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_versions where is_deleted = 1
+				UNION
+				SELECT object_id from gokabam_api_words where is_deleted = 1
+			) as real_deletes ON real_deletes.object_id = o.id	
 			WHERE g.edit_action = 'delete'  AND UNIX_TIMESTAMP(p_last.created_at) between ? and ?",
 				['ii',$first_ts_param,$last_ts_param],
 				MYDB::RESULT_SET,

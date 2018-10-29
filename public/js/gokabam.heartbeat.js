@@ -490,7 +490,7 @@ function GoKabamHeartbeat (error_callback) {
 
                  if (that.everything === null) {
                         that.everything = new KabamEverything(data);
-                        that.send_to_notify(that.everything);
+                        that.send_to_notify(that.everything,null);
 
                  } else {
 
@@ -511,7 +511,7 @@ function GoKabamHeartbeat (error_callback) {
                                      delete new_everything.library[del_kid];
                                  }
                              }
-                             new_everything.deleted_kids.concat(new_deleted_kids_array);
+                             new_everything.deleted_kids = new_everything.deleted_kids.concat(new_deleted_kids_array);
                          }
 
                          {

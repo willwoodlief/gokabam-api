@@ -132,6 +132,17 @@ class KabamEditorBase {
         this.cleanup();
     }
 
+    on_delete() {
+        for(let i =0; i < this.objects.length; i++) {
+            let root = this.objects[i];
+            root.delete = 1;
+        }
+        this._gokabam.update(this.objects);
+        this._callback_object.on_edit_delete(this);
+        this.cleanup();
+
+    }
+
     on_cancel() {
         this._callback_object.on_edit_cancel(this);
         this.cleanup();

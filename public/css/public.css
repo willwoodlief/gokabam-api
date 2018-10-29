@@ -1,1 +1,5 @@
 /*public css*/
+
+div.modal-dialog button.gk-button-danger {
+    float: left;
+}

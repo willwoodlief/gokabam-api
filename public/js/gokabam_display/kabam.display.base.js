@@ -7,7 +7,6 @@
  get_edit(),   static is multiple
  display is responsible for having a way to click or get the edit
  a display can have some words as part of the element, but needs to have a way to edit all words too
-todo add in edit support,
  */
 class KabamDisplayBase extends KabamEditorCallbacks {
 
@@ -359,6 +358,13 @@ class KabamDisplayBase extends KabamEditorCallbacks {
      * @param {KabamEditorBase} editor
      */
     on_edit_cancel(editor) {
+
+    }
+
+    /**
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_delete(editor) {
 
     }
 

@@ -8,6 +8,16 @@ class KabamEditorCallbacks {
     constructor() {
 
     }
+
+    /**
+     * @abstract
+     * @param {KabamEditorBase} editor
+     */
+    on_edit_delete(editor) {
+
+    }
+
+
     /**
      * @abstract
      * @param {KabamEditorBase} editor

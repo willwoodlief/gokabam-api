@@ -109,7 +109,19 @@ class KabamEditorBSDialogBase extends  KabamEditorBase{
                         that.on_cancel();
                         dialogItself.close();
                     }
-                }
+                },
+                {
+                    label: 'Delete',
+                    cssClass: 'btn-danger gk-button-danger',
+                    action: function(dialogRef){
+                        let u = confirm("Are you Sure you want to delete?");
+                        if (u) {
+                            that.on_delete();
+                            dialogRef.close();
+                        }
+
+                    }
+                },
 
             ]
         });
