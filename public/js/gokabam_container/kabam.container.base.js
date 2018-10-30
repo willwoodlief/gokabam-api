@@ -3,7 +3,6 @@
  */
 class KabamContainerBase extends KabamEditorCallbacks {
 
-
     /**
      * all derived classes should set style in the super constructor
      * @return {string}
@@ -13,6 +12,9 @@ class KabamContainerBase extends KabamEditorCallbacks {
     //called by things creating this container, to place the div on the correct place
     get div() { return this.outer_div;}
 
+    get base_id() { return this._base_id;}
+
+    get displays() { return this._display_list;}
     /**
      * @param {GoKabam} gokabam
      * @param {string[]} css_class_array
@@ -31,8 +33,20 @@ class KabamContainerBase extends KabamEditorCallbacks {
          *
          * @type {Object.<string, KabamDisplayBase[]>} this.display_list
          */
-        this.display_list = {};
+        this._display_list = {};
         this.gokabam = gokabam;
+
+        let ugly_base_name = this.constructor.name;
+        let camel_array = ugly_base_name.split(/(?=[A-Z])/);
+
+        let lower_array = [];
+        for(let i=0; i < camel_array.length; i++) {
+            lower_array.push(camel_array[i].toLowerCase());
+        }
+        let pretty_base_name = lower_array.join('_');//upper case separated by underscore, and all lower case
+
+        this._base_id = $.GokabamIds.register(pretty_base_name);
+
 
         if (css_class_array.indexOf('gokabam-container') < 0) {
             css_class_array.unshift('gokabam-container');
@@ -68,6 +82,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
         let div = jQuery('<div></div>');
         let class_string = class_array.join(' ');
         div.addClass(class_string);
+        div.addClass('gk-container');
         return div;
     }
 
@@ -80,7 +95,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
     create_container_div(parent_div) {
         let div = jQuery('<div></div>');
         parent_div.append(div);
-        div.addClass('gokabam-inside-container');
+        div.addClass('gk-container-content');
         return div;
     }
 
@@ -93,16 +108,16 @@ class KabamContainerBase extends KabamEditorCallbacks {
      */
     remove() {
         this.gokabam.cancel_notification(this.notification_id);
-        for(let root_type in this.display_list) {
-            if (! this.display_list.hasOwnProperty(root_type)) {continue;}
-            let ar = this.display_list[root_type];
+        for(let root_type in this._display_list) {
+            if (! this._display_list.hasOwnProperty(root_type)) {continue;}
+            let ar = this._display_list[root_type];
             for(let i =0; i < ar.length; i++) {
                 let display = ar[i];
                 display.remove();
             }
         }
         this.container_div.html('');
-        this.display_list = {};
+        this._display_list = {};
         this.object_map = {};
     }
 
@@ -142,8 +157,8 @@ class KabamContainerBase extends KabamEditorCallbacks {
             if (!rooters.hasOwnProperty(root_type)) {continue;}
 
             //first check to see if there is already a multiple display created for this type, if so we are done for this root type
-            if (this.display_list.hasOwnProperty(root_type)) {
-                let display_array = this.display_list[root_type];
+            if (this._display_list.hasOwnProperty(root_type)) {
+                let display_array = this._display_list[root_type];
                 if (display_array.length > 0) {
                     let display = display_array[0];
                     if (display.is_multiple) {
@@ -189,10 +204,10 @@ class KabamContainerBase extends KabamEditorCallbacks {
                     let display = new display_class(this.gokabam, new_filter,this);
 
                     //add the display to the display list
-                    if (this.display_list.hasOwnProperty(root_type)) {
-                        this.display_list[root_type].push(display);
+                    if (this._display_list.hasOwnProperty(root_type)) {
+                        this._display_list[root_type].push(display);
                     } else {
-                        this.display_list[root_type] = [display];
+                        this._display_list[root_type] = [display];
                     }
 
                     //we are done with this root type, made a multiple which wil handle all objects of this type now
@@ -223,10 +238,10 @@ class KabamContainerBase extends KabamEditorCallbacks {
 
                 let display = new display_class(this.gokabam, new_filter,this);
                 //add the display to the display list
-                if (this.display_list.hasOwnProperty(root_type)) {
-                    this.display_list[root_type].push(display);
+                if (this._display_list.hasOwnProperty(root_type)) {
+                    this._display_list[root_type].push(display);
                 } else {
-                    this.display_list[root_type] = [display];
+                    this._display_list[root_type] = [display];
                 }
             } //end for loop making a new display for each object
 
@@ -261,8 +276,8 @@ class KabamContainerBase extends KabamEditorCallbacks {
     on_display_destroyed(display) {
         // remove display from list
         let root_type = display.root_type;
-        if (this.display_list.hasOwnProperty(root_type)) {
-            let display_array = this.display_list[root_type];
+        if (this._display_list.hasOwnProperty(root_type)) {
+            let display_array = this._display_list[root_type];
             for(let i = 0; i < display_array.length; i++) {
                 let test = display_array[i];
                 if (test === display) {

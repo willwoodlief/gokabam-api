@@ -139,13 +139,18 @@ class ParseWord {
 			$db_thing->md5_checksum = $node['md5_checksum'];
 		}
 
-		//check language length, if greater than 2 go ahead
-		if ( strlen($db_thing->language) !== 2 ) {
-			throw new ApiParseException("The language code needs to be exactly two characters long,  @$classname for " . $db_thing->kid);
+		//check language length, if greater than 2 go ahead allow null
+		if (empty($db_thing->language)) {
+			$db_thing->language = null;
+		} else {
+			if ( strlen($db_thing->language) !== 2 ) {
+				throw new ApiParseException("The language code needs to be exactly two characters long,  @$classname for " . $db_thing->kid);
+			}
 		}
 
+
 		if (empty($db_thing->text)) {
-			throw new ApiParseException("Words need to have some kind of content, even if just empty spaces");
+			$db_thing->text = '';
 		}
 
 		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);

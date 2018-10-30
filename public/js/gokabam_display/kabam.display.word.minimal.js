@@ -1,5 +1,5 @@
 
-class KabamDisplayWordSingle extends KabamDisplayBase {
+class KabamDisplayWordMinimal extends KabamDisplayBase {
 
 
     constructor(gokabam,the_filter,container) {
@@ -10,11 +10,18 @@ class KabamDisplayWordSingle extends KabamDisplayBase {
 
     create_parent_div(classes) {
         classes.push('gokabam-draw-word-single');
-        super.create_parent_div(classes);
+        return super.create_parent_div(classes);
     }
 
-    refresh() {
-        let parent_div = this.div;
+    create_content_div(parent) {
+        return super.create_content_div(parent)
+    }
+
+    add_child_containers(parent) {
+        return []
+    }
+
+    on_refresh(parent_div) {
         let that = this;
         jQuery(document).off('click','.gk-word-single-display');
         jQuery(document).on('click','.gk-word-single-display',function() {

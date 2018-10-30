@@ -145,7 +145,11 @@ function GoKabamHeartbeat (error_callback) {
             }
 
             //get the current set of objects that match this rule (filter from the constructor params)
-            let compare_rem = find_objects_in_ruleset(everything,filter);
+            let what_dataset = everything;
+            if (new_everything) {
+                what_dataset = new_everything;
+            }
+            let compare_rem = find_objects_in_ruleset(what_dataset,filter);
 
             //the two arrays are arrays of objects that have a unique property: kid, so make two arrays of kids
             let rem_kids = [];
@@ -268,7 +272,8 @@ function GoKabamHeartbeat (error_callback) {
                 }
             }
 
-            //now do regular expressions
+            //now do rules
+            // all the rules have to fit each thing, in order for it to pass
 
             for( let kid in library) {
                 if (!library.hasOwnProperty(kid)) {
@@ -276,6 +281,7 @@ function GoKabamHeartbeat (error_callback) {
                 } //sigh !
 
                 let what = library[kid];
+                let count_matches = 0;
 
                 for(let n = 0; n < filter.rules.length; n++) {
                     let rule_node = filter.rules[n];
@@ -290,7 +296,7 @@ function GoKabamHeartbeat (error_callback) {
                     let thing = rule_node.property_value;
                     //special check for null and empty and string
                     if (thing === property_to_test) {
-                        ret_hash[what.kid] = what;
+                        count_matches ++;
                         continue;
                     }
                     if (property_to_test === null || property_to_test === '') {continue;}
@@ -307,27 +313,31 @@ function GoKabamHeartbeat (error_callback) {
                             let make_it_numeric = Number(property_to_test);
                             if ( thing.max != null && thing.min != null) {
                                 if ((make_it_numeric <= thing.max) && (make_it_numeric >= thing.min) ) {
-                                    ret_hash[what.kid] = what;
+                                    count_matches ++;
                                 }
                             } else if (thing.max == null && thing.min != null) {
                                 if ( make_it_numeric >= thing.min ) {
-                                    ret_hash[what.kid] = what;
+                                    count_matches++;
                                 }
                             } else if (thing.min == null && thing.max != null) {
                                 if ( make_it_numeric <= thing.max ) {
-                                    ret_hash[what.kid] = what;
+                                    count_matches ++;
                                 }
                             }
                         }
                     } else if (thing instanceof RegExp) {
                         //test with regular expression
                         if (thing.test(property_to_test)) {
-                            ret_hash[what.kid] = what;
+                            count_matches ++;
                         }
                     } else {
                         throw new Error("No clue what this rule for " + property
                             + "is, its not a min,max or a regex. Type of =  " + (typeof  thing) )
                     }
+                }
+                //test to see if the match count meets the rule count, if so put it in ret_hash
+                if ((count_matches > 0 ) && (count_matches === filter.rules.length)) {
+                    ret_hash[what.kid] = what;
                 }
             }
 
@@ -427,6 +437,7 @@ function GoKabamHeartbeat (error_callback) {
         //create copy of the callbacks array, in case extra things get added in the middle of all this
         let callbacks = this.da_callbacks.slice();
         for(let i = 0; i < callbacks.length; i++) {
+            if (callbacks[i] == null) { continue;}
             callbacks[i].process_everything(everything,new_everything);
         }
     };
@@ -508,7 +519,7 @@ function GoKabamHeartbeat (error_callback) {
                              for (let i = 0; i < new_deleted_kids_array.length; i++) {
                                  let del_kid = new_deleted_kids_array[i];
                                  if (new_everything.library.hasOwnProperty(del_kid)) {
-                                     delete new_everything.library[del_kid];
+                                      new_everything.remove_kid(del_kid);
                                  }
                              }
                              new_everything.deleted_kids = new_everything.deleted_kids.concat(new_deleted_kids_array);
@@ -551,8 +562,9 @@ function GoKabamHeartbeat (error_callback) {
                      that.everything.get_changed_deleted(new_everything);
                      that.everything.get_changed_inserted(new_everything);
                      that.everything.get_changed_updated(new_everything);
+                     that.everything = new_everything; //update everything before new handlers are made with the inserted stuff
                      that.send_to_notify(that.everything,new_everything);
-                     that.everything = new_everything;
+
 
 
                  }

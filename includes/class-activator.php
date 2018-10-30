@@ -276,7 +276,7 @@ class Activator {
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
-        	  iso_639_1_language_code char(2) not null default 'en',
+        	  iso_639_1_language_code char(2)  default 'en',
         	  word_code_enum varchar(15) not null comment 'name,title,blurb,description,overview,data',
               da_words mediumtext DEFAULT NULL,
               md5_checksum varchar(255) default null,

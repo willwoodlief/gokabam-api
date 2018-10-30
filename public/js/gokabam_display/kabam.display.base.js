@@ -37,6 +37,8 @@ class KabamDisplayBase extends KabamEditorCallbacks {
      */
     get gokabam() { return this._gokabam;}
 
+    get base_id() { return this._base_id;}
+
     /**
      * @param {GoKabam} gokabam
      * @param {KabamRuleFilter} the_filter
@@ -55,9 +57,21 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         this._roots = [];
         this._gokabam = gokabam;
         this._parent_div = null;
-        this._parent_div_classes = ['gokabam-draw'];
+        this._content_div = null;
+        this._parent_div_classes = ['gokabam-display'];
         this._style = style;
         this._root_type  = root_type;
+
+        let ugly_base_name = this.constructor.name;
+        let camel_array = ugly_base_name.split(/(?=[A-Z])/);
+
+        let lower_array = [];
+        for(let i=0; i < camel_array.length; i++) {
+            lower_array.push(camel_array[i].toLowerCase());
+        }
+        let pretty_base_name = lower_array.join('_');//upper case separated by underscore, and all lower case
+
+        this._base_id = $.GokabamIds.register(pretty_base_name);
 
         /**
          * @type {boolean}
@@ -70,7 +84,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
          * children need to add any dependent containers to this for proper clean up
          * @type {KabamContainerBase[]}
          */
-        this.child_containers = [];
+        this._child_containers = [];
         /**
          *
          * @type {number} notification_id
@@ -86,6 +100,9 @@ class KabamDisplayBase extends KabamEditorCallbacks {
      */
     get div() { return this._parent_div;}
 
+    get content_div() { return this._content_div;}
+
+    get child_containers() { return this._child_containers;}
 
     get filter() { return this._filter;}
 
@@ -113,22 +130,27 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         //cancel the notifications
         this._gokabam.cancel_notification(this.notification_id);
         this._parent_div.hide();
-        for(let i = 0; i < this.child_containers; i++) {
-            this.child_containers[i].remove();
-        }
+        this.remove_child_containers();
         this._parent_div.html('');
         this._roots = [];
         this._container.on_display_destroyed(this);
     }
 
+
+    refresh() {
+        this.on_refresh(this.content_div);
+        this.refresh_containers();
+    }
+
+    // noinspection JSMethodCanBeStatic
     /**
      * @abstract
      * draw is called to create the display from the roots and the parent_div
      * the div should be visible here, but it depends how the container handles it
      * its safest to just html('') out the parent div and start fresh each time
      */
-    refresh() {
-
+    on_refresh(div) {
+        div.show();
     }
 
 
@@ -139,14 +161,55 @@ class KabamDisplayBase extends KabamEditorCallbacks {
      *   if not calling super , set the parent_div_classes to all that is being used
      *
      * @param {string[]} classes
-     *
+     *  @return {jQuery}
      */
     create_parent_div(classes) {
-        this._parent_div = jQuery('<div></div>');
-        this._parent_div_classes = classes.slice();
+        let parent_div  = jQuery('<div></div>');
         let class_string = classes.join(' ');
-        this._parent_div.addClass(class_string);
-        this._parent_div.hide();
+        parent_div.addClass(class_string);
+        parent_div.hide();
+        return parent_div;
+    }
+
+    // noinspection JSMethodCanBeStatic
+    /**
+     * @abstract
+     * creates the div which holds the content
+     * the base simply makes a plain div and appends it to the parent
+     * The derived at call the base and then add classes and children
+     *  @param {jQuery} parent_div
+     *  @return {jQuery}
+     */
+    create_content_div(parent_div) {
+        let content_div  = jQuery('<div></div>');
+        // noinspection JSUnresolvedFunction
+        parent_div.append(content_div);
+        return content_div;
+    }
+
+    // noinspection JSMethodCanBeStatic
+    /**
+     * @abstract
+     * @param {jQuery} parent_div
+     * add containers to
+     * @see this._child_containers
+     * by returning array of containers added
+     * this function needs to place them in parent div and position them with classes or style
+     */
+    add_child_containers(parent_div) {
+        return [];
+    }
+
+    refresh_containers() {
+        for(let i = 0; i < this.child_containers; i++) {
+            this.child_containers[i].refresh();
+        }
+    }
+
+    remove_child_containers() {
+        for(let i = 0; i < this.child_containers; i++) {
+            this.child_containers[i].remove();
+        }
     }
 
 
@@ -191,6 +254,25 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     }
 
     /**
+     * @private
+     * internal function to set up the divs, will call overrides
+     * Will only be called once, after the first object given
+     * @return {void}
+     */
+    set_up_divs() {
+        if (this.div) {
+            this.refresh();
+            return; //do not set up if already created parent div
+        }
+        this._parent_div = this.create_parent_div(this._parent_div_classes);
+        this._content_div = this.create_content_div(this._parent_div);
+        this._child_containers = this.add_child_containers(this._parent_div);
+        this._container.on_new_display(this);
+
+        this.refresh();
+    }
+
+    /**
      * this is the first time the roots are seen, so create a new array and copy anything given
      * afterwards, call draw
      * @private
@@ -204,13 +286,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
             let new_root = new root.constructor(root);
             this._roots.push(new_root);
         }
-        this.create_parent_div(this._parent_div_classes);
-        this._container.on_new_display(this);
-        //todo displays need to have content and frame divs, and to be able to
-        // anchor their subcontainers to the frame
-        // todo have standard way of creating containers here scoped to the object(s)
-        // todo make sure containers go out of scope propertly when display is released
-        this.refresh();
+        this.set_up_divs();
     }
 
     /**
@@ -226,7 +302,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
             let new_root = new root.constructor(root);
             this._roots.push(new_root);
         }
-        this.refresh();
+        this.set_up_divs();
         this._container.on_display_changed(this);
     }
 

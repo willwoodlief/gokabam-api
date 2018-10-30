@@ -3,8 +3,8 @@
 
 
 "@fortawesome/fontawesome-free@^5.3.1":
-  version "5.3.1"
-  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.3.1.tgz#5466b8f31c1f493a96754c1426c25796d0633dd9"
+  version "5.4.2"
+  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.4.2.tgz#b2d782da69c45ea61954291e2615a8f7741c96b2"
 
 ace-diff@^2.3.0:
   version "2.3.0"
@@ -40,3 +40,7 @@ lodash@^4.17.4:
 moment@^2.22.2:
   version "2.22.2"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.2.tgz#3c257f9839fc0e93ff53149632239eb90783ff66"
+
+notifyjs-browser@^0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/notifyjs-browser/-/notifyjs-browser-0.4.2.tgz#4837b5dc00cba367d30c0b51472ed3a082a55033"

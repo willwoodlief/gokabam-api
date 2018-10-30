@@ -212,7 +212,7 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
     };
 
     /**
-     *
+     * will try to get that editor for the style, but if not will get it for the root class
      * @param root_class_string
      * @param edit_style
      * @param is_multiple
@@ -225,6 +225,13 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
         let decorated_style = edit_style + '_' + (is_multiple? 'multiple' : 'single');
 
         if (!this.editor_registry_map[root_class_string].hasOwnProperty(decorated_style)) {
+            //return the first one that matches multiple for the root type
+            for(let decorated in this.editor_registry_map[root_class_string]) {
+                let container = this.editor_registry_map[root_class_string][decorated];
+                if (container.is_multiple === is_multiple) {
+                    return container.edit_class;
+                }
+            }
             return null;
         }
 
@@ -265,7 +272,7 @@ jQuery(function($){
                 test_version = event.targets[0]; //grab the literal
             }
 
-            var re = /^version_\w+$/;
+            let re = /^version_\w+$/;
             /**
              * @type {KabamRuleFilter}
              */
@@ -283,14 +290,25 @@ jQuery(function($){
 
             nid = $.GoKabam.create_notification(handler,null,filter);
 
-            let container_class = $.GoKabam.get_container('minimal');
+            let container_class = $.GoKabam.get_container('wide');
             //make test container with word
+            // version_YD53eP
+            let type_regex = /^word_\w+$/;
+            /**
+             * @type {KabamRuleFilter}
+             */
             let word_filter = {
                 rules:[
-
+                    {
+                        property_name: 'kid',
+                        property_value: type_regex
+                    },
+                    {
+                        property_name: 'parent',
+                        property_value: 'version_YD53eP'
+                    }
                 ],
                 literals: [
-                    'word_bJWbDr'
                 ]
             };
             debugger;
@@ -318,10 +336,22 @@ jQuery(function($){
     });
 
 
+    ///////////////////////////////////////////////////
+    ////////////////Containers//////////////////////////
+    /////////////////////////////////////////////////
 
 
     // noinspection JSCheckFunctionSignatures
     $.GoKabam.register_container({style: 'minimal',register_class: KabamContainerMinimalSingle});
+
+    // noinspection JSCheckFunctionSignatures
+    $.GoKabam.register_container({style: 'wide',register_class: KabamContainerWordWide});
+
+
+    ///////////////////////////////////////////////////
+    ////////////////Displays//////////////////////////
+    /////////////////////////////////////////////////
+
 
     // noinspection JSValidateTypes
     /**
@@ -332,11 +362,32 @@ jQuery(function($){
         root_class_string : 'KabamWord',
         style : 'minimal',
         is_multiple : false,
-        display_class : KabamDisplayWordSingle
+        display_class : KabamDisplayWordMinimal
     };
 
+    $.GoKabam.register_display(entry);
+
+
+    // noinspection JSValidateTypes
+    /**
+     *
+     * @type {GoKabamDisplayRegistration} entry
+     */
+    entry = {
+        root_class_string : 'KabamWord',
+        style : 'wide',
+        is_multiple : false,
+        display_class : KabamDisplayWordWide
+    };
 
     $.GoKabam.register_display(entry);
+
+
+
+
+    //////////////////////////////////////////////////
+    ////////////////Editors//////////////////////////
+    /////////////////////////////////////////////////
 
 
     // noinspection JSValidateTypes

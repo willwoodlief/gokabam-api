@@ -22,7 +22,7 @@ coordinator:
        //and will return the updated information
  */
 
-(function($) {
+(function ($) {
     // Empty object, we are going to use this as our Queue
     var ajaxQueue = $({});
 
@@ -32,29 +32,33 @@ coordinator:
      * @param {Object} ajaxOpts
      * @constructor
      */
-    $.GokabamAjaxQueue = function(ajaxOpts) {
+    $.GokabamAjaxQueue = function (ajaxOpts) {
         // hold the original complete function
         var oldComplete = ajaxOpts.complete;
 
         // queue our ajax request
-        ajaxQueue.queue(function(next) {
+        ajaxQueue.queue(function (next) {
 
             // create a complete callback to fire the next event in the queue
-            ajaxOpts.complete = function() {
+            ajaxOpts.complete = function () {
                 // fire the original complete if it was there
                 if (oldComplete) oldComplete.apply(this, arguments);
                 next(); // run the next query in the queue
             };
 
-            // run the query
-            $.ajax(ajaxOpts);
+            try {
+                // run the query
+                $.ajax(ajaxOpts);
+            } catch (e) {
+                console.log(e);
+            }
         });
     };
 
 })(jQuery);
 
 
-(function($) {
+(function ($) {
 
     /**
      * Success callback
@@ -80,6 +84,7 @@ coordinator:
      */
     $.GokabamTalk = function gokabam_api_talk_to_frontend(method, server_options, success_callback, error_callback) {
 
+
         if (!server_options) {
             server_options = {};
         }
@@ -103,24 +108,27 @@ coordinator:
         });
 
         function success_handler(data) {
-
-            // noinspection JSUnresolvedVariable
-            if (data && data.is_valid) {
-                if (success_callback) {
-                    success_callback(data.data);
+            try {
+                // noinspection JSUnresolvedVariable
+                if (data && data.is_valid) {
+                    if (success_callback) {
+                        success_callback(data.data);
+                    } else {
+                        console.debug(data);
+                    }
                 } else {
-                    console.debug(data);
-                }
-            } else {
-                if (!data) {
-                    data = {message: 'no response'};
-                }
-                if (error_callback) {
-                    error_callback(data);
-                } else {
-                    console.debug(data);
-                }
+                    if (!data) {
+                        data = {message: 'no response'};
+                    }
+                    if (error_callback) {
+                        error_callback(data);
+                    } else {
+                        console.debug(data);
+                    }
 
+                }
+            } catch (error) {
+                $.GokabamErrorLogger(error);
             }
         }
 
@@ -157,12 +165,14 @@ coordinator:
             if (error_callback) {
                 error_callback(message);
             } else {
-                console.warn(message);
+                $.GokabamErrorLogger(message,"warn");
             }
 
 
         }
+
     }
+
 
 })(jQuery);
 
@@ -170,47 +180,47 @@ coordinator:
 /**
  * Changes timestamps in the data to human readable dates and times for the language and locale and timezone of the browser
  */
-jQuery(function($) {
+jQuery(function ($) {
     function TimeStampToLocale() {
-        $(".a-timestamp-full-date-time").each(function() {
+        $(".a-timestamp-full-date-time").each(function () {
             var qthis = $(this);
             var ts = $(this).data('ts');
             if (ts === 0 || ts === '0') {
-                qthis.text('' );
+                qthis.text('');
             } else {
                 var m = moment(ts * 1000);
                 qthis.text(m.format('LLLL'));
             }
         });
 
-        $(".a-timestamp-full-date").each(function() {
+        $(".a-timestamp-full-date").each(function () {
             var qthis = $(this);
             var ts = $(this).data('ts');
             if (ts === 0 || ts === '0') {
-                qthis.text('' );
+                qthis.text('');
             } else {
                 var m = moment(ts * 1000);
                 qthis.text(m.format('LL'));
             }
         });
 
-        $(".a-timestamp-short-date-time").each(function() {
+        $(".a-timestamp-short-date-time").each(function () {
             var qthis = $(this);
             var ts = $(this).data('ts');
             if (ts === 0 || ts === '0') {
-                qthis.text('' );
+                qthis.text('');
             } else {
-                var m = moment(ts*1000);
-                qthis.text(m.format('lll') );
+                var m = moment(ts * 1000);
+                qthis.text(m.format('lll'));
             }
 
         });
 
-        $(".a-timestamp-short-date").each(function() {
+        $(".a-timestamp-short-date").each(function () {
             var qthis = $(this);
             var ts = $(this).data('ts');
             if (ts === 0 || ts === '0') {
-                qthis.text('' );
+                qthis.text('');
             } else {
                 var m = moment(ts * 1000);
                 qthis.text(m.format('ll'));
@@ -219,6 +229,59 @@ jQuery(function($) {
     }
 
     TimeStampToLocale();
+
+
+    function GokabamUniqueID() {
+        this.gk_rem_ids = {};
+
+        /**
+         *
+         * @param {string} id
+         * @return {string}
+         */
+        this.register = function (id) {
+            let ret = id;
+
+            let counter = 1;
+            while (this.gk_rem_ids.hasOwnProperty(ret)) {
+                ret = id + '_' + counter;
+                counter++;
+            }
+            this.gk_rem_ids[ret] = Date.now();
+            return ret;
+        };
+    }
+
+    $.GokabamIds = new GokabamUniqueID();
+
+    $.GokabamErrorLogger = function(error,type_error) {
+        if (type_error == null) {
+            type_error = 'error';
+        }
+        let isError = function(e){
+            return e && e.stack && e.message;
+        };
+        let message = '';
+        if (typeof error === 'string' || error instanceof String) {
+            message = error;
+        } else if (isError(error)) {
+            message = error.message + "\n" + error.stack ;
+        } else if (error == null) {
+            message = '[null]';
+        } else if ( typeof error === 'object' ) {
+            message = JSON.stringify(error);
+        } else {
+            message = '' + error;
+        }
+
+        $.notify(message, type_error,{ position:"right", autoHideDelay: 20000,clickToHide: true,autoHide: false });
+        if (type_error === 'error') {
+            console.error(error);
+        } else {
+            console.warn(error);
+        }
+
+    }
 
 });
 

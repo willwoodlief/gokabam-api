@@ -82,7 +82,7 @@ class Plugin_Public
 	    if ($b_check) {
 		    wp_enqueue_style('bootstrap', PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap.min.css', array(), '3.3.7', 'all');
 		    wp_enqueue_style('bootstrap-theme' , PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap-theme.min.css', array(), '3.3.7', 'all');
-		    wp_enqueue_style( 'fontawesome', PLUGIN_URL . 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', array(), '5.3.1', 'all');
+		    wp_enqueue_style( 'fontawesome', PLUGIN_URL . 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', array(), '5.4.2', 'all');
 		    wp_enqueue_style( 'bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css', array('bootstrap'), '1.35.4', 'all');
 
 	    }
@@ -122,6 +122,14 @@ class Plugin_Public
 			    PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js',
 			    array('jquery-bootstrap'), '1.35.4', false);
 
+		    wp_enqueue_script('notify-browser',
+			    PLUGIN_URL . 'node_modules/notifyjs-browser/dist/notify.js',
+			    array('jquery-bootstrap'), '0.4.2', false);
+
+
+
+
+
 		    // wp_enqueue_script('gokabam-family', PLUGIN_URL . 'public/js/gokabam.family.js', array('jquery'), '0.0.1', false);
 
 		    $this->quick_enqueue('public','js/public.js');
@@ -132,12 +140,14 @@ class Plugin_Public
 
 			//displays
 		    $this->quick_enqueue('display_base','js/gokabam_display/kabam.display.base.js');
-		    $this->quick_enqueue('display_word_single','js/gokabam_display/kabam.display.word.single.js');
+		    $this->quick_enqueue('display_word_minimal','js/gokabam_display/kabam.display.word.minimal.js');
+		    $this->quick_enqueue('display_word_wide','js/gokabam_display/kabam.display.word.wide.js');
 
 
 		    //containers
 		    $this->quick_enqueue('container_base','js/gokabam_container/kabam.container.base.js');
-		    $this->quick_enqueue('container_minimals','js/gokabam_container/kabam.container.minimals.js');
+		    $this->quick_enqueue('container_minimal','js/gokabam_container/kabam.container.minimal.js');
+		    $this->quick_enqueue('container_word_wide','js/gokabam_container/kabam.container.word.wide.js');
 
 
 		    //editors

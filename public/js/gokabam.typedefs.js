@@ -1439,6 +1439,222 @@ function KabamEverything(everything)  {
     };
 
     /**
+     *
+     * @param {KabamRoot} woo
+     * return {string}
+     */
+    this.get_prefix = function(woo) {
+        if (woo == null)  {return true;}
+        if (woo.kid == null) {
+            throw new Error("Trying to get a prefix but nothing in the kid");
+        }
+        let r = new RegExp('^([a-zA-Z]+)_[a-zA-Z0-9]+');
+        let m = woo.kid.match(r);
+        if (!m) {
+            throw new Error("Kid of ["+ woo.kid +"] has no match for prefix");
+        }
+        if (m.length < 2) {
+            throw new Error("Logic Error! in getting prefix from ["+ woo.kid +"]");
+        }
+        return m[1];
+    };
+    /**
+     *
+     * @param {KabamRoot} woo
+     */
+    this.remove_kid = function(woo) {
+        if (woo == null)  {return true;}
+        if (typeof woo === 'string' || woo instanceof String) {
+            let hack = new KabamRoot(null);
+            hack.kid = woo;
+            woo = hack;
+        }
+        //get the kid's prefix
+        let prefix = this.get_prefix(woo);
+        let found_kid = null;
+        let prop = null;
+
+        switch (prefix) {
+            case 'word': {
+                prop = 'word';
+                let index = this.words.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.words.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'tag': {
+                prop = 'tag';
+                let index = this.tags.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.tags.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'journal': {
+                prop = 'journal';
+                let index = this.journals.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.journals.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'version': {
+                prop = 'version';
+                let index = this.versions.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.versions.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'apiversion': {
+                prop = 'apiversion';
+                let index = this.api_versions.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.api_versions.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'family': {
+                prop = 'family';
+                let index = this.families.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.families.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'api': {
+                prop = 'api';
+                let index = this.apis.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.apis.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'header': {
+                prop = 'header';
+                let index = this.headers.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.headers.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'input': {
+                prop = 'input';
+                let index = this.inputs.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.inputs.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'output': {
+                prop = 'output';
+                let index = this.outputs.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.outputs.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'sql': {
+                prop = 'sql';
+                let index = this.sql_parts.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.sql_parts.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'connection': {
+                prop = 'connection';
+                let index = this.use_part_connections.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.use_part_connections.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'part': {
+                prop = 'part';
+                let index = this.use_parts.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.use_parts.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'case': {
+                prop = 'case';
+                let index = this.use_cases.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.use_cases.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'group': {
+                prop = 'group';
+                // noinspection JSUnresolvedVariable
+                if (woo.type === 'database_table') {
+                    let index = this.table_groups.indexOf(woo.kid);
+                    if (index !== -1) {
+                        this.table_groups.splice(index, 1);
+                        found_kid = woo.kid;
+                    }
+                } else {
+                    let index = this.data_groups.indexOf(woo.kid);
+                    if (index !== -1) {
+                        this.data_groups.splice(index, 1);
+                        found_kid = woo.kid;
+                    }
+                }
+
+                break;
+            }
+            case  'example': {
+                prop = 'example';
+                let index = this.examples.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.examples.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            case 'element': {
+                prop = 'element';
+                let index = this.elements.indexOf(woo.kid);
+                if (index !== -1) {
+                    this.elements.splice(index, 1);
+                    found_kid = woo.kid;
+                }
+                break;
+            }
+            default: {
+                throw new Error('Did not recognize prefix in switch; ' + prefix) ;
+            }
+        }
+
+        if (found_kid) {
+            delete this.library[found_kid];
+        } else {
+            let wasit = "Was NOT";
+            if (this.library.hasOwnProperty(woo.kid)) {
+                wasit = "Is INCLUDED";
+            }
+            throw new Error("Cannot remove "+ woo.kid + ". Was not in  "+ prop +" . It " + wasit + " in the library");
+        }
+    };
+
+    /**
      * Woo needs to be derived from KabamRoot or should implement the user property
      * returns the copy made
      * @param {*} woo
