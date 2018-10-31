@@ -6,8 +6,8 @@ CREATE TRIGGER trigger_after_create_gokabam_api_use_case_parts_sql
     #insert new object id
     UPDATE gokabam_api_objects SET primary_key = NEW.id WHERE id = NEW.object_id;
 
-    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-    VALUES (NEW.object_id,NEW.last_page_load_id,'insert');
+    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action)
+    VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'insert');
 
 
     set @crc := '';
@@ -24,7 +24,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_use_case_parts_sql
       SET @crc := NULL;
     END IF;
 
-    UPDATE gokabam_api_use_case_parts SET md5_checksum_sql_parts = @crc
+    UPDATE gokabam_api_use_case_parts SET md5_checksum_sql_parts = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE id = NEW.use_case_part_id;
 
 

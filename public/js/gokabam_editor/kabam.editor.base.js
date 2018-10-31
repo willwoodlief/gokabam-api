@@ -78,8 +78,8 @@ class KabamEditorBase {
          * @type {boolean}
          */
         this._is_multiple = is_multiple;
-        if (this.is_multiple) {
-            if (this._roots.length > 1 && is_multiple) {
+        if (!this.is_multiple) {
+            if (this._roots.length > 1) {
                 throw new Error("Single Editor cannot do multiple roots at the same time");
             }
         }

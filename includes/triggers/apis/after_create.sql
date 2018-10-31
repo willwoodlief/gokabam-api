@@ -13,8 +13,8 @@ CREATE TRIGGER trigger_after_create_gokabam_api_apis
     #insert new object id
     UPDATE gokabam_api_objects SET primary_key = NEW.id WHERE id = NEW.object_id;
 
-    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-    VALUES (NEW.object_id,NEW.last_page_load_id,'insert');
+    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action)
+    VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'insert');
 
 
     #   gokabam_api_use_case_parts, in_api_id , md5_checksum_apis
@@ -45,7 +45,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_apis
         SET @crc := NULL;
       END IF;
 
-      UPDATE gokabam_api_use_case_parts s SET md5_checksum_apis = @crc
+      UPDATE gokabam_api_use_case_parts s SET md5_checksum_apis = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
       WHERE s.id = a_use_case_part_id;
 
     END LOOP;
@@ -68,14 +68,14 @@ CREATE TRIGGER trigger_after_create_gokabam_api_apis
       SET @crc := NULL;
     END IF;
 
-    UPDATE gokabam_api_family SET md5_checksum_apis = @crc
+    UPDATE gokabam_api_family SET md5_checksum_apis = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE id = NEW.api_family_id;
 
 
     #belongs_to_api_id in gokabam_api_use_cases
 
 
-    UPDATE gokabam_api_use_cases SET md5_checksum_apis = New.md5_checksum
+    UPDATE gokabam_api_use_cases SET md5_checksum_apis = New.md5_checksum, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE belongs_to_api_id = NEW.id;
 
   END

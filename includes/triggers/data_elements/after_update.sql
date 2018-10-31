@@ -43,11 +43,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
     END IF;
 
     if NEW.is_deleted = 0 THEN
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_journals)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_journals_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action,is_tags,is_words,is_journals)
+      VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_journals_changed);
     ELSE
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_journals)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_journals_changed);
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action,is_tags,is_words,is_journals)
+      VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_journals_changed);
     END IF;
 
 
@@ -178,7 +178,7 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
           SET @crc := NULL;
         END IF;
 
-        UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc
+        UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE g.id = NEW.group_id;
 
       end if;
@@ -207,7 +207,7 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
           SET @crc := NULL;
         END IF;
 
-        UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc
+        UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE g.id = NEW.parent_element_id;
 
       end if;
@@ -243,7 +243,7 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
           SET @crc := NULL;
         END IF;
 
-        UPDATE gokabam_api_use_case_parts_sql s SET md5_checksum_elements = @crc
+        UPDATE gokabam_api_use_case_parts_sql s SET md5_checksum_elements = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE s.id = a_part_sql_id;
 
       END LOOP;
@@ -255,11 +255,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_data_elements
     IF ((NEW.is_deleted = 1) AND (OLD.is_deleted = 0)) OR ((NEW.is_deleted = 0) AND (OLD.is_deleted = 1)) THEN
       -- update delete status of dependents
 
-      UPDATE gokabam_api_data_elements s SET s.is_deleted = NEW.is_deleted WHERE s.parent_element_id = NEW.id;
+      UPDATE gokabam_api_data_elements s SET s.is_deleted = NEW.is_deleted, is_downside_deleted = 1, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  ))) WHERE s.parent_element_id = NEW.id;
 
-      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
-      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1 WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_words SET is_deleted = NEW.is_deleted, is_downside_deleted = 1, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  ))) WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_tags SET is_deleted = NEW.is_deleted, is_downside_deleted = 1, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  ))) WHERE target_object_id = NEW.object_id;
+      UPDATE gokabam_api_journals SET is_deleted = NEW.is_deleted, is_downside_deleted = 1, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  ))) WHERE target_object_id = NEW.object_id;
     END IF;
 
 

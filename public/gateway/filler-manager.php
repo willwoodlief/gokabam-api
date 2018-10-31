@@ -105,14 +105,21 @@ class FillerManager {
 
 	/**
 	 * @param boolean $b_show_deleted default false , if true fills in deleted_kids
-	 * @param integer|null $deleted_page_load_id, default null, but if set will show deleted only from that page load and not time range set earlier
+	 *
+	 * @param integer|null $page_load_id <p>
+	 *      default null,
+	 *      but if set will show deleted only from that page load and not time range set earlier
+	 *      also will trigger adding in any updated roots from this page load that were indirectly updated in the triggers
+	 * </p>
+	 *
 	 * @param boolean $b_show_stragglers, if true will search out and find anything missing in the date time range, default true
+	 *
 	 * @return GKA_Everything
 	 * @throws ApiParseException
 	 * @throws SQLException
 	 * @throws FillException
 	 */
-	public function get_everything($b_show_deleted = true,$deleted_page_load_id = null,$b_show_stragglers = true) {
+	public function get_everything($b_show_deleted = true, $page_load_id = null,$b_show_stragglers = true) {
 		if (!$this->b_open) {
 			return $this->everything;
 		}
@@ -120,14 +127,20 @@ class FillerManager {
 			$this->fill_in_stragglers();
 		}
 
+		if ($page_load_id) {
+			$this->add_indirectly_changed_roots($page_load_id);
+		}
+
 		$this->b_open = false;
 
 
 		$this->finalize_processed_roots();
 		if ($b_show_deleted) {
-			$this->array_deleted_kids = $this->get_deleted_array($deleted_page_load_id);
+			$this->array_deleted_kids = $this->get_deleted_array( $page_load_id);
 			$this->everything->deleted_kids = $this->array_deleted_kids;
 		}
+
+
 		$this->everything->users = [];
 		foreach ($this->user_map as $user) {
 			$this->everything->users[] = $user->user_id;
@@ -441,6 +454,13 @@ class FillerManager {
 	 *
 	 * @param GKA_Root|GKA_Kid|string $root
 	 * @param boolean $b_child, default false
+	 *
+	 * @param boolean $b_fill_children <p>
+	 *          default true . If true then all children will be processed the same as root
+	 *          but if false, then root will be in the library and its type property, but its children may not be
+	 *          false is normally used for including changed parents when we do not want to bring in unchanged children
+	 * </p>
+	 *
 	 * @return GKA_Root|null <p>
 	 * if this root is deleted, or not in date range set by constructor, will be null
 	 * else will return one of the derived classes
@@ -449,7 +469,7 @@ class FillerManager {
 	 * @throws FillException
 	 * @throws ApiParseException
 	 */
-	public function fill($root,$b_child = false) {
+	public function fill($root,$b_child = false,$b_fill_children=true) {
 
 		if (!$this->b_open) {
 			throw new FillException("Get Everything already called, cannot process new fills now with this object");
@@ -517,41 +537,44 @@ class FillerManager {
 		$this->processed_roots[] = $root;
 		$this->map_of_processed_roots[$root->kid->kid] = $root;
 
-		//go fill any new objects
-		//when this returns all the sub processing is done, and the children are created
-		foreach ($ret as $key => $top_node) {
 
-			if (empty($top_node)) {
-				continue;
-			}
-			if ($key === 'parent') {
-				continue;
-			}
+		if ($b_fill_children ) {
+			//go fill any new objects
+			//when this returns all the sub processing is done, and the children are created
+			foreach ( $ret as $key => $top_node ) {
 
-			if ($key === 'kid') {
-				continue;
-			}
+				if ( empty( $top_node ) ) {
+					continue;
+				}
+				if ( $key === 'parent' ) {
+					continue;
+				}
+
+				if ( $key === 'kid' ) {
+					continue;
+				}
 
 
-			if (
-				 is_a($top_node,"gokabam_api\GKA_Root" ) ||
-				 is_a($top_node,"gokabam_api\GKA_Kid" )
-			)  {
-				$ret->$key = $this->fill($top_node,true);
-			}
+				if (
+					is_a( $top_node, "gokabam_api\GKA_Root" ) ||
+					is_a( $top_node, "gokabam_api\GKA_Kid" )
+				) {
+					$ret->$key = $this->fill( $top_node, true );
+				}
 
-			if ( is_array($top_node)) {
-				foreach ($top_node as $what_index => $what) {
-					if (
-						is_a($what,"gokabam_api\GKA_Root" ) ||
-						is_a($what,"gokabam_api\GKA_Kid" )
-					)  {
-						$ret->$key[$what_index] =  $this->fill($what,true);
+				if ( is_array( $top_node ) ) {
+					foreach ( $top_node as $what_index => $what ) {
+						if (
+							is_a( $what, "gokabam_api\GKA_Root" ) ||
+							is_a( $what, "gokabam_api\GKA_Kid" )
+						) {
+							$ret->$key[ $what_index ] = $this->fill( $what, true );
+						}
 					}
 				}
+
+
 			}
-
-
 		}
 		return $ret;
 
@@ -905,15 +928,29 @@ class FillerManager {
 
 		//replace journals, tags, and words for any that have them with the kid string
 		foreach ($root->words as $key => $value) {
-			$root->words[$key] = $value->kid;
+			if (is_object($value)) {
+				$root->words[$key] = $value->kid;
+			} elseif ( is_string($value)) {
+				$root->words[$key] = $value;
+			}
+
 		}
 
 		foreach ($root->tags as $key => $value) {
-			$root->tags[$key] = $value->kid;
+			if (is_object($value)) {
+				$root->tags[$key] = $value->kid;
+			} elseif ( is_string($value)) {
+				$root->tags[$key] = $value;
+			}
 		}
 
 		foreach ($root->journals as $key => $value) {
-			$root->journals[$key] = $value->kid;
+
+			if (is_object($value)) {
+				$root->journals[$key] = $value->kid;
+			} elseif ( is_string($value)) {
+				$root->journals[$key] = $value;
+			}
 		}
 
 		//flatten the roots initial_touch and recent_touch version
@@ -984,8 +1021,12 @@ class FillerManager {
 						    $property_value[$jam_index] = $jam->kid; //change the object back to a string
 					    }
 				    }
-				    $root->$property_key = $property_value;
+					 //if there are any nulls in $property_value, then we want to take them out
+
+				    $root->$property_key = array_filter($property_value);
 				 }
+
+
 
 			}
 
@@ -1214,6 +1255,50 @@ class FillerManager {
 			$this->fill($string_kid);
 		}
 
+		//finally, add in the changed parents
+
+	}
+
+	/**
+	 * adds to this class anything that has a touched page load matching the param
+	 * the roots added do not have their children processed
+	 * @param integer $page_load_id
+	 * @return GKA_Root[]
+	 * @throws SQLException
+	 * @throws FillException
+	 * @throws ApiParseException
+	 */
+	protected function add_indirectly_changed_roots($page_load_id) {
+		$res = $this->mydb->execSQL("
+			SELECT DISTINCT
+                o.id as object_id,
+                o.primary_key,
+                o.da_table_name
+			FROM gokabam_api_objects o
+			       INNER JOIN gokabam_api_change_log logged_change ON logged_change.target_object_id = o.id		      
+			WHERE
+			    logged_change.touched_page_load_id = ? 
+			ORDER BY object_id;
+			  	",
+			['i',$page_load_id],
+			MYDB::RESULT_SET,
+			"@sey@all_changed.filler-manager.php"
+		);
+		$ret = [];
+		if (empty($res))  {return $ret;}
+		foreach($res as $row) {
+			$xxx = new GKA_Kid();
+			$xxx->primary_id = $row->primary_key;
+			$xxx->table = $row->da_table_name;
+			$xxx->object_id = $row->object_id;
+			$this->kid_talk->fill_kids_in($xxx);
+			$ret[] = $xxx;
+		}
+
+		foreach ($ret as $poor_sap) {
+			$this->fill($poor_sap,false,false);
+		}
+		return $ret;
 	}
 
 }

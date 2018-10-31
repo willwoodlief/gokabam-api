@@ -296,8 +296,18 @@ class ApiGateway {
 		$start =  microtime(true);
 		$user_id = get_current_user_id();
 		$user_info = get_userdata( $user_id );
-		$user_roles = implode(', ', $user_info->roles);
-		$user_name = $user_info->display_name;
+		if ($user_info && property_exists($user_info,'roles') ) {
+			$user_roles = implode(', ', $user_info->roles);
+		} else {
+			$user_roles = null;
+		}
+
+		if ($user_info && property_exists($user_info,'display_name') ) {
+			$user_name = $user_info->display_name;
+		} else {
+			$user_name = null;
+		}
+
 		$err_info = ErrorLogger::get_call_info();
 		$is_dirty = $err_info['is_commit_modified'] ;
 		$git_branch = $err_info['branch'];

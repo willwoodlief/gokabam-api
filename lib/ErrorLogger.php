@@ -438,7 +438,7 @@ class  ErrorLogger {
 		try {
 			$a = new GitHelper();
 		} catch(\Exception $e)  {
-			return ['branch'=>null,'commit'=>null,'dirty'=>null];
+			return ['branch'=>null,'commit'=>null,'dirty'=>0];
 		}
 
 		try {

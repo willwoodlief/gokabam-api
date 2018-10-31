@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.197;
+	const DB_VERSION = 0.198;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -79,6 +79,8 @@ class Activator {
 				the children as deleted, but the children would update the parents same time creating a loop
 
 		.197 Some After Update Triggers were using the old page load id, causing recent deletes to not be noticed
+
+		.198 Added touched page load id to everything to bind together everything changed in one page load
 	*/
 
 
@@ -189,6 +191,7 @@ class Activator {
 					id int NOT NULL AUTO_INCREMENT,
 					target_object_id int not null,
 					page_load_id int default null,
+					touched_page_load_id int default null comment 'the page load where a child md5 got updated',
 					is_tags tinyint default null comment 'togged if dependent tags changed',
 					is_words tinyint default null comment 'togged if dependent words changed',
 					is_journals tinyint default null comment 'togged if dependent journals changed',
@@ -208,6 +211,7 @@ class Activator {
 					PRIMARY KEY  (id),
 					KEY object_id_key (target_object_id),
 					KEY page_load_id_key (page_load_id),
+					KEY touched_page_load_id_key (touched_page_load_id),
 					KEY created_at_key (created_at),
 					KEY edit_action_key (edit_action)
               ) $charset_collate;";
@@ -223,6 +227,11 @@ class Activator {
 			if (!$mydb->foreignKeyExists('fk_change_log_has_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_change_log ADD CONSTRAINT fk_change_log_has_page_load_id 
 										FOREIGN KEY (page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_change_log_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_change_log ADD CONSTRAINT fk_change_log_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -273,6 +282,7 @@ class Activator {
               target_object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -285,6 +295,7 @@ class Activator {
               UNIQUE KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY iso_639_1_language_code_key (iso_639_1_language_code),
               KEY word_code_enum_key (word_code_enum),
@@ -314,6 +325,11 @@ class Activator {
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_words_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_words ADD CONSTRAINT fk_words_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 ###########################################################################################################################################
 /*
  *              gokabam_api_versions
@@ -328,6 +344,7 @@ class Activator {
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -345,6 +362,7 @@ class Activator {
               PRIMARY KEY  (id),
               UNIQUE KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               UNIQUE KEY version_key (version),
               KEY post_id_key (post_id)
@@ -366,6 +384,11 @@ class Activator {
 			if (!$mydb->foreignKeyExists('fk_versions_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_versions ADD CONSTRAINT fk_versions_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_versions_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_versions ADD CONSTRAINT fk_versions_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -396,6 +419,7 @@ class Activator {
               target_object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -409,6 +433,7 @@ class Activator {
               KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY created_at_key (created_at)
@@ -440,6 +465,11 @@ class Activator {
 			if (!$mydb->foreignKeyExists('fk_journals_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_journals ADD CONSTRAINT fk_journals_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_journals_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_journals ADD CONSTRAINT fk_journals_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -494,6 +524,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               parent_element_id int default NULL comment 'this is used when the element is not a top level element, but a child of another element',
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               is_deleted tinyint DEFAULT 0 not null,
@@ -522,6 +553,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY group_id_key (group_id),
               KEY parent_element_id_key (parent_element_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY base_type_enum_key (base_type_enum),
@@ -545,6 +577,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_data_elements_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_data_elements_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_elements_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_elements ADD CONSTRAINT fk_elements_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			//add in fk for groups after its made
@@ -576,6 +613,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -595,6 +633,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY use_case_part_id_key (use_case_part_id),
@@ -620,6 +659,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_data_groups_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -669,6 +713,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -682,6 +727,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY group_id_key (group_id)
@@ -703,6 +749,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_data_group_examples_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_examples ADD CONSTRAINT fk_data_group_examples_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_group_examples_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_group_examples ADD CONSTRAINT fk_data_group_examples_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_data_group_examples_has_group_id')) {
@@ -728,6 +779,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -742,6 +794,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               UNIQUE KEY api_version_key (api_version)
               ) $charset_collate;";
@@ -765,6 +818,12 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			}
 
 
+			if (!$mydb->foreignKeyExists('fk_api_versions_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_api_versions ADD CONSTRAINT fk_api_versions_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+
 ###########################################################################################################################################
 /*
 *              gokabam_api_family
@@ -781,6 +840,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -796,6 +856,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               KEY api_version_key (api_version_id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
 			  KEY hard_code_family_name_key (hard_code_family_name)	
@@ -817,6 +878,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_family_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_family ADD CONSTRAINT fk_api_family_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_family_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_family ADD CONSTRAINT fk_family_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 
@@ -841,6 +907,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               api_family_id int not null,
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
@@ -858,6 +925,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY is_deleted_key (is_deleted),
               KEY api_family_id_key (api_family_id),
@@ -881,6 +949,10 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_apis_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_apis ADD CONSTRAINT fk_apis_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
 
 			if (!$mydb->foreignKeyExists('fk_apis_has_family_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_apis ADD CONSTRAINT fk_apis_has_family_id 
@@ -904,6 +976,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               api_id int not null comment '',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
@@ -920,6 +993,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
               KEY is_deleted_key (is_deleted),
@@ -945,6 +1019,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_gokabam_api_inputs_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_inputs ADD CONSTRAINT fk_gokabam_api_inputs_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 			if (!$mydb->foreignKeyExists('fk_api_inputs_has_api_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_inputs ADD CONSTRAINT fk_api_inputs_has_api_id 
 										FOREIGN KEY (api_id) REFERENCES gokabam_api_apis(id);' );
@@ -967,6 +1046,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -982,6 +1062,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
               KEY http_return_code_key (http_return_code),
@@ -1006,6 +1087,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk_gokabam_api_outputs_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_outputs ADD CONSTRAINT fk_gokabam_api_outputs_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 			if (!$mydb->foreignKeyExists('fk_api_outputs_has_api_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_outputs ADD CONSTRAINT fk_api_outputs_has_api_id 
 										FOREIGN KEY (api_id) REFERENCES gokabam_api_apis(id);' );
@@ -1028,6 +1114,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1046,6 +1133,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_id_key (api_id),
               KEY api_family_id_key (api_family_id),
@@ -1070,6 +1158,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_output_headers ADD CONSTRAINT fk_api_output_headers_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_gokabam_api_output_headers_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_output_headers ADD CONSTRAINT fk_gokabam_api_output_headers_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_output_headers_has_api_id')) {
@@ -1111,6 +1204,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1127,6 +1221,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
               PRIMARY KEY  (id),
               KEY object_id_key (object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY api_version_id_key (belongs_to_api_version_id),
               KEY api_id_key (belongs_to_api_id),
@@ -1149,6 +1244,11 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			if (!$mydb->foreignKeyExists('fk_api_use_case_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_cases ADD CONSTRAINT fk_api_use_case_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_gokabam_gokabam_api_use_cases_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_cases ADD CONSTRAINT fk_gokabam_gokabam_api_use_cases_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_has_api_id')) {
@@ -1297,6 +1397,7 @@ table structure for all types
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               use_case_id int not null comment 'use case that this belongs to',
               in_api_id int default null comment 'if the input is the output of an api',
               rank int default 0 comment 'used to help organize this outside the db',
@@ -1315,6 +1416,7 @@ table structure for all types
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY user_case_id_key (use_case_id),	
               KEY in_api_id_key (in_api_id), 
@@ -1338,6 +1440,11 @@ table structure for all types
 			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_api_use_case_part_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_gokabam_api_use_case_parts_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts ADD CONSTRAINT fk_gokabam_api_use_case_parts_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_part_has_api_id')) {
@@ -1365,6 +1472,7 @@ table structure for all types
               use_case_id int not null comment 'connections are owed by the use case',
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               parent_use_case_part_id int not null comment 'use case part which is the parent',
               child_use_case_part_id int not null comment 'use case part which is the child, both of these must be in the same use case',
               rank int default 0 comment 'used to help organize this outside the db, does not need to be set and defaults to 0',
@@ -1380,6 +1488,7 @@ table structure for all types
               KEY object_id_key (object_id), 
               KEY use_case_id_key (use_case_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY parent_use_case_part_id_key (parent_use_case_part_id) ,	
               KEY child_use_case_part_id_key (child_use_case_part_id), 
@@ -1414,6 +1523,11 @@ table structure for all types
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
+			if (!$mydb->foreignKeyExists('fk__part_connections_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_part_connections ADD CONSTRAINT fk__part_connections_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
 
 ###########################################################################################################################################
 /*
@@ -1429,6 +1543,7 @@ table structure for all types
               object_id int not null,
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null,
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1448,6 +1563,7 @@ table structure for all types
               PRIMARY KEY  (id),
               KEY object_id_key (object_id), 
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id), 
               KEY use_case_part_id_key (use_case_part_id) ,
               KEY sql_part_enum_key (sql_part_enum) ,	
@@ -1479,6 +1595,11 @@ table structure for all types
 			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_sql_has_use_case_part_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts_sql ADD CONSTRAINT fk_api_use_case_parts_sql_has_use_case_part_id 
 										FOREIGN KEY (use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_use_case_parts_sql_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_use_case_parts_sql ADD CONSTRAINT fk_use_case_parts_sql_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 			if (!$mydb->foreignKeyExists('fk_api_use_case_parts_sql_has_table_element_id')) {
@@ -1586,6 +1707,7 @@ data_group_examples
               target_object_id int NOT NULL comment 'tags this object',
               initial_page_load_id int default null,
               last_page_load_id int default null,
+              touched_page_load_id int default null comment 'the page load where a child md5 got updated',
               is_deleted tinyint DEFAULT 0 not null comment 'because deleted tags still around must allow for duplicates',
               is_downside_deleted tinyint DEFAULT 0 not null comment 'flag for trigger to not send changes back upstream',
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -1597,6 +1719,7 @@ data_group_examples
               KEY object_id_key (object_id),
               KEY target_object_id_key (target_object_id),
               KEY initial_page_load_id_key (initial_page_load_id),
+              KEY touched_page_load_id_key (touched_page_load_id),
               KEY last_page_load_id_key (last_page_load_id),
               KEY tag_label_key (tag_label)
               ) $charset_collate;";
@@ -1623,6 +1746,11 @@ data_group_examples
 			if (!$mydb->foreignKeyExists('fk_tags_has_initial_page_load_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_tags ADD CONSTRAINT fk_tags_has_initial_page_load_id 
 										FOREIGN KEY (initial_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_gokabam_api_tags_has_touvched_page_load_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_tags ADD CONSTRAINT fk_gokabam_api_tags_has_touvched_page_load_id 
+										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
 

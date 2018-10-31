@@ -252,7 +252,7 @@ class KabamWord extends KabamRoot {
 class KabamJournal extends KabamRoot {
 
     /**
-     * @param {GKA_Journal|GKA_Root} journal
+     * @param {GKA_Journal|GKA_Root|null} journal
      */
     constructor(journal) {
 

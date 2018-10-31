@@ -347,7 +347,44 @@ jQuery(function($){
             let tag_container_class = $.GoKabam.get_container('wide','KabamTag');
             let tag_container = new tag_container_class($.GoKabam,['gk-tag-test'], tag_filter, false);
             test_holder.append(tag_container.div);
+
+
+
+            //////////////////////// Journals ///////////////////////////////
+
+            let journal_type_regex = /^journal_\w+$/;
+
+            let journal_filter = {
+                rules:[
+                    {
+                        property_name: 'kid',
+                        property_value: journal_type_regex
+                    },
+                    {
+                        property_name: 'parent',
+                        property_value: 'version_YD53eP'
+                    }
+                ],
+                literals: [
+                ]
+            };
+
+
+
+
+            let journal_container_class = $.GoKabam.get_container('wide','KabamJournal');
+            let journal_container = new journal_container_class($.GoKabam,['gk-tag-test'], journal_filter, false);
+            test_holder.append(journal_container.div);
+
         }
+
+
+
+
+
+
+
+
     }
 
     if (!$.GoKabam) {
@@ -382,6 +419,9 @@ jQuery(function($){
 
     // noinspection JSCheckFunctionSignatures
     $.GoKabam.register_container({style: 'wide',register_class: KabamContainerTagWide,root_class_string: 'KabamTag'});
+
+    // noinspection JSCheckFunctionSignatures
+    $.GoKabam.register_container({style: 'wide',register_class: KabamContainerJournalWide,root_class_string: 'KabamJournal'});
 
 
     ///////////////////////////////////////////////////
@@ -436,6 +476,23 @@ jQuery(function($){
 
 
 
+    // noinspection JSValidateTypes
+    /**
+     *
+     * @type {GoKabamDisplayRegistration} entry
+     */
+    entry = {
+        root_class_string : 'KabamJournal',
+        style : 'wide',
+        is_multiple : false,
+        display_class : KabamDisplayJournalWide
+    };
+
+    $.GoKabam.register_display(entry);
+
+
+
+
     //////////////////////////////////////////////////
     ////////////////Editors//////////////////////////
     /////////////////////////////////////////////////
@@ -458,11 +515,25 @@ jQuery(function($){
 
 
 
+    // noinspection JSValidateTypes
+    /**
+     *
+     * @type {GoKabamEditorRegistration} edit_entry
+     */
+    let edit_journal = {
+        root_class_string : 'KabamJournal',
+        style : 'minimal',
+        is_multiple : false,
+        edit_class : KabamEditorJournalSingle
+    };
+
+
+    $.GoKabam.register_editor(edit_journal);
+
+
+
 });
 
 
 
-//todo create the journal edit and display (multiple and single)
-//todo use containers for words and tags in the edit and display
-//todo test out groups of journals in a container
 //todo do version, and work on up

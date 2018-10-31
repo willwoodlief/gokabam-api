@@ -1,4 +1,7 @@
-
+/**
+ * this class uses the tokenfield to generate the tag gui
+ * @link https://github.com/KaneCohen/tokenfield
+ */
 class KabamDisplayTagWide extends KabamDisplayBase {
 
 

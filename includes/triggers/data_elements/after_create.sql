@@ -18,8 +18,8 @@ CREATE TRIGGER trigger_after_create_gokabam_api_data_elements
     #insert new object id, do that first
     UPDATE gokabam_api_objects SET primary_key = NEW.id WHERE id = NEW.object_id;
 
-    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-    VALUES (NEW.object_id,NEW.last_page_load_id,'insert');
+    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action)
+    VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'insert');
 
 
     # update the group: if group_id is set get all fellow elements, sum up the checksums, and update the parent group
@@ -43,7 +43,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_data_elements
         SET @crc := NULL;
       END IF;
 
-      UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc
+      UPDATE gokabam_api_data_groups g SET md5_checksum_elements = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
       WHERE g.id = NEW.group_id;
 
     end if;
@@ -72,7 +72,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_data_elements
         SET @crc := NULL;
       END IF;
 
-      UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc
+      UPDATE gokabam_api_data_elements g SET md5_checksum_elements = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
       WHERE g.id = NEW.parent_element_id;
 
     end if;
@@ -108,7 +108,7 @@ CREATE TRIGGER trigger_after_create_gokabam_api_data_elements
         SET @crc := NULL;
       END IF;
 
-      UPDATE gokabam_api_use_case_parts_sql s SET md5_checksum_elements = @crc
+      UPDATE gokabam_api_use_case_parts_sql s SET md5_checksum_elements = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
       WHERE s.id = a_part_sql_id;
 
     END LOOP;

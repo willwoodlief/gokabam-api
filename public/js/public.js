@@ -160,6 +160,7 @@ coordinator:
                 message = textStatus + ' ---> ' + errorThrown;
                 console.info('Ajax failed but did not return json information, check below for details', what);
                 console.error(jqXHR, textStatus, errorThrown);
+                $.GokabamErrorLogger(message,"warn");
             }
 
             if (error_callback) {

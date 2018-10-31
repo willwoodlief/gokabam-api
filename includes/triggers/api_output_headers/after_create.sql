@@ -6,8 +6,8 @@ CREATE TRIGGER trigger_after_gokabam_api_output_headers
     #insert new object id
     UPDATE gokabam_api_objects SET primary_key = NEW.id WHERE id = NEW.object_id;
 
-    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-    VALUES (NEW.object_id,NEW.last_page_load_id,'insert');
+    INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action)
+    VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'insert');
 
 
     #gokabam_api_api_versions  md5_checksum_headers
@@ -30,7 +30,7 @@ CREATE TRIGGER trigger_after_gokabam_api_output_headers
       SET @crc := NULL;
     END IF;
 
-    UPDATE gokabam_api_family SET md5_checksum_headers = @crc
+    UPDATE gokabam_api_family SET md5_checksum_headers = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE id = NEW.api_family_id;
 
 
@@ -50,7 +50,7 @@ CREATE TRIGGER trigger_after_gokabam_api_output_headers
       SET @crc := NULL;
     END IF;
 
-    UPDATE gokabam_api_api_versions SET md5_checksum_headers = @crc
+    UPDATE gokabam_api_api_versions SET md5_checksum_headers = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE id = NEW.api_version_id;
 
 
@@ -70,7 +70,7 @@ CREATE TRIGGER trigger_after_gokabam_api_output_headers
       SET @crc := NULL;
     END IF;
 
-    UPDATE gokabam_api_apis SET md5_checksum_headers = @crc
+    UPDATE gokabam_api_apis SET md5_checksum_headers = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE id = NEW.api_id;
 
 
@@ -91,7 +91,7 @@ CREATE TRIGGER trigger_after_gokabam_api_output_headers
       SET @crc := NULL;
     END IF;
 
-    UPDATE gokabam_api_outputs SET md5_checksum_headers = @crc
+    UPDATE gokabam_api_outputs SET md5_checksum_headers = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
     WHERE id = NEW.api_output_id;
 
 

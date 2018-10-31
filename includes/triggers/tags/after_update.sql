@@ -6,11 +6,11 @@ CREATE TRIGGER trigger_after_update_gokabam_api_tags
     DECLARE local_table_name VARCHAR(50) DEFAULT NULL;     -- table name of target table
 
     if NEW.is_deleted = 0 THEN
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'edit');
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action)
+      VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'edit');
     ELSE
-      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action)
-      VALUES (NEW.object_id,NEW.last_page_load_id,'delete');
+      INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,touched_page_load_id,edit_action)
+      VALUES (NEW.object_id,NEW.last_page_load_id,NEW.touched_page_load_id,'delete');
     END IF;
 
     SET @edit_log_id := (select last_insert_id());
@@ -49,95 +49,95 @@ CREATE TRIGGER trigger_after_update_gokabam_api_tags
       IF local_table_name = 'gokabam_api_versions'
       THEN
         UPDATE gokabam_api_versions SET
-                                        md5_checksum_tags = @crc
+                                        md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_journals'
       THEN
         UPDATE gokabam_api_journals SET
-                                        md5_checksum_tags = @crc
+                                        md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_data_elements'
       THEN
-        UPDATE gokabam_api_data_elements SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_data_elements SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
 
       IF local_table_name = 'gokabam_api_data_groups'
       THEN
-        UPDATE gokabam_api_data_groups SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_data_groups SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
 
       IF local_table_name = 'gokabam_api_data_group_examples'
       THEN
-        UPDATE gokabam_api_data_group_examples SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_data_group_examples SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_api_versions'
       THEN
-        UPDATE gokabam_api_api_versions SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_api_versions SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
 
       IF local_table_name = 'gokabam_api_family'
       THEN
-        UPDATE gokabam_api_family SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_family SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_apis'
       THEN
-        UPDATE gokabam_api_apis SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_apis SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_inputs'
       THEN
-        UPDATE gokabam_api_inputs SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_inputs SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_outputs'
       THEN
-        UPDATE gokabam_api_outputs SET  md5_checksum_tags = @crc
+        UPDATE gokabam_api_outputs SET  md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_output_headers'
       THEN
-        UPDATE gokabam_api_output_headers SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_output_headers SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_use_cases'
       THEN
-        UPDATE gokabam_api_use_cases SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_use_cases SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_use_case_parts'
       THEN
-        UPDATE gokabam_api_use_case_parts SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_use_case_parts SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_use_case_part_connections'
       THEN
-        UPDATE gokabam_api_use_case_part_connections SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_use_case_part_connections SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 
       IF local_table_name = 'gokabam_api_use_case_parts_sql'
       THEN
-        UPDATE gokabam_api_use_case_parts_sql SET md5_checksum_tags = @crc
+        UPDATE gokabam_api_use_case_parts_sql SET md5_checksum_tags = @crc, touched_page_load_id = IF(NEW.touched_page_load_id IS  NULL, NEW.last_page_load_id, IF (NEW.last_page_load_id IS NULL , NULL, IF (NEW.touched_page_load_id > NEW.last_page_load_id,NEW.touched_page_load_id,NEW.last_page_load_id  )))
         WHERE id = local_primary_key;
       END IF;
 

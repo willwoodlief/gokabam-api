@@ -93,4 +93,17 @@ div.gk-tag-wide input {
     margin-bottom: 0.25em;
 }
 
+/*Journals*/
+
+div.gk-container-wide-journals {
+    /*top level div for the journal container*/
+}
+
+div.gk-journal-wide {
+    /*top in display*/
+}
+
+div.gk-journal-text {
+    /*read only journal text*/
+}
 

@@ -50,6 +50,14 @@ class VirtualThemedPages {
 	function vtp_parse_request( &$wp ) {
 		//global $wp;
 
+		//exit if for some reason the server vars are not set
+		if (
+			empty($_SERVER)  ||
+			(!array_key_exists('REQUEST_URI',$_SERVER)) ||
+			(!array_key_exists('REQUEST_METHOD',$_SERVER))
+		) {
+			return false;
+		}
 
 		//$p = $wp->query_vars['pagename'];
 		$request_uri = $_SERVER['REQUEST_URI'];

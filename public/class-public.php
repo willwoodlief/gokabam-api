@@ -151,6 +151,7 @@ class Plugin_Public
 		    $this->quick_enqueue('display_word_minimal','js/gokabam_display/kabam.display.word.minimal.js');
 		    $this->quick_enqueue('display_word_wide','js/gokabam_display/kabam.display.word.wide.js');
 		    $this->quick_enqueue('display_tag_wide','js/gokabam_display/kabam.display.tag.wide.js');
+		    $this->quick_enqueue('display_journal_wide','js/gokabam_display/kabam.display.journal.wide.js');
 
 
 		    //containers
@@ -158,12 +159,13 @@ class Plugin_Public
 		    $this->quick_enqueue('container_minimal','js/gokabam_container/kabam.container.minimal.js');
 		    $this->quick_enqueue('container_word_wide','js/gokabam_container/kabam.container.word.wide.js');
 		    $this->quick_enqueue('container_tag_wide','js/gokabam_container/kabam.container.tag.wide.js');
-
+		    $this->quick_enqueue('container_journal_wide','js/gokabam_container/kabam.container.journal.wide.js');
 
 		    //editors
 		    $this->quick_enqueue('editor_base','js/gokabam_editor/kabam.editor.base.js');
 		    $this->quick_enqueue('editor_base_bs_dialog','js/gokabam_editor/kabam.editor.bsdialog.base.js');
 		    $this->quick_enqueue('editor_word_single','js/gokabam_editor/kabam.editor.word.single.js');
+		    $this->quick_enqueue('editor_journal_single','js/gokabam_editor/kabam.editor.journal.single.js');
 
 		    //central library
 		    $this->quick_enqueue('gokabam_core','js/gokabam.js');
