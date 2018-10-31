@@ -3,7 +3,9 @@ class KabamContainerTagWide extends KabamContainerBase {
     constructor(gokabam,css_class_array, filter) {
         super(gokabam,css_class_array, filter,true,'wide');
         //find the parent kid
-
+        if (!this._display_list.hasOwnProperty('KabamTag')) {
+            this.kick_start_mulitple_display('KabamTag');
+        }
 
     }
 

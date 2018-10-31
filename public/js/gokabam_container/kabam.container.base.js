@@ -123,6 +123,46 @@ class KabamContainerBase extends KabamEditorCallbacks {
 
     /**
      *
+     * @param {string} root_type
+     * @return {Function|null}
+     */
+    kick_start_mulitple_display(root_type) {
+        let display_class = this.gokabam.get_display(root_type,this.container_style,true);
+        if (display_class) {
+            //copy filter and add a new rule for the kid to only match this type
+            let prefix = KabamRoot.get_kid_prefix(root_type);
+
+            /**
+             * @type {KabamRuleFilter} new_filter
+             */
+            let new_filter = jQuery.extend(true, {}, this.filter);
+            let new_rule = {
+                property_name: 'kid',
+                property_value: new RegExp('^' + prefix + '_\\w+$')
+            };
+
+            new_filter.rules.push(new_rule);
+
+            /**
+             * @type {KabamDisplayBase} display
+             */
+            let display = new display_class(this.gokabam, new_filter,this);
+
+            //add the display to the display list
+            if (this._display_list.hasOwnProperty(root_type)) {
+                this._display_list[root_type].push(display);
+            } else {
+                this._display_list[root_type] = [display];
+            }
+
+            //we are done with this root type, made a multiple which wil handle all objects of this type now
+            // and in the future, next time we get a new object of this class,
+
+        }
+        return display_class;
+    }
+    /**
+     *
      * @param {KabamRoot[]} root_list
      * @return {KabamDisplayBase[]} ; return empty array if nothing is created, or will return the new display array
      */
@@ -182,36 +222,8 @@ class KabamContainerBase extends KabamEditorCallbacks {
             let display_class = null;
 
             if (this.prefer_multiple) {
-                display_class = this.gokabam.get_display(root_type,this.style,true);
+                display_class = this.kick_start_mulitple_display(root_type);
                 if (display_class) {
-                    //copy filter and add a new rule for the kid to only match this type
-                    let prefix = KabamRoot.get_kid_prefix(root_type);
-
-                    /**
-                     * @type {KabamRuleFilter} new_filter
-                     */
-                    let new_filter = jQuery.extend(true, {}, this.filter);
-                    let new_rule = {
-                        property_name: 'kid',
-                        property_value: new RegExp('^' + prefix + '_\\w+$')
-                    };
-
-                    new_filter.rules.push(new_rule);
-
-                    /**
-                     * @type {KabamDisplayBase} display
-                     */
-                    let display = new display_class(this.gokabam, new_filter,this);
-
-                    //add the display to the display list
-                    if (this._display_list.hasOwnProperty(root_type)) {
-                        this._display_list[root_type].push(display);
-                    } else {
-                        this._display_list[root_type] = [display];
-                    }
-
-                    //we are done with this root type, made a multiple which wil handle all objects of this type now
-                    // and in the future, next time we get a new object of this class,
                     continue;
                 }
             }

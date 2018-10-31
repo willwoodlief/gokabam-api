@@ -343,7 +343,10 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     on_event_deleted(event) {
         if (event.targets.length === this._roots.length) {
             //we are done, everything got deleted
-            this.remove();
+            if (!this.is_multiple) {
+                this.remove();
+            }
+
 
         } else {
             //remove deleted from the roots
@@ -391,7 +394,9 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     on_event_removed_from_filter(event) {
         if (event.targets.length === this._roots.length) {
             //we are done, everything got deleted
-            this.remove();
+            if (!this.is_multiple) {
+                this.remove();
+            }
         } else {
             //remove deleted from the roots
 
