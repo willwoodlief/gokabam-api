@@ -2,7 +2,27 @@
 class KabamContainerWordWide extends KabamContainerBase {
     constructor(gokabam,css_class_array, filter) {
         super(gokabam,css_class_array, filter,false,'wide');
+        //find the parent kid
+        this._parent_kid = null;
+        let count = 0;
+        for(let i = 0; i < filter.rules.length; i++) {
+            let rule = filter.rules[i];
+            if (rule.property_name === 'parent') {
+              this._parent_kid = rule.property_value;
+              count++;
+            }
+        }
+        if (!this._parent_kid) {
+            throw new Error("Word container cannot find a parent id in the rules");
+        }
+
+        if (count > 1) {
+            throw new Error("Word container: found " + count + " parents in the rules");
+        }
+
     }
+
+    get parent_kid() { return this._parent_kid;}
 
 
     on_new_display(display) {
@@ -25,49 +45,28 @@ class KabamContainerWordWide extends KabamContainerBase {
         let that = this;
         jQuery(document).off('click','.' + button_class);
         jQuery(document).on('click','.' + button_class ,function() {
-            //get the parent id for the first word in this collection, and make a new one
-            let word = null;
-            //go through all the displays
-            for(let i in that.displays) {
-                if (word) {break;}
-                let display_array = that.displays[i];
-                for( let  b = 0; b < display_array.length; b++) {
-                    if (word) {break;}
-                    let display = display_array[b];
-                    let objects = display.objects;
-                    for( let j = 0; j < objects.length; j++) {
-                        let test = objects[j];
-                        if (test.constructor.name === 'KabamWord') {
-                            word = test;
-                            break;
-                        }
-                    }
-                }
 
-            }
-
-            if (word) {
-                let parent_kid = word.parent;
+            if (that.parent_kid) {
                 let new_word = new KabamWord(null);
-                new_word.parent = parent_kid;
+                // noinspection JSUndefinedPropertyAssignment
+                new_word.parent = that.parent_kid;
                 new_word.type = 'data';
                 that.gokabam.update([new_word]);
             }
-
 
         });
 
 
         let html =
 
-            '  <div class="col-md-1 col-sm-2 gk-container-sider">\n' +
+            '  <div class="col-md-2 col-sm-4 gk-container-frame">\n' +
             '      <div class="new-word">\n' +
             '          <button class="btn btn-success '+ button_class + '   ">'+
             '             <i class="fas fa-cloud-sun"></i> New Word' +
             '          </button>\n' +
             '      </div>\n' +
             '  </div>\n' +
-            '  <div class="col-md-11 col-sm-12 gk-container-content '+ base_id + '_child_container' +'">\n' +
+            '      <div class="col-md-10 col-sm-12 gk-container-displays '+ base_id + '_child_container" >\n' +'' +
             '  </div>';
 
         div.append(html);
@@ -78,7 +77,7 @@ class KabamContainerWordWide extends KabamContainerBase {
     create_container_div(parent_div) {
 
         let child_div = jQuery('<div></div>');
-        child_div.addClass('gk-container-content');
+        child_div.addClass('gk-container-displays');
         parent_div.find('.' + this.base_id + '_child_container').append(child_div);
         return child_div;
     }

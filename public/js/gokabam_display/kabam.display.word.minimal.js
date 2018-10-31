@@ -17,6 +17,7 @@ class KabamDisplayWordMinimal extends KabamDisplayBase {
         return super.create_content_div(parent)
     }
 
+    // noinspection JSUnusedLocalSymbols
     add_child_containers(parent) {
         return []
     }

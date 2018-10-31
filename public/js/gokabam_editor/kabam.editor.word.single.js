@@ -47,8 +47,13 @@ class KabamEditorWordSingle extends KabamEditorBSDialogBase {
 
         let word = this.objects[0];
         let type = word.type;
+        if (!type) {
+            type = '';
+        }
         let language = word.language;
+        if(!language) {language = '';}
         let text = word.text;
+        if (!text) {text = '';}
 
         let allowed_types = ['name','title','blurb','description','overview','data'];
         let options_string = '';
@@ -118,5 +123,19 @@ class KabamEditorWordSingle extends KabamEditorBSDialogBase {
      */
     after_dialog(dialogRef) {
 
+    }
+
+    on_submit() {
+        let word = this.objects[0];
+        if (!word.text) {
+            word.text = null;
+        }
+        if (!word.language) {
+            word.language = null;
+        }
+        if (!word.type) {
+            word.type = null;
+        }
+        super.on_submit();
     }
 }

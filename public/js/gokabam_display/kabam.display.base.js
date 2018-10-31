@@ -58,7 +58,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         this._gokabam = gokabam;
         this._parent_div = null;
         this._content_div = null;
-        this._parent_div_classes = ['gokabam-display'];
+        this._parent_div_classes = ['gk-display'];
         this._style = style;
         this._root_type  = root_type;
 

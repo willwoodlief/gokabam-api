@@ -82,7 +82,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
         let div = jQuery('<div></div>');
         let class_string = class_array.join(' ');
         div.addClass(class_string);
-        div.addClass('gk-container');
+        div.addClass('gk-container my-clearfix');
         return div;
     }
 
@@ -95,7 +95,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
     create_container_div(parent_div) {
         let div = jQuery('<div></div>');
         parent_div.append(div);
-        div.addClass('gk-container-content');
+        div.addClass('gk-container-displays my-clearfix');
         return div;
     }
 

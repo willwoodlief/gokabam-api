@@ -9,7 +9,7 @@ class KabamDisplayWordWide extends KabamDisplayBase {
     }
 
     create_parent_div(classes) {
-        classes.push('gk-word-wide');
+        classes.push('gk-word-wide my-clearfix');
         return  super.create_parent_div(classes);
     }
 
@@ -17,6 +17,7 @@ class KabamDisplayWordWide extends KabamDisplayBase {
         return  super.create_content_div(parent);
     }
 
+    // noinspection JSUnusedLocalSymbols
     add_child_containers(parent) {
         return []
     }
@@ -59,14 +60,12 @@ class KabamDisplayWordWide extends KabamDisplayBase {
                     'data-kid = "'+ word.kid+'" ' +
                     'class="gk-word '+ display_class +' gk-word-id-'+word.kid +'"' +
                 '>' +
-                        '  <div class="col-md-1 col-sm-2">\n' +
+                        '  <div class="col-md-2 col-sm-6">\n' +
                             '    <span class="gk-word-type">' + word.type + '</span> \n' +
+                            '    <span class="gk-word-language"> (' + word.language + ')</span> \n' +
                         '  </div>\n' +
-                        '  <div class="col-md-1 col-sm-2">\n' +
-                            '    <span class="gk-word-language">' + word.language + '</span> \n' +
-                        '  </div>\n' +
-                        '  <div class="col-md-10  col-sm-8">\n' +
-                            '    <span class="gk-word-text">' + word.text + '</span> \n' +
+                        '  <div class="col-md-10  col-sm-12">\n' +
+                            '    <p class="gk-word-text">' + word.text + '</p> \n' +
                         '  </div>'+
                 '</div>';
 

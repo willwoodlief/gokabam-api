@@ -169,18 +169,21 @@ function GoKabamHeartbeat (error_callback) {
             }
 
 
+            {
+                // for anything that is in compare_rem that is not in rem, and its not in the inserted array,
+                // this goes to  added-to-filter
+                let in_compare_but_not_rem = compare_rem_kids.filter(x => !rem_kids.includes(x));
+                let inserted_kids = everything.get_changed_inserted(null);
+                let in_array_but_not_inserted = in_compare_but_not_rem.filter(x => !inserted_kids.includes(x));
+                if (in_array_but_not_inserted.length > 0) {
 
-            // for anything that is in compare_rem that is not in rem, and its not in the inserted array,this goes to  added-to-filter
-            let in_compare_but_not_rem = compare_rem_kids.filter(x => !rem_kids.includes(x));
-
-            if (in_compare_but_not_rem.length > 0 ) {
-                let objects_to_send = [];
-                for(let i=0; i < in_compare_but_not_rem.length; i++) {
-                    objects_to_send.push (compare_rem_hash[in_compare_but_not_rem[i]]);
+                    let objects_to_send = [];
+                    for (let i = 0; i < in_array_but_not_inserted.length; i++) {
+                        objects_to_send.push(compare_rem_hash[in_compare_but_not_rem[i]]);
+                    }
+                    send_to_callback('added-to-filter', objects_to_send);
                 }
-                send_to_callback('added-to-filter',objects_to_send);
             }
-
 
             {
                 // for anything that is in rem but not in compare_rem, and its not in the deleted array,this goes to removed-from-filter
@@ -190,7 +193,7 @@ function GoKabamHeartbeat (error_callback) {
                     let in_array_but_not_deleted = in_rem_but_not_compare.filter(x => !deleted_kids.includes(x));
                     if (in_array_but_not_deleted.length > 0) {
                         let objects_to_send = [];
-                        for (let i = 0; i < in_compare_but_not_rem.length; i++) {
+                        for (let i = 0; i < in_array_but_not_deleted.length; i++) {
                             objects_to_send.push(rem_hash[in_array_but_not_deleted[i]]);
                         }
                         send_to_callback('removed-from-filter', objects_to_send);
@@ -491,6 +494,7 @@ function GoKabamHeartbeat (error_callback) {
                  // noinspection JSUnresolvedVariable
                  gokabam_api_frontend_ajax_obj.nonce = data.server.ajax_nonce;
                  if (!data.is_valid) {
+                     $.GokabamErrorLogger(data.exception_info.message,"warn");
                      if (error_callback) {
                          error_callback(data.exception_info);
                          return;
@@ -562,8 +566,9 @@ function GoKabamHeartbeat (error_callback) {
                      that.everything.get_changed_deleted(new_everything);
                      that.everything.get_changed_inserted(new_everything);
                      that.everything.get_changed_updated(new_everything);
+                     let rem_everything = that.everything;
                      that.everything = new_everything; //update everything before new handlers are made with the inserted stuff
-                     that.send_to_notify(that.everything,new_everything);
+                     that.send_to_notify(rem_everything,new_everything);
 
 
 

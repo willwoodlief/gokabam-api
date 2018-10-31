@@ -274,7 +274,7 @@ jQuery(function ($) {
             message = '' + error;
         }
 
-        $.notify(message, type_error,{ position:"right", autoHideDelay: 20000,clickToHide: true,autoHide: false });
+        $.notify(message, { position:"right",clickToHide: true,autoHide: false, className: type_error });
         if (type_error === 'error') {
             console.error(error);
         } else {

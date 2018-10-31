@@ -85,9 +85,11 @@ class Plugin_Public
 		    wp_enqueue_style( 'fontawesome', PLUGIN_URL . 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', array(), '5.4.2', 'all');
 		    wp_enqueue_style( 'bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css', array('bootstrap'), '1.35.4', 'all');
 
+		    wp_enqueue_style($this->plugin_name. '_public', plugin_dir_url(__FILE__) . 'css/public.css', array(), $this->version, 'all');
+		    wp_enqueue_style($this->plugin_name . '_gokabam_roots', plugin_dir_url(__FILE__) . 'css/gokabam_roots.css', array(), $this->version, 'all');
 	    }
 
-        wp_enqueue_style($this->plugin_name, plugin_dir_url(__FILE__) . 'css/public.css', array(), $this->version, 'all');
+
 	    $this->pages->enqueue_styles();
     }
 

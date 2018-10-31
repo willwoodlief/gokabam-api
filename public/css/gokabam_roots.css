@@ -1,0 +1,81 @@
+.my-clearfix:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}
+
+div.gk-container {
+    /*all containers have this class, and all the other css here will be under this*/
+    background-color: floralwhite;
+}
+
+div.gk-container div.gk-container-displays {
+    /*the div containing the display divs, owned by the container but not the top level div*/
+    background-color: whitesmoke;
+}
+
+div.gk-display {
+    /*top level div for all the displays*/
+    clear: both;
+}
+
+div.gk-container-frame {
+    /* the divs that are not part of the display parents, non client space */
+    /*background-color: navajowhite;*/
+    padding: 0;
+
+
+}
+
+
+/*Words !*/
+
+/*Word Container*/
+div.gk-container-wide-words {
+    /*top level div for the words container*/
+}
+
+div.gk-container-frame div.new-word {
+    /*the div that has the new word button*/
+    text-align: center;
+    height: 100%;
+}
+
+div.gk-container-frame div.new-word button {
+    /*the button that makes new words*/
+    /*margin-top: 0.5em;*/
+
+    margin: 1em;
+}
+
+
+/*Word Display*/
+div.gk-word-wide {
+    /*top level div in the word display*/
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    border: 1px gainsboro inset;
+    cursor: pointer;
+}
+
+div.gk-word {
+    /*the top div in the display's content*/
+}
+
+span.gk-word-type {
+    color: royalblue;
+}
+
+span.gk-word-language {
+    color: darkolivegreen;
+}
+
+p.gk-word-text {
+    display: inline;
+}
+
+
+

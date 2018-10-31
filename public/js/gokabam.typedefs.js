@@ -80,6 +80,26 @@ class KabamRoot {
     }
 
     /**
+     * helper function
+     * @param kid_string
+     * @return {bool|string}
+     */
+    static get_prefix_from_string(kid_string) {
+
+        if (kid_string == null)  {return true;}
+
+        let r = new RegExp('^([a-zA-Z]+)_[a-zA-Z0-9]+');
+        let m = kid_string.kid.match(r);
+        if (!m) {
+            throw new Error("Kid of ["+ woo.kid +"] has no match for prefix");
+        }
+        if (m.length < 2) {
+            throw new Error("Logic Error! in getting prefix from ["+ woo.kid +"]");
+        }
+        return m[1];
+
+    }
+    /**
      * helper
      * @param {string} root_type_string
      * @return string
