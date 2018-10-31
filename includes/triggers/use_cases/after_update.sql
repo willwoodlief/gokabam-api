@@ -48,10 +48,10 @@ CREATE TRIGGER trigger_after_update_gokabam_api_use_cases
 
     if NEW.is_deleted = 0 THEN
       INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_families,is_apis,is_use_case_parts,is_journals)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_family_changed,@has_api_changed,@has_parts_changed,@has_journals_changed);
+      VALUES (NEW.object_id,NEW.last_page_load_id,'edit',@has_tags_changed,@has_words_changed,@has_family_changed,@has_api_changed,@has_parts_changed,@has_journals_changed);
     ELSE
       INSERT INTO gokabam_api_change_log(target_object_id,page_load_id,edit_action,is_tags,is_words,is_families,is_apis,is_use_case_parts,is_journals)
-      VALUES (NEW.object_id,OLD.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_family_changed,@has_api_changed,@has_parts_changed,@has_journals_changed);
+      VALUES (NEW.object_id,NEW.last_page_load_id,'delete',@has_tags_changed,@has_words_changed,@has_family_changed,@has_api_changed,@has_parts_changed,@has_journals_changed);
     END IF;
 
     SET @edit_log_id := (select last_insert_id());

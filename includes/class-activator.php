@@ -16,7 +16,7 @@ require_once realpath(dirname(__FILE__)) . '/../lib/DBSelector.php';
 class Activator {
 
 
-	const DB_VERSION = 0.196;
+	const DB_VERSION = 0.197;
 	/*
 	 * Change Log
 	 * .180     gokabam_api_page_loads now has user roles and name, microtime, and more git info
@@ -78,6 +78,7 @@ class Activator {
 			 deleted. Previously could not do this when using only one delete field as the parents would try to mark
 				the children as deleted, but the children would update the parents same time creating a loop
 
+		.197 Some After Update Triggers were using the old page load id, causing recent deletes to not be noticed
 	*/
 
 
