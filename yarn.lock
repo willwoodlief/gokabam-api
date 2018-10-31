@@ -44,3 +44,7 @@ moment@^2.22.2:
 notifyjs-browser@^0.4.2:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/notifyjs-browser/-/notifyjs-browser-0.4.2.tgz#4837b5dc00cba367d30c0b51472ed3a082a55033"
+
+tokenfield@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/tokenfield/-/tokenfield-1.1.0.tgz#fd780105e57acb6bc42da2fdb6921649a2b2db8f"

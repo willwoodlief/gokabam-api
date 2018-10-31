@@ -3,6 +3,11 @@ http://viima.github.io/jquery-comments/  for user comments
 https://speckyboy.com/plugins-for-extending-bootstrap/ toy store
 
 https://getbootstrap.com/docs/3.3/components/ bs ref
+
+
+tokens / tags
+https://github.com/KaneCohen/tokenfield
+ backup idea: https://maxfavilli.com/jquery-tag-manager
 ----------------
 
 JournalEditor

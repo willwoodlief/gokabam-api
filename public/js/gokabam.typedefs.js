@@ -280,7 +280,7 @@ class KabamJournal extends KabamRoot {
 class KabamTag extends KabamRoot {
 
     /**
-     * @param {GKA_Tag|GKA_Root} tag
+     * @param {GKA_Tag|GKA_Root|null} tag
      */
     constructor(tag) {
 

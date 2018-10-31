@@ -453,10 +453,13 @@ function GoKabamHeartbeat (error_callback) {
      *              on the second and onward calls, it will get only updates, insert and deletes since the last call
      */
      this.get_information = function() {
-
-         //always get full updates
-        let hugs = {api_action: 'get',pass_through_data: 'heartbeat get',begin_timestamp: null , end_timestamp: null};
-        data_push_and_recieve(hugs);
+        try {
+            //always get full updates
+            let hugs = {api_action: 'get',pass_through_data: 'heartbeat get',begin_timestamp: null , end_timestamp: null};
+            data_push_and_recieve(hugs);
+        } catch(error) {
+            $.GokabamErrorLogger(error,'warn');
+        }
 
     };
 
@@ -471,14 +474,18 @@ function GoKabamHeartbeat (error_callback) {
      */
     this.push_update = function(root_array) {
 
-        let every_update = new KabamEverything(null);
-        for(let i = 0; i < root_array.length; i++) {
-            let root = root_array[i];
-            let added_copy = every_update.add_root(root,true); //will throw error if root not correct class
-            added_copy.clean();  //clear out dependencies
+        try {
+            let every_update = new KabamEverything(null);
+            for (let i = 0; i < root_array.length; i++) {
+                let root = root_array[i];
+                let added_copy = every_update.add_root(root, true); //will throw error if root not correct class
+                added_copy.clean();  //clear out dependencies
+            }
+            every_update.api_action = 'update';
+            data_push_and_recieve(every_update);
+        } catch(error) {
+            $.GokabamErrorLogger(error,'warn');
         }
-        every_update.api_action = 'update';
-        data_push_and_recieve(every_update);
      };
 
      function data_push_and_recieve(data) {

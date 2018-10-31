@@ -78,4 +78,19 @@ p.gk-word-text {
 }
 
 
+/*TAGS !*/
+
+div.gk-container-wide-tags {
+    /*top level div for the tag container*/
+}
+
+div.gk-tag-wide {
+    /*top div in the tag display*/
+}
+
+div.gk-tag-wide input {
+    width: 50em;
+    margin-bottom: 0.25em;
+}
+
 

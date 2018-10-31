@@ -7,6 +7,7 @@
     "diff": "^3.5.0",
     "highlight-within-textarea": "^2.0.5",
     "moment": "^2.22.2",
-    "notifyjs-browser": "^0.4.2"
+    "notifyjs-browser": "^0.4.2",
+    "tokenfield": "^1.1.0"
   }
 }

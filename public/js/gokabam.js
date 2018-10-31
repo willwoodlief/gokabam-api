@@ -290,7 +290,17 @@ jQuery(function($){
 
             nid = $.GoKabam.create_notification(handler,null,filter);
 
-            let container_class = $.GoKabam.get_container('wide');
+            let test_holder = $('.test-container');
+
+
+
+
+
+            ////////////////////////////////////////
+            ////////// Words ///////////////////
+            /////////////////////////////////////
+
+            let container_class = $.GoKabam.get_container('wide','KabamWord');
             //make test container with word
             // version_YD53eP
             let type_regex = /^word_\w+$/;
@@ -311,9 +321,32 @@ jQuery(function($){
                 literals: [
                 ]
             };
-            debugger;
+
             let container = new container_class($.GoKabam,['gk-test-test'], word_filter, false);
-            $('.test-container').append(container.div);
+            test_holder.append(container.div);
+
+ ////////////////////////////tags///////////////////////////////
+
+            let tag_type_regex = /^tag_\w+$/;
+
+            let tag_filter = {
+                rules:[
+                    {
+                        property_name: 'kid',
+                        property_value: tag_type_regex
+                    },
+                    {
+                        property_name: 'parent',
+                        property_value: 'version_YD53eP'
+                    }
+                ],
+                literals: [
+                ]
+            };
+
+            let tag_container_class = $.GoKabam.get_container('wide','KabamTag');
+            let tag_container = new tag_container_class($.GoKabam,['gk-tag-test'], tag_filter, false);
+            test_holder.append(tag_container.div);
         }
     }
 
@@ -345,7 +378,10 @@ jQuery(function($){
     $.GoKabam.register_container({style: 'minimal',register_class: KabamContainerMinimalSingle});
 
     // noinspection JSCheckFunctionSignatures
-    $.GoKabam.register_container({style: 'wide',register_class: KabamContainerWordWide});
+    $.GoKabam.register_container({style: 'wide',register_class: KabamContainerWordWide,root_class_string: 'KabamWord'});
+
+    // noinspection JSCheckFunctionSignatures
+    $.GoKabam.register_container({style: 'wide',register_class: KabamContainerTagWide,root_class_string: 'KabamTag'});
 
 
     ///////////////////////////////////////////////////
@@ -383,6 +419,21 @@ jQuery(function($){
     $.GoKabam.register_display(entry);
 
 
+    // noinspection JSValidateTypes
+    /**
+     *
+     * @type {GoKabamDisplayRegistration} entry
+     */
+    entry = {
+        root_class_string : 'KabamTag',
+        style : 'wide',
+        is_multiple : true,
+        display_class : KabamDisplayTagWide
+    };
+
+    $.GoKabam.register_display(entry);
+
+
 
 
     //////////////////////////////////////////////////
@@ -410,12 +461,6 @@ jQuery(function($){
 });
 
 
-
-
-
-
-//todo create the display, edit for tags (multiple only)
-//todo test it out, along with being in a container
 
 //todo create the journal edit and display (multiple and single)
 //todo use containers for words and tags in the edit and display

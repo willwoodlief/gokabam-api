@@ -84,6 +84,8 @@ class Plugin_Public
 		    wp_enqueue_style('bootstrap-theme' , PLUGIN_URL . 'node_modules/bootstrap/dist/css/bootstrap-theme.min.css', array(), '3.3.7', 'all');
 		    wp_enqueue_style( 'fontawesome', PLUGIN_URL . 'node_modules/@fortawesome/fontawesome-free/css/all.min.css', array(), '5.4.2', 'all');
 		    wp_enqueue_style( 'bootstrap-dialog', PLUGIN_URL . 'node_modules/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css', array('bootstrap'), '1.35.4', 'all');
+		    wp_enqueue_style( 'tokenfield', PLUGIN_URL . 'node_modules/tokenfield/dist/tokenfield.css', array(), '1.1.0', 'all');
+
 
 		    wp_enqueue_style($this->plugin_name. '_public', plugin_dir_url(__FILE__) . 'css/public.css', array(), $this->version, 'all');
 		    wp_enqueue_style($this->plugin_name . '_gokabam_roots', plugin_dir_url(__FILE__) . 'css/gokabam_roots.css', array(), $this->version, 'all');
@@ -128,6 +130,10 @@ class Plugin_Public
 			    PLUGIN_URL . 'node_modules/notifyjs-browser/dist/notify.js',
 			    array('jquery-bootstrap'), '0.4.2', false);
 
+		    wp_enqueue_script('tokenfield',
+			    PLUGIN_URL . 'node_modules/tokenfield/dist/tokenfield.min.js',
+			    array(), '1.1.0', false);
+
 
 
 
@@ -144,12 +150,14 @@ class Plugin_Public
 		    $this->quick_enqueue('display_base','js/gokabam_display/kabam.display.base.js');
 		    $this->quick_enqueue('display_word_minimal','js/gokabam_display/kabam.display.word.minimal.js');
 		    $this->quick_enqueue('display_word_wide','js/gokabam_display/kabam.display.word.wide.js');
+		    $this->quick_enqueue('display_tag_wide','js/gokabam_display/kabam.display.tag.wide.js');
 
 
 		    //containers
 		    $this->quick_enqueue('container_base','js/gokabam_container/kabam.container.base.js');
 		    $this->quick_enqueue('container_minimal','js/gokabam_container/kabam.container.minimal.js');
 		    $this->quick_enqueue('container_word_wide','js/gokabam_container/kabam.container.word.wide.js');
+		    $this->quick_enqueue('container_tag_wide','js/gokabam_container/kabam.container.tag.wide.js');
 
 
 		    //editors
