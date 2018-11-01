@@ -114,6 +114,14 @@ class ParseVersion {
 			$db_thing->md5_checksum = $node['md5_checksum'];
 		}
 
+		//check to see if valid post id
+		if (! empty($db_thing->post_id) ) {
+			if ( false === get_post_status( $db_thing->post_id ) ) {
+				// The post does not exist
+				throw new ApiParseException("The post id of {$db_thing->post_id} does not exist as a post on this wordpress");
+			}
+		}
+
 
 		$db_thing->kid = $manager->kid_talk->generate_or_refresh_primary_kid($db_thing->kid,self::$reference_table);
 

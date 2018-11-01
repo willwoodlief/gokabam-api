@@ -294,6 +294,18 @@ class GKA_Version extends GKA_Root
 	 */
 	public $text = '';
 
+	/**
+	 * READ ONLY, filled out by framework
+	 * @var string $post_title
+	 */
+	public $post_title = '';
+
+	/**
+	 * READ ONLY, filled out by framework
+	 * @var string $post_url
+	 */
+	public $post_url = '';
+
 
 }
 

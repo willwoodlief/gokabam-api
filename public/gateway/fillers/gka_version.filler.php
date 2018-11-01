@@ -69,6 +69,12 @@ class Fill_GKA_Version {
 		$root->website_url = $data->website_url;
 		$root->post_id = $data->post_id;
 		$root->git_repo_url = $data->git_repo_url;
+		if ($root->post_id && $root->post_id > 0) {
+			$root->post_title = get_the_title($root->post_id);
+			$root->post_url = get_permalink($root->post_id);
+		}
+
+
 
 		return $root;
 

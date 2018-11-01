@@ -8,25 +8,30 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
     }
 
     create_parent_div(classes) {
-        classes.push('gk-journal-compact my-clearfix');
-        return  super.create_parent_div(classes);
 
-    }
 
-    create_content_div(parent) {
-        let base_id = this.base_id;
         let click_class = this.base_id + '-gk-journal-compact-clicker';
-        let tag_class = base_id + '-tag-holder';
-        let content_class = base_id + '-content-holder';
+        let more_class = ['gk-journal-compact', 'my-clearfix', click_class];
+        classes = [].concat(classes, more_class);
 
         let that = this;
         jQuery(document).off('click','.' + click_class);
         jQuery(document).on('click','.'+ click_class,function() {
             that.gokabam.popout_container(that.root_type,'wide','pop-test',that.container.filter);
         });
+        return  super.create_parent_div(classes);
+
+    }
+
+    create_content_div(parent) {
+        let base_id = this.base_id;
+        let tag_class = base_id + '-tag-holder';
+        let content_class = base_id + '-content-holder';
+
+
 
         let html =
-            '<div class="gk-compact-journal-miniframe '+ click_class +' my-clearfix">\n' +
+            '<div class="gk-compact-journal-miniframe '+ '' +' my-clearfix">\n' +
 
             '    <div class=" '+ content_class+'"></div>\n' +
 
@@ -62,8 +67,8 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
             ]
         };
 
-        let tag_container_class = $.GoKabam.get_container('wide','KabamTag');
-        let tag_container = new tag_container_class($.GoKabam,['gk-tag-of-journal'], tag_filter, false);
+        let tag_container_class = jQuery.GoKabam.get_container('wide','KabamTag');
+        let tag_container = new tag_container_class(jQuery.GoKabam,['gk-tag-of-journal'], tag_filter, false);
         parent.find('div.'+tag_class).append(tag_container.div);
 
         return [tag_container]
@@ -94,9 +99,14 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
                 'style="" ' +
                 'data-kid = "'+ journal.kid+'" ' +
                 'class="gk-journal-compact-innest '+ display_class +' gk-journal-id-'+journal.kid +'"' +
-                '>' +
-                '  <div class="gk-journal-title">' + journal_title + '</div> \n' +
-                '  <p class="gk-journal-text">' + journal.text + '</p> \n' +
+                '>' ;
+            if (journal_title) {
+                html += '  <div class="gk-journal-title">' + journal_title + '</div> \n';
+            } else {
+                html += '  <div class="gk-journal-title"> Missing Title </div> \n';
+            }
+
+            html +=    '  <p class="gk-journal-text">' + journal.text + '</p> \n' +
 
                 '</div>';
 
@@ -117,13 +127,13 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
 
             let kid_word = journal.words[i];
 
-            if (!lib.words.hasOwnProperty(kid_word)) {
+            if (!lib.hasOwnProperty(kid_word)) {
                 throw new Error("Everything does not have the word kid["+ kid_word +"] that is in the journal reference ")
             }
             /**
              * @type {KabamWord} w
              */
-            let w = lib.words[kid_word];
+            let w = lib[kid_word];
             if (w.type === 'title') {
                 return w.text;
             }

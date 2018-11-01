@@ -79,10 +79,11 @@ class KabamRoot {
         this.tags = [];
     }
 
+    // noinspection JSUnusedGlobalSymbols
     /**
      * helper function
      * @param kid_string
-     * @return {bool|string}
+     * @return {boolean|string}
      */
     static get_prefix_from_string(kid_string) {
 
@@ -91,10 +92,10 @@ class KabamRoot {
         let r = new RegExp('^([a-zA-Z]+)_[a-zA-Z0-9]+');
         let m = kid_string.kid.match(r);
         if (!m) {
-            throw new Error("Kid of ["+ woo.kid +"] has no match for prefix");
+            throw new Error("Kid of ["+ kid_string +"] has no match for prefix");
         }
         if (m.length < 2) {
-            throw new Error("Logic Error! in getting prefix from ["+ woo.kid +"]");
+            throw new Error("Logic Error! in getting prefix from ["+ kid_string +"]");
         }
         return m[1];
 
@@ -172,18 +173,22 @@ class KabamRoot {
  * @typedef {GKA_Root} GKA_Version
  * @property {string|null} website_url   , if there is an associated website url about this
  * @property {integer|null} post_id      , if a blog post is made about this on this wordpress
+ * @property {string|null} post_title      , READ ONLY, filled out by framework. if a blog post then the post url
+ * @property {string|null} post_url      , READ ONLY, filled out by framework. if a blog post then the post title
  * @property {string|null} git_repo_url  , associated git repo online
  * @property {string|null} git_tag       , associated git_tag
  * @property {string|null} git_commit_id , associated commit
  * @property {string} text               , the  internal name of this version
+
  */
+
 
 
 
 class KabamVersion extends KabamRoot {
 
     /**
-     * @param {GKA_Version|GKA_Root} version
+     * @param {GKA_Version|GKA_Root|null} version
      */
     constructor(version) {
 
@@ -195,6 +200,8 @@ class KabamVersion extends KabamRoot {
             this.git_tag = version.git_tag;
             this.git_commit_id = version.git_commit_id;
             this.text = version.text;
+            this.post_title = version.post_title;
+            this.post_url = version.post_url;
         } else {
             this.website_url = null;
             this.post_id = null;
@@ -202,6 +209,8 @@ class KabamVersion extends KabamRoot {
             this.git_tag = null;
             this.git_commit_id = null;
             this.text = null;
+            this.post_title = null;
+            this.post_url = null;
         }
     }
 

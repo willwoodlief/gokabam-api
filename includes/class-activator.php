@@ -338,7 +338,10 @@ class Activator {
  */
 ###########################################################################################################################################
 
-			//versions
+
+			/**
+			 * todo deprecate git_tag,git_commit_id, replace with better
+			 */
 			$sql = "CREATE TABLE `gokabam_api_versions` (
               id int NOT NULL AUTO_INCREMENT,
               object_id int not null,
@@ -350,7 +353,7 @@ class Activator {
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
               post_id int default null comment 'if a blog post is made about this',
-              version varchar(255) not null ,
+              version varchar(255) default null ,
               git_repo_url varchar(255) default null comment 'any associated git repo online',
               git_commit_id varchar(255) DEFAULT NULL comment 'any associted git commit',
               git_tag varchar(255) DEFAULT NULL comment 'any associated git tag',

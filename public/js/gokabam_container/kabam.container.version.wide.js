@@ -1,28 +1,11 @@
 
-class KabamContainerJournalWide extends KabamContainerBase {
+class KabamContainerVersionWide extends KabamContainerBase {
     constructor(gokabam,css_class_array, filter) {
         super(gokabam,css_class_array, filter,false,'wide');
-        //find the parent kid
-        this._parent_kid = null;
-        let count = 0;
-        for(let i = 0; i < filter.rules.length; i++) {
-            let rule = filter.rules[i];
-            if (rule.property_name === 'parent') {
-              this._parent_kid = rule.property_value;
-              count++;
-            }
-        }
-        if (!this._parent_kid) {
-            throw new Error("Journal container cannot find a parent id in the rules");
-        }
-
-        if (count > 1) {
-            throw new Error("Journal container: found " + count + " parents in the rules");
-        }
+        //versions have no parents
 
     }
 
-    get parent_kid() { return this._parent_kid;}
 
 
     on_new_display(display) {
@@ -39,19 +22,15 @@ class KabamContainerJournalWide extends KabamContainerBase {
 
     create_outer_div(class_array) {
         let div = super.create_outer_div(class_array);
-        div.addClass('gk-container-wide-journals');
+        div.addClass('gk-container-wide-versions');
         let base_id = this.base_id;
         let button_class = base_id + '-new_button';
         let that = this;
         jQuery(document).off('click','.' + button_class);
         jQuery(document).on('click','.' + button_class ,function() {
 
-            if (that.parent_kid) {
-                let new_journal = new KabamJournal(null);
-                // noinspection JSUndefinedPropertyAssignment
-                new_journal.parent = that.parent_kid;
-                that.gokabam.update([new_journal]);
-            }
+            let new_version = new KabamVersion(null);
+            that.gokabam.update([new_version]);
 
         });
 
@@ -61,7 +40,7 @@ class KabamContainerJournalWide extends KabamContainerBase {
             '  <div class="col-md-2 col-sm-4 gk-container-frame">\n' +
             '      <div class="new-word">\n' +
             '          <button class="btn btn-success '+ button_class + '   ">'+
-            '             <i class="fas fa-save"></i> New Journal' +
+            '             <i class="fas fa-save"></i> New Version' +
             '          </button>\n' +
             '      </div>\n' +
             '  </div>\n' +

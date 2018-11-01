@@ -43,7 +43,7 @@ class KabamContainerJournalCompact extends KabamContainerBase {
         let div = super.create_outer_div(class_array);
         div.addClass('gk-container-compact-journals');
         let base_id = this.base_id;
-        let button_class = base_id + '_new_button';
+        let button_class = base_id + '-new_button';
         let that = this;
         jQuery(document).off('click','.' + button_class);
         jQuery(document).on('click','.' + button_class ,function() {
@@ -55,16 +55,20 @@ class KabamContainerJournalCompact extends KabamContainerBase {
                 that.gokabam.update([new_journal]);
             }
 
+
         });
 
-
+//todo in both compacts, add an up arrow at top to expand to wide coverage
+        //todo, this will also stop having the click handlers fight and can edit
         let html =
 
             '  <div class="gk-container-frame">\n' +
-            '<div class=" gk-compact-journal-header  '+ button_class + '   "><span class="gk-compact-journal-adder">' +
-            '<i class="fas fa-file-alt"></i></span></div>' +
+            '  <div class=" gk-compact-journal-header  '+ button_class + '   ">' +
+            '    <span class="gk-compact-journal-adder">' +
+            '      <i class="fas fa-file-alt"></i>' +
+            '    </span></div>' +
 
-            '      <div class="gk-container-displays '+ base_id + '_child_container" ></div>\n' +'' +
+            '    <div class="gk-container-displays '+ base_id + '_child_container" ></div>\n' +'' +
             '  </div>';
 
         div.append(html);

@@ -230,3 +230,92 @@ div.gk-journal-compact p.gk-journal-text {
     padding: 0.25em;
     font-size: 12px;
 }
+
+/*version*/
+
+/*wide*/
+
+div.gk-container-wide-versions {
+    /*top level container*/
+}
+
+div.gk-version-wide {
+    /*top level display*/
+}
+
+div.gk-version-wide div.version-container {
+    /*holds child containers*/
+}
+
+div.gk-version-wide div.gk-version-content {
+    /*holds the version data*/
+    font-size: 12px;
+}
+
+div.gk-version-wide div.gk-version-content p {
+    margin: 0;
+    padding: 0.25em;
+}
+
+div.gk-version-wide div.gk-version-content a{
+
+}
+
+div.gk-version-wide div.gk-version-content span {
+
+}
+
+div.gk-version-wide div.gk-version-content span.gk-missing {
+    font-weight: bold;
+    color: purple;
+}
+
+div.gk-version-wide div.gk-version-content span.gk-title {
+    font-weight: bold;
+    color: #202020;
+    margin-right: 1em;
+}
+
+div.gk-version-wide div.gk-version-content div.gk-text {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-text p {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-post-id {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-post-id a {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-post-id span {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-website-url a {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-website-url span {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-website-url a {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-repo-url span {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-repo-url a {
+
+}
+
+div.gk-version-wide div.gk-version-content div.gk-repo-url span {
+
+}

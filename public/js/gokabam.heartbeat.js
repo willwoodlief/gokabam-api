@@ -457,7 +457,7 @@ function GoKabamHeartbeat (error_callback) {
             let hugs = {api_action: 'get',pass_through_data: 'heartbeat get',begin_timestamp: null , end_timestamp: null};
             data_push_and_recieve(hugs);
         } catch(error) {
-            $.GokabamErrorLogger(error,'warn');
+            jQuery.GokabamErrorLogger(error,'warn');
         }
 
     };
@@ -483,12 +483,12 @@ function GoKabamHeartbeat (error_callback) {
             every_update.api_action = 'update';
             data_push_and_recieve(every_update);
         } catch(error) {
-            $.GokabamErrorLogger(error,'warn');
+            jQuery.GokabamErrorLogger(error,'warn');
         }
      };
 
      function data_push_and_recieve(data) {
-         $.GokabamTalk('gokabam_api',
+         jQuery.GokabamTalk('gokabam_api',
              {gokabam_api_data:data}, //pass the params to the wordpress backend
 
              /**
@@ -500,7 +500,7 @@ function GoKabamHeartbeat (error_callback) {
                  // noinspection JSUnresolvedVariable
                  gokabam_api_frontend_ajax_obj.nonce = data.server.ajax_nonce;
                  if (!data.is_valid) {
-                     $.GokabamErrorLogger(data.exception_info.message,"warn");
+                     jQuery.GokabamErrorLogger(data.exception_info.message,"warn");
                      if (error_callback) {
                          error_callback(data.exception_info);
                          return;

@@ -48,7 +48,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
         }
         let pretty_base_name = lower_array.join('_');//upper case separated by underscore, and all lower case
 
-        this._base_id = $.GokabamIds.register(pretty_base_name);
+        this._base_id = jQuery.GokabamIds.register(pretty_base_name);
 
 
         if (css_class_array.indexOf('gokabam-container') < 0) {

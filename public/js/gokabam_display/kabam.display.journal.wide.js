@@ -62,12 +62,12 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
             ]
         };
 
-        let tag_container_class = $.GoKabam.get_container('wide','KabamTag');
-        let tag_container = new tag_container_class($.GoKabam,['gk-tag-of-journal'], tag_filter, false);
+        let tag_container_class = jQuery.GoKabam.get_container('wide','KabamTag');
+        let tag_container = new tag_container_class(jQuery.GoKabam,['gk-tag-of-journal'], tag_filter, false);
         parent.find('div.'+tag_class).append(tag_container.div);
 
         //////////////////////////
-        let container_class = $.GoKabam.get_container('compact','KabamWord');
+        let container_class = jQuery.GoKabam.get_container('compact','KabamWord');
         //make test container with word
         // version_YD53eP
         let type_regex = /^word_\w+$/;
@@ -89,7 +89,7 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
             ]
         };
 
-        let word_container = new container_class($.GoKabam,['gk-test-test'], word_filter, false);
+        let word_container = new container_class(jQuery.GoKabam,['gk-test-test'], word_filter, false);
         parent.find('div.'+word_class).append(word_container.div);
 
         return [tag_container,word_container]

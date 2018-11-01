@@ -62,6 +62,7 @@ class KabamDisplayTagWide extends KabamDisplayBase {
         setTimeout(do_tokenfield, 500);
 
         function do_tokenfield() {
+            // noinspection ES6ModulesDependencies
             that.tokensfield = new Tokenfield({
                 el: document.querySelector('.' + input_id), // Attach Tokenfield to the input element with class "text-input"
                 items: object_array,
@@ -76,6 +77,9 @@ class KabamDisplayTagWide extends KabamDisplayBase {
                     return; //we are just adding existing
                 }
                 let token_name = token_info.text;
+                /**
+                 * @type {KabamTag}
+                 */
                 let k = new KabamTag(null);
                 k.parent = that.parent_kid;
                 k.text = token_name;
@@ -89,6 +93,10 @@ class KabamDisplayTagWide extends KabamDisplayBase {
              */
             that.tokensfield.on("removedToken", (a,kabam_tag_object) => {
                 if (kabam_tag_object.hasOwnProperty('md5_checksum')) {
+
+                    /**
+                     * @type {KabamTag}
+                     */
                     let k = new KabamTag(kabam_tag_object);
                     k.delete = 1;
                     that.gokabam.update([k]);

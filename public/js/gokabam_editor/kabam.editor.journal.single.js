@@ -54,6 +54,7 @@ class KabamEditorJournalSingle extends KabamEditorBSDialogBase {
         let kid_string = journal.kid;
         if (!kid_string) { kid_string = 'blank';}
         let special_name = 'gk-journal-id-'+kid_string;
+        special_name = jQuery.GokabamIds.register(special_name);
         jQuery(document).off('change','.' + special_name);
 
 
