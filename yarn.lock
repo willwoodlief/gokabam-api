@@ -33,6 +33,10 @@ highlight-within-textarea@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/highlight-within-textarea/-/highlight-within-textarea-2.0.5.tgz#77aa0efdf9b842c581cc2726cf2a458bbaea0550"
 
+jquery-popup-overlay@^1.7.4:
+  version "1.7.4"
+  resolved "http://registry.npmjs.org/jquery-popup-overlay/-/jquery-popup-overlay-1.7.4.tgz#0474750902689d40fb3f6759298622878b42c5b6"
+
 lodash@^4.17.4:
   version "4.17.11"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"

@@ -1,20 +1,30 @@
-
-class KabamDisplayWordWide extends KabamDisplayBase {
-
+class KabamDisplayWordCompact extends KabamDisplayBase {
 
     constructor(gokabam,the_filter,container) {
 
-        super(gokabam,the_filter,container,'wide',false,'KabamWord');
+
+        super(gokabam,the_filter,container,'compact',false,'KabamWord');
         this._editing_kid = null;
     }
 
     create_parent_div(classes) {
-        classes.push('gk-word-wide my-clearfix');
+        let click_class = this.base_id + '-gk-word-compact-clicker';
+        let more_class = ['gk-word-compact', 'my-clearfix', click_class];
+        classes = [].concat(classes, more_class);
+
+        let that = this;
+        jQuery(document).off('click','.' + click_class);
+        jQuery(document).on('click','.'+ click_class,function() {
+            that.gokabam.popout_container(that.root_type,'wide','pop-test',that.container.filter);
+        });
         return  super.create_parent_div(classes);
     }
 
     create_content_div(parent) {
-        return  super.create_content_div(parent);
+        let content_div  = jQuery('<div class="gk-word-compact-inner"></div>');
+        // noinspection JSUnresolvedFunction
+        parent.append(content_div);
+        return content_div;
     }
 
     // noinspection JSUnusedLocalSymbols
@@ -24,7 +34,7 @@ class KabamDisplayWordWide extends KabamDisplayBase {
 
     on_refresh(parent_div) {
         let that = this;
-        let display_class = this.base_id + '_gk-word-wide-display';
+        let display_class = this.base_id + '-gk-word-compact-display';
         jQuery(document).off('click','.' + display_class);
         jQuery(document).on('click','.'+ display_class,function() {
             //find editor for this type and single
@@ -56,17 +66,13 @@ class KabamDisplayWordWide extends KabamDisplayBase {
 
             let html = '' +
                 '<div ' +
-                    'style="" ' +
-                    'data-kid = "'+ word.kid+'" ' +
-                    'class="gk-word-wide-innest '+ display_class +' gk-word-id-'+word.kid +'"' +
+                'style="" ' +
+                'data-kid = "'+ word.kid+'" ' +
+                'class="gk-word-compact-innest '+ display_class +' gk-word-id-'+word.kid +'"' +
                 '>' +
-                        '  <div class="col-md-2 col-sm-6">\n' +
-                            '    <span class="gk-word-type">' + word.type + '</span> \n' +
-                            '    <span class="gk-word-language"> (' + word.language + ')</span> \n' +
-                        '  </div>\n' +
-                        '  <div class="col-md-10  col-sm-12">\n' +
-                            '    <p class="gk-word-text">' + word.text + '</p> \n' +
-                        '  </div>'+
+
+                '  <p class="gk-word-text"><span class="gk-word-type">' + word.type + '</span>' + word.text + '</p> \n' +
+
                 '</div>';
 
 
@@ -102,7 +108,4 @@ class KabamDisplayWordWide extends KabamDisplayBase {
         div.removeClass('gk-on-edit');
     }
 
-
 }
-
-

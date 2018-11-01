@@ -245,7 +245,7 @@ jQuery(function ($) {
 
             let counter = 1;
             while (this.gk_rem_ids.hasOwnProperty(ret)) {
-                ret = id + '_' + counter;
+                ret = id + '-' + counter;
                 counter++;
             }
             this.gk_rem_ids[ret] = Date.now();

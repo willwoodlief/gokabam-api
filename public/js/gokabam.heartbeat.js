@@ -47,7 +47,6 @@
  * @param {HeartbeatNotification} event
  */
 
-//todo on delete, the journal is not updated when the tag is deleted, even though the journal is in the everything
 
 
 

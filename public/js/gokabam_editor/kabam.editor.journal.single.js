@@ -68,7 +68,7 @@ class KabamEditorJournalSingle extends KabamEditorBSDialogBase {
         div.append(
             '<div class="form-group">\n' +
             '  <label for="gk-single-journal-edit-input-text">Text</label>\n' +
-            '  <textarea class="form-control gk-single-journal-edit-input gk-rf-text  '+ special_name +'" id="gk-single-journal-edit-input-text" >'
+            '  <textarea rows="20" class="form-control gk-single-journal-edit-input gk-rf-text  '+ special_name +'" id="gk-single-journal-edit-input-text" >'
             + text + '</textarea>\n' +
             '</div>'
         );

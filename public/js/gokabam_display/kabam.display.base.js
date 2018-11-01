@@ -39,6 +39,10 @@ class KabamDisplayBase extends KabamEditorCallbacks {
 
     get base_id() { return this._base_id;}
 
+    get container() { return this._container;}
+
+    get filter() { return this._filter;}
+
     /**
      * @param {GoKabam} gokabam
      * @param {KabamRuleFilter} the_filter
@@ -61,6 +65,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         this._parent_div_classes = ['gk-display'];
         this._style = style;
         this._root_type  = root_type;
+        this._container = container;
 
         let ugly_base_name = this.constructor.name;
         let camel_array = ugly_base_name.split(/(?=[A-Z])/);
@@ -69,7 +74,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         for(let i=0; i < camel_array.length; i++) {
             lower_array.push(camel_array[i].toLowerCase());
         }
-        let pretty_base_name = lower_array.join('_');//upper case separated by underscore, and all lower case
+        let pretty_base_name = lower_array.join('-');//upper case separated by underscore, and all lower case
 
         this._base_id = $.GokabamIds.register(pretty_base_name);
 
@@ -104,7 +109,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
 
     get child_containers() { return this._child_containers;}
 
-    get filter() { return this._filter;}
+
 
     /**
      *

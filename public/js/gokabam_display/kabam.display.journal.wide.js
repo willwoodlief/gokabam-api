@@ -1,10 +1,6 @@
 
 class KabamDisplayJournalWide extends KabamDisplayBase {
 
-//todo have gateway return the changed parents, as well as the changed children, on an update
-//todo walk up the parents list for each starting node, and add just the parents. But special cases add use case which uses api and sql parts which reference elements (anything which does a cursor in the triggers
-    //todo or easier, use the change log
-    //todo layout, change layout for words and position tags, better journal presentation
 
     constructor(gokabam,the_filter,container) {
 
@@ -14,35 +10,40 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
 
     create_parent_div(classes) {
         classes.push('gk-journal-wide my-clearfix');
-        let div =   super.create_parent_div(classes);
-        let base_id = this.base_id;
-        let word_class = base_id + '_word_holder';
-        let tag_class = base_id + '_tag_holder';
-        let content_class = base_id + '_content_holder';
-
-        let html =
-            '<div class="gk-journal-miniframe">\n' +
-            '    <div class="col-md-4 col-sm-12 '+ word_class +'"></div>\n' +
-            '    <div class="col-md-8 col-sm-12 '+ content_class+'"></div>\n' +
-            '    <div class="col-md-12 col-sm-12 '+ tag_class+ '"></div>\n' +
-            '</div>'
-           ;
-        div.append(html);
-        return div;
+        return  super.create_parent_div(classes);
     }
 
+    /**
+     *
+     * @param {jQuery} parent
+     */
     create_content_div(parent) {
-        return  super.create_content_div(parent);
+        let base_id = this.base_id;
+        let word_class = base_id + '-word-holder';
+        let tag_class = base_id + '-tag-holder';
+        let content_class = base_id + '-content-holder';
+
+        let html =
+            '<div class="gk-journal-miniframe  my-clearfix">\n' +
+            '    <div class="col-md-2 col-sm-12 journal-container '+ word_class +'"></div>\n' +
+            '    <div class="col-md-10 col-sm-12 '+ content_class+'"></div>\n' +
+
+
+
+            '    <div class="col-md-12 col-sm-12  journal-container '+ tag_class+ '"></div>\n' +
+            '</div>'
+        ;
+        // noinspection JSUnresolvedFunction
+        parent.append(html);
+        return parent.find('.' + content_class);
     }
 
     // noinspection JSUnusedLocalSymbols
     add_child_containers(parent) {
         let journal = this.objects[0];
         let base_id = this.base_id;
-        let word_class = base_id + '_word_holder';
-        let tag_class = base_id + '_tag_holder';
-
-
+        let word_class = base_id + '-word-holder';
+        let tag_class = base_id + '-tag-holder';
 
         let tag_type_regex = /^tag_\w+$/;
 
@@ -66,7 +67,7 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
         parent.find('div.'+tag_class).append(tag_container.div);
 
         //////////////////////////
-        let container_class = $.GoKabam.get_container('wide','KabamWord');
+        let container_class = $.GoKabam.get_container('compact','KabamWord');
         //make test container with word
         // version_YD53eP
         let type_regex = /^word_\w+$/;
@@ -114,6 +115,7 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
             editor.edit();
         });
 
+
         parent_div.html('');
         let object_array = this.objects;
         let object_map = {};
@@ -130,13 +132,12 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
                 '<div ' +
                     'style="" ' +
                     'data-kid = "'+ journal.kid+'" ' +
-                    'class="gk-journal '+ display_class +' gk-journal-id-'+journal.kid +'"' +
+                    'class="gk-journal-text '+ display_class +' gk-journal-id-'+journal.kid +'"' +
                 '>' +
-                        '  <div class="col-md-12  col-sm-12">\n' +
-                            '    <div class="gk-journal-text">' + journal.text + '</div> \n' +
-                        '  </div>'+
-                '</div>';
 
+                journal.text  +
+
+                '</div>';
 
             parent_div.append(html);
         }

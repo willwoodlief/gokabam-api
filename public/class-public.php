@@ -134,6 +134,14 @@ class Plugin_Public
 			    PLUGIN_URL . 'node_modules/tokenfield/dist/tokenfield.min.js',
 			    array(), '1.1.0', false);
 
+		    wp_enqueue_script('popup-overlay',
+			    PLUGIN_URL . 'node_modules/jquery-popup-overlay/jquery.popupoverlay.js',
+			    array(), '1.7.4', false);
+
+		    wp_enqueue_script('jquery-ui',
+			    PLUGIN_URL . 'jslib/jquery-ui/jquery-ui.js',
+			    array(), '1.12.1', false);
+
 
 
 
@@ -150,16 +158,20 @@ class Plugin_Public
 		    $this->quick_enqueue('display_base','js/gokabam_display/kabam.display.base.js');
 		    $this->quick_enqueue('display_word_minimal','js/gokabam_display/kabam.display.word.minimal.js');
 		    $this->quick_enqueue('display_word_wide','js/gokabam_display/kabam.display.word.wide.js');
+		    $this->quick_enqueue('display_word_compact','js/gokabam_display/kabam.display.word.compact.js');
 		    $this->quick_enqueue('display_tag_wide','js/gokabam_display/kabam.display.tag.wide.js');
 		    $this->quick_enqueue('display_journal_wide','js/gokabam_display/kabam.display.journal.wide.js');
+		    $this->quick_enqueue('display_journal_compact','js/gokabam_display/kabam.display.journal.compact.js');
 
 
 		    //containers
 		    $this->quick_enqueue('container_base','js/gokabam_container/kabam.container.base.js');
 		    $this->quick_enqueue('container_minimal','js/gokabam_container/kabam.container.minimal.js');
 		    $this->quick_enqueue('container_word_wide','js/gokabam_container/kabam.container.word.wide.js');
+		    $this->quick_enqueue('container_word_compact','js/gokabam_container/kabam.container.word.compact.js');
 		    $this->quick_enqueue('container_tag_wide','js/gokabam_container/kabam.container.tag.wide.js');
 		    $this->quick_enqueue('container_journal_wide','js/gokabam_container/kabam.container.journal.wide.js');
+		    $this->quick_enqueue('container_journal_compact','js/gokabam_container/kabam.container.journal.compact.js');
 
 		    //editors
 		    $this->quick_enqueue('editor_base','js/gokabam_editor/kabam.editor.base.js');

@@ -101,7 +101,7 @@ class KabamEditorWordSingle extends KabamEditorBSDialogBase {
             '</div>' +
             '<div class="form-group">\n' +
             '  <label for="gk-single-word-edit-input-text">Text</label>\n' +
-            '  <textarea class="form-control gk-single-word-edit-input gk-rf-text  '+ special_name +'" id="gk-single-word-edit-input-text" >'
+            '  <textarea rows="20" class="form-control gk-single-word-edit-input gk-rf-text  '+ special_name +'" id="gk-single-word-edit-input-text" >'
             + text + '</textarea>\n' +
             '</div>'
         );

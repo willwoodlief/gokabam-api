@@ -1,3 +1,12 @@
+.gk-generic-popup {
+    width: 80%;
+}
+
+div.gk-inner-popout {
+    background-color: floralwhite;
+    padding: 1em;
+}
+
 .my-clearfix:after {
     content: ".";
     display: block;
@@ -15,6 +24,7 @@ div.gk-container {
 div.gk-container div.gk-container-displays {
     /*the div containing the display divs, owned by the container but not the top level div*/
     background-color: whitesmoke;
+    padding: 0;
 }
 
 div.gk-display {
@@ -31,8 +41,11 @@ div.gk-container-frame {
 }
 
 
+
+
 /*Words !*/
 
+/*Wide*/
 /*Word Container*/
 div.gk-container-wide-words {
     /*top level div for the words container*/
@@ -61,24 +74,73 @@ div.gk-word-wide {
     cursor: pointer;
 }
 
-div.gk-word {
+div.gk-word-wide-innest {
     /*the top div in the display's content*/
 }
 
-span.gk-word-type {
+div.gk-word-wide-innest  span.gk-word-type {
     color: royalblue;
 }
 
-span.gk-word-language {
+div.gk-word-wide-innest  span.gk-word-language {
     color: darkolivegreen;
 }
 
-p.gk-word-text {
+div.gk-word-wide-innest  p.gk-word-text {
     display: inline;
 }
 
+/*Compact*/
+div.gk-container-compact-words {
+    padding: 0;
+    /*top level*/
+}
 
-/*TAGS !*/
+
+
+div.gk-compact-word-header {
+    background-color: whitesmoke;
+}
+
+span.gk-compact-word-adder {
+    font-size: 2em;
+    color: green;
+    cursor: pointer;
+}
+
+div.gk-word-compact {
+    width: 100%;
+    padding: 0.5em;
+    background-color: cadetblue;
+}
+
+div.gk-word-compact-inner {
+    background-color: white;
+    width: 100%;
+}
+
+div.gk-word-compact-innest {
+
+}
+
+div.gk-word-compact-innest span.gk-word-type {
+    font-size: small;
+    font-weight: bold;
+    margin-right: 1em;
+    color: midnightblue;
+}
+
+div.gk-word-compact-innest {
+    color: black;
+
+}
+
+div.gk-word-compact-innest p.gk-word-text {
+    margin: 0;
+    padding: 0.25em
+}
+
+    /*TAGS !*/
 
 div.gk-container-wide-tags {
     /*top level div for the tag container*/
@@ -99,11 +161,72 @@ div.gk-container-wide-journals {
     /*top level div for the journal container*/
 }
 
+div.gk-journal-miniframe {
+
+}
+
+div.gk-journal-miniframe div.journal-container {
+    padding: 0;
+    margin-top: 0.5em;
+}
+
 div.gk-journal-wide {
     /*top in display*/
+    padding: 0.5em;
+    border: 1px grey solid;
+    margin-bottom: .5em ;
 }
 
-div.gk-journal-text {
+div.gk-journal-wide div.gk-journal-text {
     /*read only journal text*/
+    min-height: 6em;
+    background-color: gainsboro;
+    padding: 0.5em;
+    border-radius: 0.5em;
+    margin: 0.5em;
+    font-size: 12px;
+
 }
 
+/*compact journals*/
+.gk-container-compact-journals {
+    /*outer container*/
+    padding: 0;
+}
+
+div.gk-compact-journal-header {
+    background-color: whitesmoke;
+}
+
+span.gk-compact-journal-adder {
+    font-size: 2em;
+    color: green;
+    cursor: pointer;
+}
+
+div.gk-journal-compact {
+    /*top display*/
+    width: 100%;
+    padding: 0.5em;
+    background-color: #a07c26;
+}
+
+div.gk-journal-compact-inner {
+    background-color: white;
+    width: 100%;
+}
+
+div.gk-journal-compact-innest {
+    color: black;
+}
+
+div.gk-journal-title {
+    background-color: orange;
+    color: black;
+}
+
+div.gk-journal-compact p.gk-journal-text {
+    margin: 0;
+    padding: 0.25em;
+    font-size: 12px;
+}

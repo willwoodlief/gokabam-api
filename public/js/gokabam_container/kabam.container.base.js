@@ -15,6 +15,9 @@ class KabamContainerBase extends KabamEditorCallbacks {
     get base_id() { return this._base_id;}
 
     get displays() { return this._display_list;}
+
+    get filter() { return this._filter;}
+
     /**
      * @param {GoKabam} gokabam
      * @param {string[]} css_class_array
@@ -27,7 +30,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
         super();
         this.container_style = style;
         this.prefer_multiple = prefer_multiple;
-        this.filter = filter;
+        this._filter = filter;
 
         /**
          *
@@ -135,7 +138,7 @@ class KabamContainerBase extends KabamEditorCallbacks {
             /**
              * @type {KabamRuleFilter} new_filter
              */
-            let new_filter = jQuery.extend(true, {}, this.filter);
+            let new_filter = jQuery.extend(true, {}, this._filter);
             let new_rule = {
                 property_name: 'kid',
                 property_value: new RegExp('^' + prefix + '_\\w+$')
