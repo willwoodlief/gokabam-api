@@ -12,7 +12,7 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
         let more_class = ['gk-word-compact', 'my-clearfix', click_class];
         classes = [].concat(classes, more_class);
 
-        let that = this;
+
         jQuery(document).off('click','.' + click_class);
         jQuery(document).on('click','.'+ click_class,function() {
 
@@ -32,7 +32,13 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
         return []
     }
 
+    /**
+     * @link https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
+     * @link https://markdown-it.github.io/markdown-it/
+     * @param parent_div
+     */
     on_refresh(parent_div) {
+        //todo on 4 displays (both journals and words) fix up newlines to br and put in lists for astrixes
         let that = this;
         let display_class = this.base_id + '-gk-word-compact-display';
         jQuery(document).off('click','.' + display_class);
@@ -55,6 +61,7 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
         parent_div.html('');
         let object_array = this.objects;
         let object_map = {};
+        let md = window.markdownit();
         for(let i =0; i < object_array.length ; i++) {
             // noinspection JSValidateTypes
             /**
@@ -64,6 +71,11 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
             object_map[word.kid] = word;
 
 
+            let processed_text = '';
+            if (word.text) {
+                processed_text = md.render(word.text);
+            }
+
             let html = '' +
                 '<div ' +
                 'style="" ' +
@@ -71,7 +83,7 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
                 'class="gk-word-compact-innest '+ display_class +' gk-word-id-'+word.kid +'"' +
                 '>' +
 
-                '  <p class="gk-word-text"><span class="gk-word-type">' + word.type + '</span>' + word.text + '</p> \n' +
+                '  <p class="gk-word-text"><span class="gk-word-type">' + word.type + '</span>' + processed_text + '</p> \n' +
 
                 '</div>';
 

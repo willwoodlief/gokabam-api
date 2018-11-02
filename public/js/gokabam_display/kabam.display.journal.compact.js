@@ -81,6 +81,8 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
         parent_div.html('');
         let object_array = this.objects;
         let object_map = {};
+        let md = window.markdownit();
+
         for(let i =0; i < object_array.length ; i++) {
             // noinspection JSValidateTypes
             /**
@@ -91,6 +93,11 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
             let journal_title = this.get_journal_title(journal);
             if (!journal_title) {
                 journal_title = '';
+            }
+
+            let processed_text = '';
+            if (journal.text) {
+                processed_text = md.render(journal.text);
             }
 
             let html = '' +
@@ -105,7 +112,7 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
                 html += '  <div class="gk-journal-title"> Missing Title </div> \n';
             }
 
-            html +=    '  <p class="gk-journal-text">' + journal.text + '</p> \n' +
+            html +=    '  <p class="gk-journal-text">' + processed_text + '</p> \n' +
 
                 '</div>';
 

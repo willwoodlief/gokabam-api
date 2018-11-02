@@ -45,6 +45,7 @@ class KabamDisplayWordWide extends KabamDisplayBase {
         parent_div.html('');
         let object_array = this.objects;
         let object_map = {};
+        let md = window.markdownit();
         for(let i =0; i < object_array.length ; i++) {
             // noinspection JSValidateTypes
             /**
@@ -53,6 +54,11 @@ class KabamDisplayWordWide extends KabamDisplayBase {
             let word = object_array[i];
             object_map[word.kid] = word;
 
+
+            let processed_text = '';
+            if (word.text) {
+                processed_text = md.render(word.text);
+            }
 
             let html = '' +
                 '<div ' +
@@ -65,7 +71,7 @@ class KabamDisplayWordWide extends KabamDisplayBase {
                             '    <span class="gk-word-language"> (' + word.language + ')</span> \n' +
                         '  </div>\n' +
                         '  <div class="col-md-10  col-sm-12">\n' +
-                            '    <p class="gk-word-text">' + word.text + '</p> \n' +
+                            '    <p class="gk-word-text">' + processed_text + '</p> \n' +
                         '  </div>'+
                 '</div>';
 

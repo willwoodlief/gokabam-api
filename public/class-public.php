@@ -142,6 +142,12 @@ class Plugin_Public
 			    PLUGIN_URL . 'jslib/jquery-ui/jquery-ui.js',
 			    array(), '1.12.1', false);
 
+		    wp_enqueue_script('markdown',
+			    PLUGIN_URL . 'node_modules/markdown-it/dist/markdown-it.js',
+			    array(), '1.12.1', false);
+
+
+
 
 
 

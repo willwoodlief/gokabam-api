@@ -119,6 +119,7 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
         parent_div.html('');
         let object_array = this.objects;
         let object_map = {};
+        let md = window.markdownit();
         for(let i =0; i < object_array.length ; i++) {
             // noinspection JSValidateTypes
             /**
@@ -126,6 +127,11 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
              */
             let journal = object_array[i];
             object_map[journal.kid] = journal;
+
+            let processed_text = '';
+            if (journal.text) {
+                processed_text = md.render(journal.text);
+            }
 
 
             let html = '' +
@@ -135,7 +141,7 @@ class KabamDisplayJournalWide extends KabamDisplayBase {
                     'class="gk-journal-text '+ display_class +' gk-journal-id-'+journal.kid +'"' +
                 '>' +
 
-                journal.text  +
+                processed_text  +
 
                 '</div>';
 

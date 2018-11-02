@@ -74,6 +74,11 @@ div.gk-word-wide {
     cursor: pointer;
 }
 
+div.gk-word-wide p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 div.gk-word-wide-innest {
     /*the top div in the display's content*/
 }
@@ -143,6 +148,11 @@ div.gk-word-compact {
     background-color: cadetblue;
 }
 
+div.gk-word-compact p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 div.gk-word-compact-inner {
     background-color: white;
     width: 100%;
@@ -206,6 +216,11 @@ div.gk-journal-wide {
     margin-bottom: .5em ;
 }
 
+div.gk-journal-wide p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 div.gk-journal-wide div.gk-journal-text {
     /*read only journal text*/
     min-height: 6em;
@@ -267,6 +282,11 @@ div.gk-journal-compact {
     width: 100%;
     padding: 0.5em;
     background-color: #a07c26;
+}
+
+div.gk-journal-compact p {
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 div.gk-journal-compact-inner {

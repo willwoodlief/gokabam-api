@@ -7,6 +7,7 @@
     "diff": "^3.5.0",
     "highlight-within-textarea": "^2.0.5",
     "jquery-popup-overlay": "^1.7.4",
+    "markdown-it": "^8.4.2",
     "moment": "^2.22.2",
     "notifyjs-browser": "^0.4.2",
     "tokenfield": "^1.1.0"
