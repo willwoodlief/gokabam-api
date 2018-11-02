@@ -14,10 +14,9 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
         let more_class = ['gk-journal-compact', 'my-clearfix', click_class];
         classes = [].concat(classes, more_class);
 
-        let that = this;
         jQuery(document).off('click','.' + click_class);
         jQuery(document).on('click','.'+ click_class,function() {
-            that.gokabam.popout_container(that.root_type,'wide','pop-test',that.container.filter);
+
         });
         return  super.create_parent_div(classes);
 

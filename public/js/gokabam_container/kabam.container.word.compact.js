@@ -44,6 +44,7 @@ class KabamContainerWordCompact extends KabamContainerBase {
         div.addClass('gk-container-compact-words');
         let base_id = this.base_id;
         let button_class = base_id + '_new_button';
+        let popoff_class = base_id + '-popoff';
         let that = this;
         jQuery(document).off('click','.' + button_class);
         jQuery(document).on('click','.' + button_class ,function() {
@@ -59,13 +60,39 @@ class KabamContainerWordCompact extends KabamContainerBase {
         });
 
 
+        jQuery(document).off('click','.' + popoff_class);
+        jQuery(document).on('click','.' + popoff_class ,function() {
+            let keys = Object.keys(that.displays);
+            if (keys.length > 0) {
+                let displays = that.displays[  keys[0]  ];
+                if (displays.length > 0) {
+                    let gig = displays[0];
+                    that.gokabam.popout_container(gig.root_type,'wide','pop-test',that.filter,that.div);
+                }
+
+
+            }
+
+        });
+
+
         let html =
 
-            '  <div class="gk-container-frame">\n' +
-            '<div class=" gk-compact-word-header  '+ button_class + '   "><span class="gk-compact-word-adder"><i class="fas fa-plus"></i></span></div>' +
+            '<div class="gk-container-frame">\n' +
 
+            '  <div class=" gk-compact-word-header gk-adder '+ button_class + '   ">' +
+            '    <span class="gk-compact-word-adder">' +
+            '      <i class="fas fa-file-alt"></i>' +
+            '    </span>' +
+            '  </div>' +
 
-            '      <div class="gk-container-displays '+ base_id + '_child_container" ></div>\n' +'' +
+            '  <div class=" gk-compact-word-header gk-popoff '+ popoff_class + '   ">' +
+            '    <span class="gk-compact-word-popoff">' +
+            '      <i class="fas fa-angle-up"></i>' +
+            '    </span>' +
+            '  </div>' +
+
+            '    <div class="gk-container-displays '+ base_id + '_child_container" ></div>\n' +'' +
             '  </div>';
 
         div.append(html);

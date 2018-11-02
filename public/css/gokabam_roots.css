@@ -102,10 +102,39 @@ div.gk-compact-word-header {
     background-color: whitesmoke;
 }
 
+div.gk-compact-word-header.gk-adder {
+    width: 50%;
+    height: 2.5em;
+    padding: 0;
+    margin: 0;
+    float: left;
+    display: inline-block;
+}
+
+div.gk-compact-word-header.gk-popoff {
+    width: 50%;
+    height: 2.5em;
+    padding: 0;
+    margin: 0;
+    float:right;
+    display: inline-block;
+}
+
+
+
+
 span.gk-compact-word-adder {
     font-size: 2em;
     color: green;
     cursor: pointer;
+}
+
+span.gk-compact-word-popoff {
+    font-size: 2em;
+    color: green;
+    cursor: pointer;
+    margin-right: 0.5em;
+    float:right;
 }
 
 div.gk-word-compact {
@@ -198,10 +227,39 @@ div.gk-compact-journal-header {
     background-color: whitesmoke;
 }
 
+div.gk-compact-journal-header.gk-adder {
+    width: 50%;
+    height: 2.5em;
+    padding: 0;
+    margin: 0;
+    float: left;
+    display: inline-block;
+}
+
+div.gk-compact-journal-header.gk-popoff {
+    width: 50%;
+    height: 2.5em;
+    padding: 0;
+    margin: 0;
+    float:right;
+    display: inline-block;
+}
+
+
+
+
 span.gk-compact-journal-adder {
     font-size: 2em;
     color: green;
     cursor: pointer;
+}
+
+span.gk-compact-journal-popoff {
+    font-size: 2em;
+    color: green;
+    cursor: pointer;
+    margin-right: 0.5em;
+    float:right;
 }
 
 div.gk-journal-compact {

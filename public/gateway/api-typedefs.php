@@ -227,7 +227,7 @@ class GKA_Word extends GKA_Root
 {
 
 	/**
-	 * @var string $type name,title,blurb,description,overview,data
+	 * @var string $type name,title,blurb,description,overview,data,note,t odo
 	 */
 	public $type = '';
 

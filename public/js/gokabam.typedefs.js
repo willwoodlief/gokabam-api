@@ -222,7 +222,7 @@ class KabamVersion extends KabamRoot {
 /**
  * Typedef for GKA_Word, it inherits from GKA_Root, the parent can be anything but tags and words
  * @typedef {GKA_Root} GKA_Word
- * @property {string} type  can be name,title,blurb,description,overview,data
+ * @property {string} type  can be name,title,blurb,description,overview,data,note,to do
  * @property {string} language
  * @property {string} text
  */

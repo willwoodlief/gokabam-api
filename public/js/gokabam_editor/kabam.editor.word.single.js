@@ -55,7 +55,7 @@ class KabamEditorWordSingle extends KabamEditorBSDialogBase {
         let text = word.text;
         if (!text) {text = '';}
 
-        let allowed_types = ['name','title','blurb','description','overview','data'];
+        let allowed_types = ['name','title','blurb','description','overview','data','todo','note'];
         let options_string = '';
         for(let i = 0; i < allowed_types.length; i++) {
             options_string += '<option ';

@@ -13,6 +13,7 @@ function cycleEditors(obj) {
     rightEditor.clearSelection();
 }
 
+//todo get this json view to fit inside parent without going bigger
 jQuery(function($) {
     // noinspection ES6ModulesDependencies
     var aceDiffer = new AceDiff({

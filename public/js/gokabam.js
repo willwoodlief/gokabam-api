@@ -238,14 +238,17 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
         return this.editor_registry_map[root_class_string][decorated_style].edit_class;
     };
 
+    // noinspection JSUnusedLocalSymbols
     /**
      * @link http://dev.vast.com/jquery-popup-overlay/
      * @param {string} root_type
      * @param {string} style
      * @param {string} classes
      * @param {KabamRuleFilter} filter
+     * @param {jQuery} parent
      */
-    this.popout_container = function(root_type,style,classes,filter) {
+    this.popout_container = function(root_type,style,classes,filter,parent) {
+
         let container_class = jQuery.GoKabam.get_container(style,root_type);
         if (!container_class) {
             throw new Error("Could not find container for " + root_type + " and style " + style);
@@ -261,17 +264,17 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
         new_guy.append(cheat);
         new_guy.append('<button class=" btn btn-primary '+ popout_div_name +'_close"><i class="fas fa-window-close"></i> Close</button>');
         new_guy.popup({
+          //  type: 'tooltip',
             opacity: 0.3,
             transition: 'all 0.3s',
             autozindex: true,
             blur: false,
             backgroundactive: true,
-            keepfocus: false
+            keepfocus: false,
+          //  tooltipanchor: parent,
         });
         new_guy.draggable();
         new_guy.popup('show');
-        //todo position this where its on the visible screen always
-        //todo tweak this so that the bootstrap dialog editor is always higher z index
     }
 }
 

@@ -135,8 +135,8 @@ class Plugin_Public
 			    array(), '1.1.0', false);
 
 		    wp_enqueue_script('popup-overlay',
-			    PLUGIN_URL . 'node_modules/jquery-popup-overlay/jquery.popupoverlay.js',
-			    array(), '1.7.4', false);
+			    PLUGIN_URL . 'jslib/my.jquery.popupoverlay.js',
+			    array(), '1.7.13', false);
 
 		    wp_enqueue_script('jquery-ui',
 			    PLUGIN_URL . 'jslib/jquery-ui/jquery-ui.js',

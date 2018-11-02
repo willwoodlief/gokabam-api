@@ -96,7 +96,7 @@ class Activator {
 		if ($b_safety_swith) return ;
 
 		//make it update
-		$b_force_create = false;
+		$b_force_create = true;
 
 		$installed_ver = floatval( get_option( "_".strtolower( PLUGIN_NAME) ."_db_version" ));
 
@@ -288,7 +288,7 @@ class Activator {
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
               updated_at DATETIME ON UPDATE CURRENT_TIMESTAMP,
         	  iso_639_1_language_code char(2)  default 'en',
-        	  word_code_enum varchar(15) not null comment 'name,title,blurb,description,overview,data',
+        	  word_code_enum varchar(15) not null comment 'name,title,blurb,description,overview,data,note,todo',
               da_words mediumtext DEFAULT NULL,
               md5_checksum varchar(255) default null,
               PRIMARY KEY  (id),

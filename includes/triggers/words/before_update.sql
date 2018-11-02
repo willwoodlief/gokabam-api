@@ -11,7 +11,9 @@ CREATE TRIGGER trigger_before_update_gokabam_api_words
       'blurb',
       'description',
       'overview',
-      'data'
+      'data',
+      'note',
+      'todo'
     ) then
       SET @message := CONCAT('INVALID word_code_enum: ', NEW.word_code_enum);
       SIGNAL SQLSTATE '45000'
