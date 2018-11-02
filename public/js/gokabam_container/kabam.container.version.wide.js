@@ -34,11 +34,15 @@ class KabamContainerVersionWide extends KabamContainerBase {
 
         });
 
+        let new_style = '';
+        if (this.filter.rules.length === 0) {
+            new_style = ' style="display:none" ';
+        }
 
         let html =
 
             '  <div class="col-md-2 col-sm-4 gk-container-frame">\n' +
-            '      <div class="new-word">\n' +
+            '      <div class="new-word" '+ new_style +'>\n' +
             '          <button class="btn btn-success '+ button_class + '   ">'+
             '             <i class="fas fa-save"></i> New Version' +
             '          </button>\n' +
