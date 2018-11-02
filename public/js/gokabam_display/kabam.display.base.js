@@ -67,6 +67,8 @@ class KabamDisplayBase extends KabamEditorCallbacks {
         this._root_type  = root_type;
         this._container = container;
 
+        this._thing_slot = -1;
+
         let ugly_base_name = this.constructor.name;
         let camel_array = ugly_base_name.split(/(?=[A-Z])/);
 

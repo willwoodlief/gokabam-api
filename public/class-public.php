@@ -169,6 +169,7 @@ class Plugin_Public
 		    $this->quick_enqueue('display_journal_wide','js/gokabam_display/kabam.display.journal.wide.js');
 		    $this->quick_enqueue('display_journal_compact','js/gokabam_display/kabam.display.journal.compact.js');
 		    $this->quick_enqueue('display_version_wide','js/gokabam_display/kabam.display.version.wide.js');
+		    $this->quick_enqueue('display_version_compact','js/gokabam_display/kabam.display.version.compact.js');
 
 
 		    //containers
@@ -180,6 +181,7 @@ class Plugin_Public
 		    $this->quick_enqueue('container_journal_wide','js/gokabam_container/kabam.container.journal.wide.js');
 		    $this->quick_enqueue('container_journal_compact','js/gokabam_container/kabam.container.journal.compact.js');
 		    $this->quick_enqueue('container_version_wide','js/gokabam_container/kabam.container.version.wide.js');
+		    $this->quick_enqueue('container_version_compact','js/gokabam_container/kabam.container.version.compact.js');
 
 		    //editors
 		    $this->quick_enqueue('editor_base','js/gokabam_editor/kabam.editor.base.js');
@@ -218,7 +220,6 @@ class Plugin_Public
 		require_once PLUGIN_PATH . 'lib/Input.php';
 
 	    check_ajax_referer( strtolower( PLUGIN_NAME) . 'public_nonce' );
-
 
 	    if (!is_user_logged_in()) {
 		    wp_send_json(['is_valid' => false, 'message' => 'not logged in' ]);

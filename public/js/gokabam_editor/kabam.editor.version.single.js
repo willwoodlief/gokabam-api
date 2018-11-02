@@ -71,19 +71,19 @@ class KabamEditorVersionSingle extends KabamEditorBSDialogBase {
 
 
         jQuery(document).on('change','.gk-rf-text.' + special_name,function() {
-            version.text = $(this).val();
+            version.text = jQuery(this).val();
         });
 
         jQuery(document).on('change','.gk-rf-website.' + special_name,function() {
-            version.website_url = $(this).val();
+            version.website_url = jQuery(this).val();
         });
 
         jQuery(document).on('change','.gk-rf-git.' + special_name,function() {
-            version.git_repo_url = $(this).val();
+            version.git_repo_url = jQuery(this).val();
         });
 
         jQuery(document).on('change','.gk-rf-post.' + special_name,function() {
-            version.post_id = $(this).val();
+            version.post_id = jQuery(this).val();
         });
 
         //add on handlers before creation, but also call off for multiple calls on this object

@@ -5,20 +5,20 @@ require_once( realpath( dirname( __FILE__ )  . '/../../../../lib/Input.php') );
 require_once( realpath( dirname( __FILE__ )  . '/../../../../lib/ErrorLogger.php') );
 require_once( realpath( dirname( __FILE__ )  . '/../../../../lib/DBSelector.php') );
 
-class Poke {
+class Versions {
 
-	public static $post_name = 'Go Kabam';
+	public static $post_name = 'GoKabam Ideas';
 	static public  function get_regex() {
 		# /([\d.]+)/
-		return '#/gokabam_api/poke/(?P<table>[a-z]*)_(?P<code>[[:alnum:]]*)(?P<hint>[^[:alnum:]][[:alnum:]]*)?#i';
+		return '#/gokabam_api/versions#i';
 	}
 
 	static public  function get_slug() {
-		return 'gokabam_api/poke';
+		return 'gokabam_api/versions';
 	}
 
 	static public  function get_name() {
-		return 'poke';
+		return 'versions';
 	}
 
 	static public  function get_title($request_uri) {
@@ -39,7 +39,7 @@ class Poke {
 		ErrorLogger::unused_params($data_from_post,$request_uri);
 
 		ob_start();
-		require_once( realpath( dirname( __FILE__ ) ) . '/poke.view.php' );
+		require_once( realpath( dirname( __FILE__ ) ) . '/versions.view.php' );
 		$html = ob_get_contents();
 		ob_end_clean();
 
@@ -55,12 +55,12 @@ class Poke {
 	}
 
 	static public function enqueue_styles($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/poke/poke.css');
-		wp_enqueue_style($plugin_name . '_gk_poke', $path, array(), $plugin_version, 'all');
+		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/versions/versions.css');
+		wp_enqueue_style($plugin_name . '_gk_versions', $path, array(), $plugin_version, 'all');
 	}
 
 	static public function enqueue_scripts($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/poke/poke.js');
-		wp_enqueue_script($plugin_name. '_gk_poke', $path, array('jquery'), $plugin_version, false);
+		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/versions/versions.js');
+		wp_enqueue_script($plugin_name. '_gk_versions', $path, array('jquery'), $plugin_version, false);
 	}
 }

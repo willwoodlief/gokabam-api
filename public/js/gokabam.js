@@ -352,6 +352,9 @@ jQuery(function($){
     // noinspection JSCheckFunctionSignatures
     jQuery.GoKabam.register_container({style: 'wide',register_class: KabamContainerVersionWide,root_class_string: 'KabamVersion'});
 
+    // noinspection JSCheckFunctionSignatures
+    jQuery.GoKabam.register_container({style: 'compact',register_class: KabamContainerVersionCompact,root_class_string: 'KabamVersion'});
+
 
 
 
@@ -462,6 +465,20 @@ jQuery(function($){
         style : 'wide',
         is_multiple : false,
         display_class : KabamDisplayVersionWide
+    };
+
+    jQuery.GoKabam.register_display(entry);
+
+    // noinspection JSValidateTypes
+    /**
+     *
+     * @type {GoKabamDisplayRegistration} entry
+     */
+    entry = {
+        root_class_string : 'KabamVersion',
+        style : 'compact',
+        is_multiple : false,
+        display_class : KabamDisplayVersionCompact
     };
 
     jQuery.GoKabam.register_display(entry);

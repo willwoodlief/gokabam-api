@@ -59,7 +59,7 @@ class KabamEditorJournalSingle extends KabamEditorBSDialogBase {
 
 
         jQuery(document).on('change','.gk-rf-text.' + special_name,function() {
-            journal.text = $(this).val();
+            journal.text = jQuery(this).val();
         });
 
         //add on handlers before creation, but also call off for multiple calls on this object
