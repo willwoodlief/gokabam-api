@@ -670,10 +670,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 			}
 
 
-			if (!$mydb->foreignKeyExists('fk_data_groups_has_use_case_part_parent_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_use_case_part_parent_id 
-										FOREIGN KEY (use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
-			}
+
 
 			if (!$mydb->foreignKeyExists('fk_data_groups_has_output_parent_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_output_parent_id 
@@ -1756,7 +1753,11 @@ data_group_examples
 										FOREIGN KEY (touched_page_load_id) REFERENCES gokabam_api_page_loads(id);' );
 			}
 
-
+			//from above
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_use_case_part_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_use_case_part_parent_id 
+										FOREIGN KEY (use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
 
 			//NOW UPDATE THE TRIGGERS !
 			$mydb->execute_nested_sql_files(PLUGIN_PATH.'includes/triggers');
