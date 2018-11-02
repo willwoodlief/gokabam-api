@@ -672,20 +672,7 @@ Note: if need nesting of equivalent things over and under then make a duplicate
 
 
 
-			if (!$mydb->foreignKeyExists('fk_data_groups_has_output_parent_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_output_parent_id 
-										FOREIGN KEY (api_output_id) REFERENCES gokabam_api_outputs(id);' );
-			}
 
-			if (!$mydb->foreignKeyExists('fk_data_groups_has_input_parent_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_input_parent_id 
-										FOREIGN KEY (api_input_id) REFERENCES gokabam_api_inputs(id);' );
-			}
-
-			if (!$mydb->foreignKeyExists('fk_data_groups_has_header_parent_id')) {
-				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_header_parent_id 
-										FOREIGN KEY (header_id) REFERENCES gokabam_api_output_headers(id);' );
-			}
 
 
 		//from elements above
@@ -1757,6 +1744,21 @@ data_group_examples
 			if (!$mydb->foreignKeyExists('fk_data_groups_has_use_case_part_parent_id')) {
 				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_use_case_part_parent_id 
 										FOREIGN KEY (use_case_part_id) REFERENCES gokabam_api_use_case_parts(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_output_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_output_parent_id 
+										FOREIGN KEY (api_output_id) REFERENCES gokabam_api_outputs(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_input_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_input_parent_id 
+										FOREIGN KEY (api_input_id) REFERENCES gokabam_api_inputs(id);' );
+			}
+
+			if (!$mydb->foreignKeyExists('fk_data_groups_has_header_parent_id')) {
+				$mydb->execute( 'ALTER TABLE gokabam_api_data_groups ADD CONSTRAINT fk_data_groups_has_header_parent_id 
+										FOREIGN KEY (header_id) REFERENCES gokabam_api_output_headers(id);' );
 			}
 
 			//NOW UPDATE THE TRIGGERS !
