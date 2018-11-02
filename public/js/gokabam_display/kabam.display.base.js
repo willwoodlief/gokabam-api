@@ -229,14 +229,17 @@ class KabamDisplayBase extends KabamEditorCallbacks {
     on_notify(event) {
         switch (event.action) {
             case 'init' : {
+                this.maybe_set_container_parent(event.targets);
                 this.on_event_init(event) ;
                 break;
             }
             case 'inserted' : {
+                this.maybe_set_container_parent(event.targets);
                 this.on_event_inserted(event) ;
                 break;
             }
             case 'updated' : {
+                this.maybe_set_container_parent(event.targets);
                 this.on_event_updated(event) ;
                 break;
             }
@@ -245,6 +248,7 @@ class KabamDisplayBase extends KabamEditorCallbacks {
                 break;
             }
             case 'added-to-filter' : {
+                this.maybe_set_container_parent(event.targets);
                 this.on_event_added_to_filter(event) ;
                 break;
             }
@@ -254,6 +258,23 @@ class KabamDisplayBase extends KabamEditorCallbacks {
             }
             default: {
                 throw new Error('Display base did not have a case for the action of ' + event.action);
+            }
+        }
+    }
+
+
+    /**
+     * If the parent container has the property parent_kid, and it is empty, then set it with
+     * the first object's parent kid
+     * @private
+     * @param {KabamRoot[]} roots
+     */
+    maybe_set_container_parent(roots) {
+        if (this.container.hasOwnProperty('_parent_kid')) {
+            if (this.container.parent_kid == null) {
+                if (roots.length > 0) {
+                    this.container.set_parent_kid(roots[0].parent);
+                }
             }
         }
     }

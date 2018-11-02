@@ -13,6 +13,124 @@ function cycleEditors(obj) {
     rightEditor.clearSelection();
 }
 
+function gk_root_start() {
+    let test_holder = $('.test-container');
+
+
+    ////////////////////////////////////////
+    ////////// Words ///////////////////
+    /////////////////////////////////////
+
+    let container_class = jQuery.GoKabam.get_container('wide','KabamWord');
+    //make test container with word
+    // version_YD53eP
+    let type_regex = /^word_\w+$/;
+    /**
+     * @type {KabamRuleFilter}
+     */
+    let word_filter = {
+        rules:[
+            {
+                property_name: 'kid',
+                property_value: type_regex
+            },
+            {
+                property_name: 'parent',
+                property_value: 'version_YD53eP'
+            }
+        ],
+        literals: [
+        ]
+    };
+
+    let container = new container_class(jQuery.GoKabam,['gk-test-test'], word_filter);
+    test_holder.append('<h2>Word Test Wide Container</h2>');
+    test_holder.append(container.div);
+
+    ////////////////////////////tags///////////////////////////////
+
+    let tag_type_regex = /^tag_\w+$/;
+
+    let tag_filter = {
+        rules:[
+            {
+                property_name: 'kid',
+                property_value: tag_type_regex
+            },
+            {
+                property_name: 'parent',
+                property_value: 'version_YD53eP'
+            }
+        ],
+        literals: [
+        ]
+    };
+
+    let tag_container_class = jQuery.GoKabam.get_container('wide','KabamTag');
+    let tag_container = new tag_container_class(jQuery.GoKabam,['gk-tag-test'], tag_filter);
+    test_holder.append('<h2>Tag Test Wide Container</h2>');
+    test_holder.append(tag_container.div);
+
+
+
+    //////////////////////// Journals ///////////////////////////////
+    {
+        let journal_type_regex = /^journal_\w+$/;
+
+        let journal_filter = {
+            rules: [
+                {
+                    property_name: 'kid',
+                    property_value: journal_type_regex
+                },
+                {
+                    property_name: 'parent',
+                    property_value: 'version_YD53eP'
+                }
+            ],
+            literals: []
+        };
+
+
+        let journal_container_class = jQuery.GoKabam.get_container('wide', 'KabamJournal');
+        let journal_container = new journal_container_class(jQuery.GoKabam, ['gk-tag-test'], journal_filter);
+        test_holder.append('<h2>Journal Test Wide Container</h2>');
+        test_holder.append(journal_container.div);
+
+    }
+    /// TEST VERSION ////
+    {
+        let version_type_regex = /^version_\w+$/;
+
+        let version_filter = {
+            rules: [
+                {
+                    property_name: 'kid',
+                    property_value: version_type_regex
+                }
+            ],
+            literals: []
+        };
+
+
+        let version_container_class = jQuery.GoKabam.get_container('wide', 'KabamVersion');
+        let version_container = new version_container_class(jQuery.GoKabam, ['gk-tag-test'], version_filter);
+        test_holder.append('<h2>Version Container</h2>');
+        test_holder.append(version_container.div);
+
+    }
+
+    $('button.gk-test1').click(function() {
+        jQuery.GoKabam.refresh();
+    });
+
+    $('button.gk-test2').click(function() {
+        alert('I do nothing');
+    });
+
+
+}
+
 //todo get this json view to fit inside parent without going bigger
 jQuery(function($) {
     // noinspection ES6ModulesDependencies

@@ -90,7 +90,7 @@ class KabamRoot {
         if (kid_string == null)  {return true;}
 
         let r = new RegExp('^([a-zA-Z]+)_[a-zA-Z0-9]+');
-        let m = kid_string.kid.match(r);
+        let m = kid_string.match(r);
         if (!m) {
             throw new Error("Kid of ["+ kid_string +"] has no match for prefix");
         }
@@ -99,6 +99,67 @@ class KabamRoot {
         }
         return m[1];
 
+    }
+
+    static get_class_name_from_kid(kid_string) {
+        let prefix = KabamRoot.get_prefix_from_string(kid_string);
+        switch (prefix) {
+            case 'word': {
+                return 'KabamWord';
+            }
+            case 'tag': {
+                return 'KabamTag';
+            }
+            case 'journal': {
+                return 'KabamJournal';
+            }
+            case 'version': {
+                return 'KabamVersion';
+            }
+            case 'apiversion': {
+                return 'KabamApiVersion';
+            }
+            case 'family': {
+                return 'KabamFamily';
+            }
+            case 'api': {
+                return 'KabamApi';
+            }
+            case 'header': {
+                return 'KabamHeader';
+            }
+            case 'input': {
+                return 'KabamInput';
+            }
+            case 'output': {
+                return 'KabamOutput';
+            }
+            case 'sql': {
+                return 'KabamSqlPart';
+            }
+            case 'connection': {
+                return 'KabamPartConnection';
+            }
+            case 'part': {
+                return '';
+            }
+            case 'case': {
+                return 'KabamUseCase';
+            }
+            case 'group': {
+                return 'KabamDataGroup';
+            }
+
+            case  'example': {
+                return 'KabamDataExample';
+            }
+            case 'element': {
+                return 'KabamElement'
+            }
+            default: {
+                throw new Error('Did not prefex to find class in switch ' + prefix) ;
+            }
+        }
     }
     /**
      * helper

@@ -279,7 +279,7 @@ function GoKabam(heartbeat_error_handler,get_callbacks) {
 }
 
 
-var test_version = null;
+
 
 jQuery(function($){
 
@@ -291,163 +291,25 @@ jQuery(function($){
         console.log(exception_info);
     }
 
-    let nid = null;
-
+    let is_initialized = false; //for one time action
 
     /**
      *
      * @param {GoKabam} go_kabam
      */
     function on_get(go_kabam) {
-        if (nid == null) {
-            //create test handler
+        if (is_initialized === false) {
+            is_initialized = true;
 
-            /**
-             * @param {HeartbeatNotification} event
-             */
-            function handler(event) {
-                console.log(event);
-                test_version = event.targets[0]; //grab the literal
-            }
-
-            let re = /^version_\w+$/;
-            /**
-             * @type {KabamRuleFilter}
-             */
-            let filter = {
-                rules:[
-                    {
-                        property_name: 'kid',
-                        property_value: re
-                    }
-                ],
-                literals: [
-                    'version_YD53eP'
-                ]
-            };
-
-            nid = jQuery.GoKabam.create_notification(handler,null,filter);
-
-            let test_holder = $('.test-container');
-
-
-
-
-
-            ////////////////////////////////////////
-            ////////// Words ///////////////////
-            /////////////////////////////////////
-
-            let container_class = jQuery.GoKabam.get_container('wide','KabamWord');
-            //make test container with word
-            // version_YD53eP
-            let type_regex = /^word_\w+$/;
-            /**
-             * @type {KabamRuleFilter}
-             */
-            let word_filter = {
-                rules:[
-                    {
-                        property_name: 'kid',
-                        property_value: type_regex
-                    },
-                    {
-                        property_name: 'parent',
-                        property_value: 'version_YD53eP'
-                    }
-                ],
-                literals: [
-                ]
-            };
-
-            let container = new container_class(jQuery.GoKabam,['gk-test-test'], word_filter);
-            test_holder.append('<h2>Word Test Wide Container</h2>');
-            test_holder.append(container.div);
-
- ////////////////////////////tags///////////////////////////////
-
-            let tag_type_regex = /^tag_\w+$/;
-
-            let tag_filter = {
-                rules:[
-                    {
-                        property_name: 'kid',
-                        property_value: tag_type_regex
-                    },
-                    {
-                        property_name: 'parent',
-                        property_value: 'version_YD53eP'
-                    }
-                ],
-                literals: [
-                ]
-            };
-
-            let tag_container_class = jQuery.GoKabam.get_container('wide','KabamTag');
-            let tag_container = new tag_container_class(jQuery.GoKabam,['gk-tag-test'], tag_filter);
-            test_holder.append('<h2>Tag Test Wide Container</h2>');
-            test_holder.append(tag_container.div);
-
-
-
-            //////////////////////// Journals ///////////////////////////////
+            if (typeof gk_root_start === "function")
             {
-                let journal_type_regex = /^journal_\w+$/;
-
-                let journal_filter = {
-                    rules: [
-                        {
-                            property_name: 'kid',
-                            property_value: journal_type_regex
-                        },
-                        {
-                            property_name: 'parent',
-                            property_value: 'version_YD53eP'
-                        }
-                    ],
-                    literals: []
-                };
-
-
-                let journal_container_class = jQuery.GoKabam.get_container('wide', 'KabamJournal');
-                let journal_container = new journal_container_class(jQuery.GoKabam, ['gk-tag-test'], journal_filter);
-                test_holder.append('<h2>Journal Test Wide Container</h2>');
-                test_holder.append(journal_container.div);
-
+                try {
+                    gk_root_start();
+                } catch(error) {
+                    jQuery.GokabamErrorLogger(error,'error');
+                }
             }
-            /// TEST VERSION ////
-            {
-                let version_type_regex = /^version_\w+$/;
-
-                let version_filter = {
-                    rules: [
-                        {
-                            property_name: 'kid',
-                            property_value: version_type_regex
-                        }
-                    ],
-                    literals: []
-                };
-
-
-                let version_container_class = jQuery.GoKabam.get_container('wide', 'KabamVersion');
-                let version_container = new version_container_class(jQuery.GoKabam, ['gk-tag-test'], version_filter);
-                test_holder.append('<h2>Version Container</h2>');
-                test_holder.append(version_container.div);
-
-            }
-
-
-
         }
-
-
-
-
-
-
-
-
     }
 
     if (!jQuery.GoKabam) {
@@ -460,13 +322,7 @@ jQuery(function($){
 
 
 
-    $('button.gk-test1').click(function() {
-        jQuery.GoKabam.refresh();
-    });
 
-    $('button.gk-test2').click(function() {
-        jQuery.GoKabam.update([test_version]);
-    });
 
 
     ///////////////////////////////////////////////////

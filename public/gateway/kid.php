@@ -352,7 +352,12 @@ class KidTalk {
 				$hint = $output_array['hint'];
 			}
 			if ( ! array_key_exists( $table_key, self::$key_to_table_map ) ) {
-				throw new ApiParseException( "Cannot find a table match for the parent prefix of [$table_key], the child was [{$child->kid}]" );
+				if ($child) {
+					throw new ApiParseException( "Cannot find a table match for the parent prefix of [$table_key], the child was [{$child->kid}]" );
+				} else {
+					throw new ApiParseException( "Cannot find a table match for the parent prefix of [$table_key]" );
+				}
+
 			}
 			$table = self::$key_to_table_map[ $table_key ];
 

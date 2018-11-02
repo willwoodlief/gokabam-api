@@ -1,0 +1,19 @@
+/*poke page css*/
+
+div.overflow-container div.main {
+    width: 100%;
+    margin-left: 1em;
+    margin-right: 1em;
+
+}
+
+
+
+div.overflow-container div.main div.loop-container div.entry {
+    padding: 1em 0 0;
+}
+
+div.overflow-container div.main div.loop-container div.entry  div.entry-header {
+    padding-left: 2em;
+    display: none;
+}

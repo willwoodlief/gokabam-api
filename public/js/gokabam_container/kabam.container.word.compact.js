@@ -2,27 +2,10 @@
 class KabamContainerWordCompact extends KabamContainerBase {
     constructor(gokabam,css_class_array, filter) {
         super(gokabam,css_class_array, filter,false,'compact');
-        //find the parent kid
-        this._parent_kid = null;
-        let count = 0;
-        for(let i = 0; i < filter.rules.length; i++) {
-            let rule = filter.rules[i];
-            if (rule.property_name === 'parent') {
-              this._parent_kid = rule.property_value;
-              count++;
-            }
-        }
-        if (!this._parent_kid) {
-            throw new Error("Word container cannot find a parent id in the rules");
-        }
 
-        if (count > 1) {
-            throw new Error("Word container: found " + count + " parents in the rules");
-        }
 
     }
 
-    get parent_kid() { return this._parent_kid;}
 
 
     on_new_display(display) {
@@ -76,12 +59,17 @@ class KabamContainerWordCompact extends KabamContainerBase {
         });
 
 
+        let new_style = '';
+        if (this.parent_kid == null) {
+            new_style = ' style="display:none" ';
+        }
+
         let html =
 
             '<div class="gk-container-frame">\n' +
 
             '  <div class=" gk-compact-word-header gk-adder '+ button_class + '   ">' +
-            '    <span class="gk-compact-word-adder">' +
+            '    <span class="gk-compact-word-adder" '+ new_style + ' >' +
             '      <i class="fas fa-file-alt"></i>' +
             '    </span>' +
             '  </div>' +

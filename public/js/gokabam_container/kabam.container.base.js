@@ -18,6 +18,10 @@ class KabamContainerBase extends KabamEditorCallbacks {
 
     get filter() { return this._filter;}
 
+    set_parent_kid(kid) {this._parent_kid = kid;}
+
+    get parent_kid() { return this._parent_kid;}
+
     /**
      * @param {GoKabam} gokabam
      * @param {string[]} css_class_array
@@ -28,9 +32,22 @@ class KabamContainerBase extends KabamEditorCallbacks {
 
     constructor(gokabam,css_class_array, filter, prefer_multiple,style) {
         super();
+        this._parent_kid = null;
         this.container_style = style;
         this.prefer_multiple = prefer_multiple;
         this._filter = filter;
+
+        let count = 0;
+        for(let i = 0; i < filter.rules.length; i++) {
+            let rule = filter.rules[i];
+            if (rule.property_name === 'parent') {
+                this.set_parent_kid(rule.property_value);
+                count++;
+            }
+        }
+        if (count > 1) {
+          //  throw new Error("Found "+ count + " parents, too many parents");
+        }
 
         /**
          *

@@ -73,15 +73,15 @@ class KabamEditorWordSingle extends KabamEditorBSDialogBase {
         special_name = jQuery.GokabamIds.register(special_name);
         jQuery(document).off('change','.' + special_name);
         jQuery(document).on('change','.gk-rf-type.' + special_name,function() {
-            word.type = $(this).val();
+            word.type = jQuery(this).val();
         });
 
         jQuery(document).on('change','.gk-rf-language.' + special_name,function() {
-            word.language = $(this).val();
+            word.language = jQuery(this).val();
         });
 
         jQuery(document).on('change','.gk-rf-text.' + special_name,function() {
-            word.text = $(this).val();
+            word.text = jQuery(this).val();
         });
 
         //add on handlers before creation, but also call off for multiple calls on this object
