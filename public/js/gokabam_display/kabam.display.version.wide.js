@@ -135,7 +135,6 @@ class KabamDisplayVersionWide extends KabamDisplayBase {
         let that = this;
         let display_class = this.base_id + '_gk-journal-wide-display';
         jQuery(document).off('click','.' + display_class);
-        //todo do not open this dialog if clicking on a link
         jQuery(document).on('click','.'+ display_class,function() {
             //find editor for this type and single
             let editor_class = that.gokabam.get_editor(that.root_type,that.style,false);

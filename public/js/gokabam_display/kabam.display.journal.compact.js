@@ -74,9 +74,28 @@ class KabamDisplayJournalCompact extends KabamDisplayBase {
     }
 
     on_refresh(parent_div) {
-
+        let that = this;
         let display_class = this.base_id + '-gk-journal-compact-display';
+        jQuery(document).off('click','.' + display_class);
+        jQuery(document).on('click','.'+ display_class,function() {
+            //find editor for this type and single
+            let editor_class = that.gokabam.get_editor(that.root_type,that.style,false);
+            if (!editor_class) {
+                throw new Error('Display Journal cannot find single editor for journal');
+            }
+            let kid = jQuery(this).data('kid');
+            that._editing_kid = kid;
+            if (!object_map.hasOwnProperty(kid)) {
+                throw new Error("Display Journal Map does not have journal ["+ kid +"] in click handler");
+            }
+            let journal_to_be_edited = object_map[kid];
+            let editor = new editor_class(that.gokabam,[journal_to_be_edited],that);
+            editor.edit();
+        });
 
+        jQuery(document).on('click','.'+ display_class + ' a',function(event) {
+            event.stopPropagation();
+        });
 
         parent_div.html('');
         let object_array = this.objects;
