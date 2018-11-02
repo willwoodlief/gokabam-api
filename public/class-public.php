@@ -219,6 +219,19 @@ class Plugin_Public
 
 	    check_ajax_referer( strtolower( PLUGIN_NAME) . 'public_nonce' );
 
+
+	    if (!is_user_logged_in()) {
+		    wp_send_json(['is_valid' => false, 'message' => 'not logged in' ]);
+		    die();
+	    }
+
+	    if (!current_user_can('administrator')) {
+		    wp_send_json(['is_valid' => false, 'message' => 'not administrator' ]);
+		    die();
+	    }
+
+
+
 	    if (array_key_exists( 'method',$_POST) && $_POST['method'] == 'echo') {
 
 		    try {
