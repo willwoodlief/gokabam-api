@@ -126,6 +126,11 @@ class KabamDisplayVersionWide extends KabamDisplayBase {
         return [tag_container,word_container, journal_container]
     }
 
+    /**
+     * @link https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
+     * @link https://markdown-it.github.io/markdown-it/
+     * @param parent_div
+     */
     on_refresh(parent_div) {
         let that = this;
         let display_class = this.base_id + '_gk-journal-wide-display';
@@ -145,6 +150,10 @@ class KabamDisplayVersionWide extends KabamDisplayBase {
             let journal_to_be_edited = object_map[kid];
             let editor = new editor_class(that.gokabam,[journal_to_be_edited],that);
             editor.edit();
+        });
+
+        jQuery(document).on('click','.'+ display_class + ' a',function(event) {
+            event.stopPropagation();
         });
 
 

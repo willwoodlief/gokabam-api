@@ -38,7 +38,6 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
      * @param parent_div
      */
     on_refresh(parent_div) {
-        //todo on 4 displays (both journals and words) fix up newlines to br and put in lists for astrixes
         let that = this;
         let display_class = this.base_id + '-gk-word-compact-display';
         jQuery(document).off('click','.' + display_class);
@@ -56,6 +55,10 @@ class KabamDisplayWordCompact extends KabamDisplayBase {
             let word_to_be_edited = object_map[kid];
             let editor = new editor_class(that.gokabam,[word_to_be_edited],that);
             editor.edit();
+        });
+
+        jQuery(document).on('click','.'+ display_class + ' a',function(event) {
+            event.stopPropagation();
         });
 
         parent_div.html('');
