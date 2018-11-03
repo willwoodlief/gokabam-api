@@ -73,7 +73,7 @@ class ApiTestPage {
 
 		wp_enqueue_style( 'ace-diff', PLUGIN_URL. 'node_modules/ace-diff/dist/ace-diff.min.css', array(), '1.0', 'all' );
 
-		$path = get_home_url( null, 'wp-content/plugins/gokam-api/public/pages/test/api_test_page.css' );
+		$path = get_home_url( null, 'wp-content/plugins/gokabam-api/public/pages/test/api_test_page.css' );
 		wp_enqueue_style( $plugin_name . '_gk_api_test', $path, array(), $plugin_version, 'all' );
 	}
 
@@ -86,11 +86,11 @@ class ApiTestPage {
 
 		wp_enqueue_script( 'ace', "https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js", array(), '1.4.1' );
 
-		$path = get_home_url( null, 'wp-content/plugins/gokam-api/node_modules/ace-diff/dist/ace-diff.min.js' );
+		$path = get_home_url( null, 'wp-content/plugins/gokabam-api/node_modules/ace-diff/dist/ace-diff.min.js' );
 		wp_enqueue_script( 'ace-diff', $path, array('ace'), $plugin_version, false   );
 
 
-		$path = get_home_url( null, 'wp-content/plugins/gokam-api/public/pages/test/api_test_page.js' );
+		$path = get_home_url( null, 'wp-content/plugins/gokabam-api/public/pages/test/api_test_page.js' );
 		wp_enqueue_script( $plugin_name . '_gk_api_test', $path, array( 'jquery' ), $plugin_version, false );
 
 

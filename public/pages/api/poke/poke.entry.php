@@ -55,12 +55,12 @@ class Poke {
 	}
 
 	static public function enqueue_styles($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/poke/poke.css');
+		$path  = get_home_url(null,  'wp-content/plugins/gokabam-api/public/pages/api/poke/poke.css');
 		wp_enqueue_style($plugin_name . '_gk_poke', $path, array(), $plugin_version, 'all');
 	}
 
 	static public function enqueue_scripts($plugin_name,$plugin_version) {
-		$path  = get_home_url(null,  'wp-content/plugins/gokam-api/public/pages/api/poke/poke.js');
+		$path  = get_home_url(null,  'wp-content/plugins/gokabam-api/public/pages/api/poke/poke.js');
 		wp_enqueue_script($plugin_name. '_gk_poke', $path, array('jquery'), $plugin_version, false);
 	}
 }
